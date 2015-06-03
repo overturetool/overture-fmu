@@ -15,10 +15,9 @@ char jvmLibLoaded = 0;
 //typedef _JNI_IMPORT_OR_EXPORT_ jint JNICALL (*myFuncDef)(JavaVM **pvm, void **penv, void *args);
 typedef jint (JNICALL *CreateJavaVMPROC)(JavaVM **pvm, void **penv, void *args);
 
-JNIEnv* create_vm(JavaVM **jvm, const char* jvmLibPath, char* jvmOption1)
+JNIEnv* create_vm(JavaVM **jvm, const char* jvmLibPath, char** classpath, int cpSize)
 {
-	const char* m_JvmLibLocation =
-			/*jvmLibPath;//*/"/Library/Java/JavaVirtualMachines/jdk1.7.0_75.jdk/Contents/Home/jre/lib/server/libjvm.dylib";
+	const char* m_JvmLibLocation = jvmLibPath; //"/Library/Java/JavaVirtualMachines/jdk1.7.0_75.jdk/Contents/Home/jre/lib/server/libjvm.dylib";
 
 	printf("Loading lib from: %s\n", m_JvmLibLocation);
 #ifdef _WIN32
@@ -70,14 +69,21 @@ JNIEnv* create_vm(JavaVM **jvm, const char* jvmLibPath, char* jvmOption1)
 	args.version = JNI_VERSION_1_6;
 	args.nOptions = 1;
 //	options.optionString = "-Djava.class.path=./";
-	options.optionString =
-			/*jvmOption1;//*/"-Djava.class.path=/Users/kel/Downloads/eclipse-cde/workspace/JavaTest/bin/";
+	options.optionString =	classpath[0];//"-Djava.class.path=/Users/kel/Downloads/eclipse-cde/workspace/JavaTest/bin/";
 
 	args.options = &options;
 	args.ignoreUnrecognized = 0;
 	int rv;
 //	rv = JNI_CreateJavaVM(jvm, (void**) &env, &args);
-	rv = CreateJavaVM(jvm, (void**) &env, &args);
+
+	if (CreateJavaVM)
+	{
+		rv = CreateJavaVM(jvm, (void**) &env, &args);
+	} else
+	{
+		env = NULL;
+	}
+
 	if (rv < 0 || !env)
 	{
 		printf("Unable to Launch JVM %d\n", rv);
@@ -98,21 +104,37 @@ JNIEnv* create_vm(JavaVM **jvm, const char* jvmLibPath, char* jvmOption1)
 		jvm = buffer;
 		printf("VM pointer %p\n", jvm);
 
-	rv=	(*(*jvm))->GetEnv(*jvm, &env, JNI_VERSION_1_6);
-	if (rv < 0)
-			{
-				printf("did not get env\n");
-			}
+		rv = (*(*jvm))->GetEnv(*jvm, &env, JNI_VERSION_1_6);
+		if (rv < 0)
+		{
+			printf("did not get env\n");
+		}
 
+		rv = (*(*jvm))->AttachCurrentThread(*jvm, &env, NULL);
+		if (rv < 0)
+		{
+			printf("did not attache\n");
+		}
 
-	rv=	(*(*jvm))->AttachCurrentThread(*jvm,&env,NULL);
-	if (rv < 0)
-			{
-				printf("did not attache\n");
-			}
+		for (int i = 0; i < cpSize; i++)
+		{
+			char * cp = classpath[i];
+			printf("Lets try to add the class path %d...:%s\n", i, cp);
+			callJavaMethodVoid(env, "org/intocps/orchestration/coe/util/ClassPathCLoader", "addFileS",
+					"(Ljava/lang/String;)V", (*env)->NewStringUTF(env, cp));
+		}
 
-		printf("Lets try to add the class path...:%s\n",jvmOption1);
-		callJavaMethodVoid(env,"org/intocps/orchestration/coe/util/ClassPathCLoader","addFileS","(Ljava/lang/String;)V",(*env)->NewStringUTF(env,jvmOption1));
+//		printf("Lets try to add the class path 1...:%s\n", jvmOption1);
+//		callJavaMethodVoid(env, "org/intocps/orchestration/coe/util/ClassPathCLoader", "addFileS",
+//				"(Ljava/lang/String;)V", (*env)->NewStringUTF(env, jvmOption1));
+//
+//		if (jvmOption2 != NULL)
+//		{
+//			printf("Lets try to add the class path 2...:%s\n", jvmOption2);
+//			callJavaMethodVoid(env, "org/intocps/orchestration/coe/util/ClassPathCLoader", "addFileS",
+//					"(Ljava/lang/String;)V", (*env)->NewStringUTF(env, jvmOption2));
+//
+//		}
 
 	} else
 		printf("Launched JVM! :)\n");
@@ -150,12 +172,12 @@ void callJavaMethodVoid(JNIEnv* env, const char* className, const char* methodNa
 	jClz = (*env)->FindClass(env, className);
 
 	if (jClz == NULL)
-		printf("Class not found\n");
+		printf("Class not found: %s\n", className);
 
 	jMethod = (*env)->GetStaticMethodID(env, jClz, methodName, signature);
 
 	if (jMethod == NULL)
-		printf("Method not found\n");
+		printf("Method not found: %s\n", methodName);
 
 	/* Declare a va_list type variable */
 	va_list myargs;
@@ -180,12 +202,12 @@ char callJavaMethodByte(JNIEnv* env, const char* className, const char* methodNa
 	jClz = (*env)->FindClass(env, className);
 
 	if (jClz == NULL)
-		printf("Class not found\n");
+		printf("Class not found: %s\n", className);
 
 	jMethod = (*env)->GetStaticMethodID(env, jClz, methodName, signature);
 
 	if (jMethod == NULL)
-		printf("Method not found\n");
+		printf("Method not found: %s\n", methodName);
 
 	/* Declare a va_list type variable */
 	va_list myargs;

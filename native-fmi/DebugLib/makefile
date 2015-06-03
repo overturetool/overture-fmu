@@ -28,9 +28,9 @@ all: Fmi2Java
 Fmi2Java: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: MacOS X C Linker'
-	gcc -shared -L/Library/Java/JavaVirtualMachines/jdk1.7.0_75.jdk/Contents/Home/jre/lib/server -o "tcj.dylib" $(OBJS) $(USER_OBJS) $(LIBS)
+	gcc -shared -L/Library/Java/JavaVirtualMachines/jdk1.7.0_75.jdk/Contents/Home/jre/lib/server -o "vdm-tankcontroller.dylib" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
-	cp tcj.dylib /Users/kel/data/into-cps/intocps-coe/orchestration/coe/src/test/resources/fmus/tcj/binaries/darwin64/
+	cp vdm-tankcontroller.dylib /Users/kel/data/into-cps/intocps-coe/orchestration/coe/src/test/resources/fmus/vdm-tankcontroller/binaries/darwin64/
 	@echo ' '
 
 # Other Targets

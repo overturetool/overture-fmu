@@ -10,7 +10,6 @@
 #include "jvmHelper.h"
 #include <string.h>
 
-
 #define FMI2JAVA_CLASS "Fmi2Java"
 //int main()
 //{
@@ -44,14 +43,13 @@ static jlongArray getVrArray(const fmi2ValueReference vr[], size_t nvr)
 	return result;
 }
 
-
 char* concat(char *s1, char *s2)
 {
-    char *result = malloc(strlen(s1)+strlen(s2)+1);//+1 for the zero-terminator
-    //in real code you would check for errors in malloc here
-    strcpy(result, s1);
-    strcat(result, s2);
-    return result;
+	char *result = malloc(strlen(s1) + strlen(s2) + 1); //+1 for the zero-terminator
+	//in real code you would check for errors in malloc here
+	strcpy(result, s1);
+	strcat(result, s2);
+	return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -85,34 +83,59 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
 	char * line = NULL;
 	char * jvmLibPath = NULL;
 	char * jvmOption1 = NULL;
+	char * jvmOption2 = NULL;
+	char* classpath[20];
+	int classpathSize =0;
 	int i = 0;
 
+	size_t size = 0;
 
-	while ((read = getdelim(&line, &len, '\n',fp)) != -1)
+	while ((read = getdelim(&line, &len, '\n', fp)) != -1)
 	{
 //		printf("Retrieved line of length %zu :\n", read);
 //		printf("%s\n", line);
+//
+//		for (int i = 0; i < read; i++)
+//		{
+//			char ch = line[i];
+//			printf("%x ", ch & 0xff);
+//		}
+//		printf("\n");
 
+		if (line[read - 1] == '\n')
+		{
+			line[read - 1] = 0;
+			read--;
+		}
 
+//		for (int i = 0; i < read; i++)
+//		{
+//			char ch = line[i];
+//			printf("%x ", ch & 0xff);
+//		}
+//		printf("\n");
+
+		char * tmp = malloc(read + 1);
+//		printf(" line of length %zu :\n", read);
+
+		stpncpy(tmp, line, read);
+		tmp[read] = 0;
+//		printf("---- Path: '%s'\n", tmp);
+//		for (int i = 0; i < read; i++)
+//		{
+//			char ch = tmp[i];
+//			printf("%x ", ch & 0xff);
+//		}
+//		printf("\n");
 
 		if (i == 0)
 		{
-			jvmLibPath = malloc(strlen (line));
-			stpncpy(jvmLibPath, line, strlen (line)-1);
-			//strcpy(jvmLibPath,line);
-			jvmLibPath[strlen (line)-1]=0;
-			printf("---- stpncpy line of length '%s' :\n", jvmLibPath);
-		} else if (i == 1)
+			jvmLibPath = tmp;
+
+		} else
 		{
-			jvmOption1 = malloc(strlen (line)-1);
-
-			stpncpy(jvmOption1, line, strlen (line));
-			jvmOption1[strlen (line)]=0;
-			printf("---- stpncpy line of length '%s' :\n", jvmOption1);
-
-			jvmOption1 =concat(fmuResourceLocation,jvmOption1);
-			printf("---- stpncpy CP '%s' :\n", jvmOption1);
-
+			classpath[classpathSize]=concat(fmuResourceLocation, tmp);
+			classpathSize++;
 		}
 		i++;
 	}
@@ -121,20 +144,29 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
 	if (line)
 		free(line);
 
+
+
 //	printf("JVM lib path: %s\n", jvmLibPath);
 //	printf("JVM lib opt1: %s\n", jvmOption1);
 
-	env = create_vm(&jvm, jvmLibPath, jvmOption1);
+	env = create_vm(&jvm, jvmLibPath, classpath, classpathSize);
+
+	if(jvmLibPath)
+		free(jvmLibPath);
+
+	for(int i=0;i<classpathSize;i++)
+		free(classpath[i]);
 
 	if (env == NULL)
 		printf("unable to create VM\n");
 
 	printf("final test\n");
 	callJavaMethodVoid(env, FMI2JAVA_CLASS, "instantiate", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)V",
-			(*env)->NewStringUTF(env, fmuGUID), (*env)->NewStringUTF(env, instanceName),(*env)->NewStringUTF(env, fmuResourceLocation), 0);
+			(*env)->NewStringUTF(env, fmuGUID), (*env)->NewStringUTF(env, instanceName),
+			(*env)->NewStringUTF(env, fmuResourceLocation), 0);
 //	printf("%d ", status);
 
-	return (void*)1234;
+	return (void*) 1234;
 }
 
 fmi2Status fmi2SetupExperiment(fmi2Component c, fmi2Boolean toleranceDefined, fmi2Real tolerance, fmi2Real startTime,
@@ -233,32 +265,30 @@ fmi2Status fmi2GetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
 {
 	int i = 0;
 
-		jbooleanArray valArr;
-		valArr = (*env)->NewBooleanArray(env, nvr);
-		if (valArr == NULL)
-		{
-			return fmi2Error; /* out of memory error thrown */
-		}
+	jbooleanArray valArr;
+	valArr = (*env)->NewBooleanArray(env, nvr);
+	if (valArr == NULL)
+	{
+		return fmi2Error; /* out of memory error thrown */
+	}
 
-		callJavaMethodByte(env, FMI2JAVA_CLASS, "getBoolean", "([J[Z)B", getVrArray(vr, nvr), valArr);
+	callJavaMethodByte(env, FMI2JAVA_CLASS, "getBoolean", "([J[Z)B", getVrArray(vr, nvr), valArr);
 
-		jboolean *vbody = (*env)->GetBooleanArrayElements(env, valArr, 0);
-		for (i = 0; i < nvr; i++)
-		{
-			value[i] = vbody[i];
-		}
+	jboolean *vbody = (*env)->GetBooleanArrayElements(env, valArr, 0);
+	for (i = 0; i < nvr; i++)
+	{
+		value[i] = vbody[i];
+	}
 
-		(*env)->ReleaseBooleanArrayElements(env, valArr, vbody, 0);
+	(*env)->ReleaseBooleanArrayElements(env, valArr, vbody, 0);
 
-		return fmi2OK;
+	return fmi2OK;
 }
 
 fmi2Status fmi2GetString(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2String value[])
 {
 	return fmi2Error;
 }
-
-
 
 fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Real value[])
 {
@@ -292,23 +322,23 @@ fmi2Status fmi2SetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
 {
 	int i = 0;
 
-		jbooleanArray valArr;
-		valArr = (*env)->NewBooleanArray(env, nvr);
-		if (valArr == NULL)
-		{
-			return fmi2Error; /* out of memory error thrown */
-		}
-		jboolean fill2[nvr];
-		for (i = 0; i < nvr; i++)
-		{
-			fill2[i] = value[i]; // put whatever logic you want to populate the values here.
-		}
-		// move from the temp structure to the java structure
-		(*env)->SetBooleanArrayRegion(env, valArr, 0, nvr, fill2);
+	jbooleanArray valArr;
+	valArr = (*env)->NewBooleanArray(env, nvr);
+	if (valArr == NULL)
+	{
+		return fmi2Error; /* out of memory error thrown */
+	}
+	jboolean fill2[nvr];
+	for (i = 0; i < nvr; i++)
+	{
+		fill2[i] = value[i]; // put whatever logic you want to populate the values here.
+	}
+	// move from the temp structure to the java structure
+	(*env)->SetBooleanArrayRegion(env, valArr, 0, nvr, fill2);
 
-		callJavaMethodByte(env, FMI2JAVA_CLASS, "setBoolean", "([J[Z)B", getVrArray(vr, nvr), valArr);
+	callJavaMethodByte(env, FMI2JAVA_CLASS, "setBoolean", "([J[Z)B", getVrArray(vr, nvr), valArr);
 
-		return fmi2OK;
+	return fmi2OK;
 }
 
 fmi2Status fmi2SetString(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2String value[])
@@ -373,7 +403,7 @@ fmi2Status fmi2CancelStep(fmi2Component c)
 fmi2Status fmi2DoStep(fmi2Component c, fmi2Real currentCommunicationPoint, fmi2Real communicationStepSize,
 		fmi2Boolean noSetFMUStatePriorToCurrentPoint)
 {
-	callJavaMethodVoid(env, FMI2JAVA_CLASS, "doStep", "(DD)V",currentCommunicationPoint,communicationStepSize);
+	callJavaMethodVoid(env, FMI2JAVA_CLASS, "doStep", "(DD)V", currentCommunicationPoint, communicationStepSize);
 	return fmi2OK;
 }
 
