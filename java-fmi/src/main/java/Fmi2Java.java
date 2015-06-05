@@ -1,10 +1,23 @@
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Vector;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
+
+import org.destecs.core.vdmlink.LinkInfo;
+import org.destecs.core.vdmlink.Links;
 import org.destecs.protocol.exceptions.RemoteSimulationException;
 import org.destecs.protocol.structs.StepStruct;
 import org.destecs.protocol.structs.StepStructoutputsStruct;
@@ -14,63 +27,184 @@ import org.destecs.vdmj.VDMCO;
 import org.overture.config.Settings;
 import org.overture.interpreter.scheduler.SystemClock;
 import org.overture.interpreter.scheduler.SystemClock.TimeUnit;
+import org.w3c.dom.DOMException;
+import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 public class Fmi2Java
 {
+	public static class NamedNodeMapIterator implements Iterator<Node>,
+			Iterable<Node>
+	{
+		private final NamedNodeMap list;
+		private int index = 0;
+
+		public NamedNodeMapIterator(NamedNodeMap list)
+		{
+			this.list = list;
+		}
+
+		// @Override
+		public boolean hasNext()
+		{
+			return list != null && index < list.getLength();
+		}
+
+		// @Override
+		public Node next()
+		{
+			return list.item(index++);
+		}
+
+		// @Override
+		public void remove()
+		{
+			throw new RuntimeException("Not implemented");
+		}
+
+		// @Override
+		public Iterator<Node> iterator()
+		{
+			return this;
+		}
+
+	}
+
+	public static class NodeIterator implements Iterator<Node>, Iterable<Node>
+	{
+		private final NodeList list;
+		private int index = 0;
+
+		public NodeIterator(NodeList list)
+		{
+			this.list = list;
+		}
+
+		// @Override
+		public boolean hasNext()
+		{
+			return index < list.getLength();
+		}
+
+		// @Override
+		public Node next()
+		{
+			return list.item(index++);
+		}
+
+		// @Override
+		public void remove()
+		{
+			throw new RuntimeException("Not implemented");
+		}
+
+		// @Override
+		public Iterator<Node> iterator()
+		{
+			return this;
+		}
+
+	}
+
 	private static class FmiState
 	{
 		final int size = 20;
 		public final double[] reals = new double[size];
-		@SuppressWarnings("unused")
 		public final int[] integers = new int[size];
 		public final boolean[] booleans = new boolean[size];
 	}
 
 	static FmiState state;
+	static Links links;
 
 	static Double time = (double) 0;
 
-	static final int levelId = 3;
+	private static List<StepinputsStructParam> collectInputsFromCache()
+	{
+		List<StepinputsStructParam> inputs = new Vector<StepinputsStructParam>();
 
-	static final int valveId = 4;
+		for (Entry<String, LinkInfo> entry : links.getInputs().entrySet())
+		{
 
-	static final int maxLevelId = 0;
+			Double value = 0.0;
+			switch (((ExtendedLinkInfo) entry.getValue()).type)
+			{
+				case Boolean:
+					value = state.booleans[Integer.valueOf(entry.getKey())] ? 1.0
+							: 0.0;
+					break;
+				case Integer:
+					value = new Double(state.integers[Integer.valueOf(entry.getKey())]);
+					break;
+				case Real:
+					value = state.reals[Integer.valueOf(entry.getKey())];
+					break;
+				case String:
+					break;
+				default:
+					break;
 
-	static final int minLevelId = 1;
+			}
+
+			inputs.add(new StepinputsStructParam(entry.getKey(), Arrays.asList(new Double[] { value }), Arrays.asList(new Integer[] { 1 })));
+		}
+
+		return inputs;
+	}
 
 	public static void doStep(double t, double h)
 	{
-		System.out.println("doStep in external java");
+		// System.out.println("doStep in external java");
 
 		try
 		{
-			// System.out.println(InterpreterUtil.interpret("1+1"));
-			List<StepinputsStructParam> inputs = new Vector<StepinputsStructParam>();
-			inputs.add(new StepinputsStructParam("level", Arrays.asList(new Double[] { state.reals[levelId] }), Arrays.asList(new Integer[] { 1 })));
+			List<StepinputsStructParam> inputs = collectInputsFromCache();
 
 			double timeTmp = new Double(SystemClock.timeToInternal(TimeUnit.seconds, t
 					+ h));
 			StepStruct res = SimulationManager.getInstance().step(timeTmp, inputs, new Vector<String>());
 
 			res.time = SystemClock.internalToTime(TimeUnit.seconds, res.time.longValue());
-			// System.levelSensor.level
-			// System.valveActuator.valveState
-
-			System.out.println(String.format("Running from: %.6f to %.6f", time, res.time));
-			for (StepStructoutputsStruct output : res.outputs)
-			{
-				System.out.println(String.format("\tOutput %s = %s", output.name, output.value.get(0)));
-				if (output.name.equals("valve"))
-				{
-					state.booleans[valveId] = output.value.get(0) > 0;
-				}
-			}
+			syncOutputsToCache(res.outputs);
 
 			time = res.time;
 		} catch (Exception e)
 		{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+
+	}
+
+	private static void syncOutputsToCache(List<StepStructoutputsStruct> outputs)
+	{
+		for (StepStructoutputsStruct output : outputs)
+		{
+			// System.out.println(String.format("\tOutput %s = %s", output.name, output.value.get(0)));
+			ExtendedLinkInfo link = (ExtendedLinkInfo) links.getLinks().get(output.name);
+
+			int index = Integer.valueOf(output.name);
+			switch (link.type)
+			{
+				case Boolean:
+					state.booleans[index] = output.value.get(0) > 0;
+					break;
+				case Integer:
+					state.integers[index] = output.value.get(0).intValue();
+					break;
+				case Real:
+					state.reals[index] = output.value.get(0);
+					break;
+				case String:
+					break;
+				default:
+					break;
+
+			}
+
 		}
 
 	}
@@ -87,20 +221,41 @@ public class Fmi2Java
 		{
 			// set sdp
 			List<Map<String, Object>> parameters = new Vector<Map<String, Object>>();
+			
+			for (Entry<String, LinkInfo> link : links.getSharedDesignParameters().entrySet())
+			{
+				int index = Integer.valueOf(link.getKey());
+				
+				ExtendedLinkInfo info = (ExtendedLinkInfo) link.getValue();
+				
+				Double value = 0.0;
+				switch (info.type)
+				{
+					case Boolean:
+						value = state.booleans[index] ? 1.0
+								: 0.0;
+						break;
+					case Integer:
+						value = new Double(state.integers[index]);
+						break;
+					case Real:
+						value = state.reals[index];
+						break;
+					case String:
+						break;
+					default:
+						break;
 
-			Map<String, Object> pMax = new HashMap<String, Object>();
-			pMax.put("name", "maxlevel");
-			pMax.put("value", new Double[] { state.reals[maxLevelId] });
-			pMax.put("size", new Integer[] { 1 });
-			parameters.add(pMax);
+				}
+				
+				Map<String, Object> pMax = new HashMap<String, Object>();
+				pMax.put("name", link.getKey());
+				pMax.put("value", new Double[] { value });
+				pMax.put("size", new Integer[] { 1 });
+				parameters.add(pMax);
+			}
 
-			Map<String, Object> pMin = new HashMap<String, Object>();
-			pMin.put("name", "minlevel");
-			pMin.put("value", new Double[] { state.reals[minLevelId] });
-			pMin.put("size", new Integer[] { 1 });
-			parameters.add(pMin);
-
-			SimulationManager.getInstance().setDesignParameters(parameters);
+			 SimulationManager.getInstance().setDesignParameters(parameters);
 
 			// start
 			SimulationManager.getInstance().start(time.longValue());
@@ -109,13 +264,13 @@ public class Fmi2Java
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		System.out.println("enter init");
+		System.out.println("exit init");
 		return 0;
 	}
 
 	public static byte freeInstance()
 	{
-		System.out.println("enter init");
+		System.out.println("free instance");
 		return 0;
 	}
 
@@ -146,8 +301,8 @@ public class Fmi2Java
 				+ "", resourceFolder));
 		Fmi2Java.state = new FmiState();
 		// init default state
-		state.reals[minLevelId] = 1.0;
-		state.reals[maxLevelId] = 3.0;
+		// state.reals[minLevelId] = 1.0;
+		// state.reals[maxLevelId] = 3.0;
 		try
 		{
 			SimulationManager.getInstance().initialize();
@@ -180,10 +335,12 @@ public class Fmi2Java
 				}
 			}
 
-			File linkFile = new File(sourceRoot, "vdm.link".replace('/', File.separatorChar));
+			File linkFile = new File(sourceRoot, "modelDescription.xml".replace('/', File.separatorChar));
 			File baseDirFile = new File(".");
 
-			SimulationManager.getInstance().load(specfiles, linkFile, new File("."), baseDirFile, disableRtLog, disableCoverage, disableOptimization);
+			links = createVdmLinks(linkFile);
+
+			SimulationManager.getInstance().load(specfiles, links, new File("."), baseDirFile, disableRtLog, disableCoverage, disableOptimization);
 
 		} catch (Exception e)
 		{
@@ -191,9 +348,125 @@ public class Fmi2Java
 		}
 	}
 
+	static class ExtendedLinkInfo extends LinkInfo
+	{
+		public enum Type
+		{
+			Real, Boolean, Integer, String
+		}
+
+		public final Type type;
+
+		public ExtendedLinkInfo(String identifier, List<String> qualifiedName,
+				int line, Type type)
+		{
+			super(identifier, qualifiedName, line);
+			this.type = type;
+		}
+
+	}
+
+	static Links createVdmLinks(File linkFile) throws SAXException,
+			IOException, ParserConfigurationException,
+			XPathExpressionException, DOMException
+	{
+		DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
+		Document doc = docBuilderFactory.newDocumentBuilder().parse(linkFile);
+
+		XPathFactory xPathfactory = XPathFactory.newInstance();
+		XPath xpath = xPathfactory.newXPath();
+
+		final Map<String, LinkInfo> link = new HashMap<String, LinkInfo>();
+		final List<String> outputs = new Vector<String>();
+		final List<String> inputs = new Vector<String>();
+		final List<String> designParameters = new Vector<String>();
+
+		for (Node n : new NodeIterator(lookup(doc, xpath, "//ScalarVariable")))
+		{
+			NamedNodeMap attributes = n.getAttributes();
+
+			String name = attributes.getNamedItem("name").getNodeValue();
+			String valRef = attributes.getNamedItem("valueReference").getNodeValue();
+
+			List<String> qualifiedName = Arrays.asList(name.split("\\."));
+			ExtendedLinkInfo.Type type = ExtendedLinkInfo.Type.Real;
+
+			for (@SuppressWarnings("unused") Node n1 : new NodeIterator(lookup(n, xpath, "Real")))
+			{
+				type = ExtendedLinkInfo.Type.Real;
+			}
+
+			for (@SuppressWarnings("unused") Node n1 : new NodeIterator(lookup(n, xpath, "Boolean")))
+			{
+				type = ExtendedLinkInfo.Type.Boolean;
+			}
+
+			for (@SuppressWarnings("unused") Node n1 : new NodeIterator(lookup(n, xpath, "Integer")))
+			{
+				type = ExtendedLinkInfo.Type.Integer;
+			}
+
+			link.put(valRef, new ExtendedLinkInfo(valRef, qualifiedName, 0, type));
+
+			String causality = attributes.getNamedItem("causality").getNodeValue();
+
+			if ("output".equals(causality))
+			{
+				outputs.add(valRef);
+			} else if ("input".equals(causality))
+			{
+				inputs.add(valRef);
+			} else if ("parameter".equals(causality))
+			{
+				designParameters.add(valRef);
+			}
+
+		}
+
+		return new Links(link, outputs, inputs, new Vector<String>(), designParameters, new Vector<String>());
+	}
+
+	final static boolean DEBUG = false;
+
+	static NodeList lookup(Object doc, XPath xpath, String expression)
+			throws XPathExpressionException
+	{
+		XPathExpression expr = xpath.compile(expression);
+
+		if (DEBUG)
+		{
+			// System.out.println("Starting from: " + formateNodeWithAtt(doc));
+		}
+		final NodeList list = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
+
+		if (DEBUG)
+		{
+			System.out.print("\tFound: ");
+		}
+		boolean first = true;
+		for (@SuppressWarnings("unused") Node n : new NodeIterator(list))
+		{
+			if (DEBUG)
+			{
+				// System.out.println((!first ? "\t       " : "")
+				// + formateNodeWithAtt(n));
+			}
+			first = false;
+		}
+		if (first)
+		{
+			if (DEBUG)
+			{
+				System.out.println("none");
+			}
+		}
+		return list;
+
+	}
+
 	public static byte reset()
 	{
-		System.out.println("enter init");
+		System.out.println("reset");
 		return 0;
 	}
 
@@ -219,7 +492,15 @@ public class Fmi2Java
 
 	public static byte terminate()
 	{
-		System.out.println("enter init");
+		System.out.println("terminate");
+		try
+		{
+			SimulationManager.getInstance().stopSimulation();
+		} catch (RemoteSimulationException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return 0;
 	}
 
