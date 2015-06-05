@@ -21,9 +21,10 @@
 //}
 
 static JavaVM *jvm;
-static JNIEnv *env;
+//static JNIEnv *env;
+//static JNIEnv envv;
 
-static jlongArray getVrArray(const fmi2ValueReference vr[], size_t nvr)
+static jlongArray getVrArray(JNIEnv *env, const fmi2ValueReference vr[], size_t nvr)
 {
 	jlongArray result;
 	result = (*env)->NewLongArray(env, nvr);
@@ -52,6 +53,30 @@ char* concat(char *s1, char *s2)
 	return result;
 }
 
+JavaVM * getCurrentVM()
+{
+	printf("checking exception in setreal\n");
+	int rv;
+	jsize nVMs;
+	JNI_GetCreatedJavaVMs(NULL, 0, &nVMs); // 1. just get the required array length
+	JavaVM** buffer = malloc(sizeof(JavaVM*) * nVMs);
+	//new JavaVM*[nVMs];
+	rv = JNI_GetCreatedJavaVMs(buffer, nVMs, &nVMs); // 2. get the data
+
+	if (rv < 0)
+	{
+		printf("did not get created vms\n");
+	}
+
+	printf("Got VM # %d\n", nVMs);
+	JavaVM * ljvm = buffer[0];
+	printf("lVM pointer %p\n", ljvm);
+	free(buffer);
+	printf("lVM pointer %p\n", ljvm);
+	return ljvm;
+
+}
+
 // ---------------------------------------------------------------------------
 // FMI functions
 // ---------------------------------------------------------------------------
@@ -59,6 +84,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
 		fmi2String fmuResourceLocation, const fmi2CallbackFunctions *functions, fmi2Boolean visible,
 		fmi2Boolean loggingOn)
 {
+	JNIEnv *env;
 	printf("instantiate\n");
 
 	FILE * fp;
@@ -82,13 +108,10 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
 
 	char * line = NULL;
 	char * jvmLibPath = NULL;
-	char * jvmOption1 = NULL;
-	char * jvmOption2 = NULL;
 	char* classpath[20];
-	int classpathSize =0;
+	int classpathSize = 0;
 	int i = 0;
 
-	size_t size = 0;
 
 	while ((read = getdelim(&line, &len, '\n', fp)) != -1)
 	{
@@ -134,7 +157,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
 
 		} else
 		{
-			classpath[classpathSize]=concat(fmuResourceLocation, tmp);
+			classpath[classpathSize] = concat(fmuResourceLocation, tmp);
 			classpathSize++;
 		}
 		i++;
@@ -144,17 +167,17 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
 	if (line)
 		free(line);
 
-
-
 //	printf("JVM lib path: %s\n", jvmLibPath);
 //	printf("JVM lib opt1: %s\n", jvmOption1);
 
 	env = create_vm(&jvm, jvmLibPath, classpath, classpathSize);
-
-	if(jvmLibPath)
+	jvm = getCurrentVM();
+	printf("--VM pointer %p\n", jvm);
+	printf("ENV *env=%p\n", *env);
+	if (jvmLibPath)
 		free(jvmLibPath);
 
-	for(int i=0;i<classpathSize;i++)
+	for (int i = 0; i < classpathSize; i++)
 		free(classpath[i]);
 
 	if (env == NULL)
@@ -165,6 +188,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
 			(*env)->NewStringUTF(env, fmuGUID), (*env)->NewStringUTF(env, instanceName),
 			(*env)->NewStringUTF(env, fmuResourceLocation), 0);
 //	printf("%d ", status);
+	printf("called instantiate in java\n");
 
 	return (void*) 1234;
 }
@@ -178,30 +202,60 @@ fmi2Status fmi2SetupExperiment(fmi2Component c, fmi2Boolean toleranceDefined, fm
 
 fmi2Status fmi2EnterInitializationMode(fmi2Component c)
 {
+	JNIEnv *env;
+	int rv = (*jvm)->GetEnv(*jvm, &env, JNI_VERSION_1_6);
+	if (rv < 0)
+	{
+		printf("did not get env\n");
+	}
 	callJavaMethodByte(env, FMI2JAVA_CLASS, "enterInitializationMode", "()B");
 	return fmi2OK;
 }
 
 fmi2Status fmi2ExitInitializationMode(fmi2Component c)
 {
+	JNIEnv *env;
+	int rv = (*jvm)->GetEnv(*jvm, &env, JNI_VERSION_1_6);
+	if (rv < 0)
+	{
+		printf("did not get env\n");
+	}
 	callJavaMethodByte(env, FMI2JAVA_CLASS, "exitInitializationMode", "()B");
 	return fmi2OK;
 }
 
 fmi2Status fmi2Terminate(fmi2Component c)
 {
+	JNIEnv *env;
+	int rv = (*jvm)->GetEnv(*jvm, &env, JNI_VERSION_1_6);
+	if (rv < 0)
+	{
+		printf("did not get env\n");
+	}
 	callJavaMethodByte(env, FMI2JAVA_CLASS, "terminate", "()B");
 	return fmi2OK;
 }
 
 fmi2Status fmi2Reset(fmi2Component c)
 {
+	JNIEnv *env;
+	int rv = (*jvm)->GetEnv(*jvm, &env, JNI_VERSION_1_6);
+	if (rv < 0)
+	{
+		printf("did not get env\n");
+	}
 	callJavaMethodByte(env, FMI2JAVA_CLASS, "reset", "()B");
 	return fmi2Error;
 }
 
 void fmi2FreeInstance(fmi2Component c)
 {
+	JNIEnv *env;
+	int rv = (*jvm)->GetEnv(*jvm, &env, JNI_VERSION_1_6);
+	if (rv < 0)
+	{
+		printf("did not get env\n");
+	}
 	callJavaMethodByte(env, FMI2JAVA_CLASS, "freeInstance", "()B");
 
 	//TODO free stuff
@@ -234,6 +288,12 @@ fmi2Status fmi2SetDebugLogging(fmi2Component c, fmi2Boolean loggingOn, size_t nC
 
 fmi2Status fmi2GetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Real value[])
 {
+	JNIEnv *env;
+	int rv = (*jvm)->GetEnv(*jvm, &env, JNI_VERSION_1_6);
+	if (rv < 0)
+	{
+		printf("did not get env\n");
+	}
 	int i = 0;
 
 	jdoubleArray valArr;
@@ -243,7 +303,7 @@ fmi2Status fmi2GetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 		return fmi2Error; /* out of memory error thrown */
 	}
 
-	callJavaMethodByte(env, FMI2JAVA_CLASS, "getReal", "([J[D)B", getVrArray(vr, nvr), valArr);
+	callJavaMethodByte(env, FMI2JAVA_CLASS, "getReal", "([J[D)B", getVrArray(env, vr, nvr), valArr);
 
 	jdouble *vbody = (*env)->GetDoubleArrayElements(env, valArr, 0);
 	for (i = 0; i < nvr; i++)
@@ -263,6 +323,12 @@ fmi2Status fmi2GetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
 
 fmi2Status fmi2GetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Boolean value[])
 {
+	JNIEnv *env;
+	int rv = (*jvm)->GetEnv(*jvm, &env, JNI_VERSION_1_6);
+	if (rv < 0)
+	{
+		printf("did not get env\n");
+	}
 	int i = 0;
 
 	jbooleanArray valArr;
@@ -272,7 +338,7 @@ fmi2Status fmi2GetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
 		return fmi2Error; /* out of memory error thrown */
 	}
 
-	callJavaMethodByte(env, FMI2JAVA_CLASS, "getBoolean", "([J[Z)B", getVrArray(vr, nvr), valArr);
+	callJavaMethodByte(env, FMI2JAVA_CLASS, "getBoolean", "([J[Z)B", getVrArray(env, vr, nvr), valArr);
 
 	jboolean *vbody = (*env)->GetBooleanArrayElements(env, valArr, 0);
 	for (i = 0; i < nvr; i++)
@@ -292,10 +358,55 @@ fmi2Status fmi2GetString(fmi2Component c, const fmi2ValueReference vr[], size_t 
 
 fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Real value[])
 {
+	JNIEnv *env;
+	int rv = (*jvm)->GetEnv(*jvm, &env, JNI_VERSION_1_6);
+	if (rv < 0)
+	{
+		printf("did not get env\n");
+	}
 	int i = 0;
 
 	jdoubleArray valArr;
+
+//	printf("checking exception in setreal\n");
+
+//	jsize nVMs;
+//	JNI_GetCreatedJavaVMs(NULL, 0, &nVMs); // 1. just get the required array length
+//	JavaVM** buffer = malloc(sizeof(JavaVM*) * nVMs);
+//	//new JavaVM*[nVMs];
+//	rv = JNI_GetCreatedJavaVMs(buffer, nVMs, &nVMs); // 2. get the data
+//
+//	if (rv < 0)
+//	{
+//		printf("did not get created vms\n");
+//	}
+//
+//	printf("Got VM # %d\n", nVMs);
+//	jvm = buffer[0];
+//	printf("VM pointer %p\n", jvm);
+//
+//	JNIEnv *env;
+//	int 	rv = (*jvm)->GetEnv(*jvm, &env, JNI_VERSION_1_6);
+//	if (rv < 0)
+//	{
+//		printf("did not get env\n");
+//	}
+//	printf("got env\n");
+
+//	if ((*env)->ExceptionCheck(&envv))
+//	{
+//		printf("exception\n");
+//		(envv)->ExceptionDescribe(&envv);
+//
+//	}
+
+//	printf("AttachCurrentThread\n");
+//	(*jvm)->AttachCurrentThread(jvm,&env,NULL);
+
+//	 printf("ENV *env=%p\n",env);
+//	printf("Allocating double array of size %d\n", nvr);
 	valArr = (*env)->NewDoubleArray(env, nvr);
+//	printf("array created\n");
 	if (valArr == NULL)
 	{
 		return fmi2Error; /* out of memory error thrown */
@@ -308,7 +419,7 @@ fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 	// move from the temp structure to the java structure
 	(*env)->SetDoubleArrayRegion(env, valArr, 0, nvr, fill2);
 
-	callJavaMethodByte(env, FMI2JAVA_CLASS, "setReal", "([J[D)B", getVrArray(vr, nvr), valArr);
+	callJavaMethodByte(env, FMI2JAVA_CLASS, "setReal", "([J[D)B", getVrArray(env, vr, nvr), valArr);
 
 	return fmi2OK;
 }
@@ -320,6 +431,12 @@ fmi2Status fmi2SetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
 
 fmi2Status fmi2SetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Boolean value[])
 {
+	JNIEnv *env;
+	int rv = (*jvm)->GetEnv(*jvm, &env, JNI_VERSION_1_6);
+	if (rv < 0)
+	{
+		printf("did not get env\n");
+	}
 	int i = 0;
 
 	jbooleanArray valArr;
@@ -336,7 +453,7 @@ fmi2Status fmi2SetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
 	// move from the temp structure to the java structure
 	(*env)->SetBooleanArrayRegion(env, valArr, 0, nvr, fill2);
 
-	callJavaMethodByte(env, FMI2JAVA_CLASS, "setBoolean", "([J[Z)B", getVrArray(vr, nvr), valArr);
+	callJavaMethodByte(env, FMI2JAVA_CLASS, "setBoolean", "([J[Z)B", getVrArray(env, vr, nvr), valArr);
 
 	return fmi2OK;
 }
@@ -403,6 +520,12 @@ fmi2Status fmi2CancelStep(fmi2Component c)
 fmi2Status fmi2DoStep(fmi2Component c, fmi2Real currentCommunicationPoint, fmi2Real communicationStepSize,
 		fmi2Boolean noSetFMUStatePriorToCurrentPoint)
 {
+	JNIEnv *env;
+	int rv = (*jvm)->GetEnv(*jvm, &env, JNI_VERSION_1_6);
+	if (rv < 0)
+	{
+		printf("did not get env\n");
+	}
 	callJavaMethodVoid(env, FMI2JAVA_CLASS, "doStep", "(DD)V", currentCommunicationPoint, communicationStepSize);
 	return fmi2OK;
 }

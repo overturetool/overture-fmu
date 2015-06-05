@@ -109,6 +109,7 @@ JNIEnv* create_vm(JavaVM **jvm, const char* jvmLibPath, char** classpath, int cp
 		{
 			printf("did not get env\n");
 		}
+		printf("ENV *env=%p\n",*env);
 
 		rv = (*(*jvm))->AttachCurrentThread(*jvm, &env, NULL);
 		if (rv < 0)
@@ -138,6 +139,8 @@ JNIEnv* create_vm(JavaVM **jvm, const char* jvmLibPath, char** classpath, int cp
 
 	} else
 		printf("Launched JVM! :)\n");
+
+
 	return env;
 }
 

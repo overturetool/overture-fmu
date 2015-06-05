@@ -35,7 +35,7 @@
 #endif
 
 
-JNIEnv* create_vm(JavaVM **jvm, const char* libPath,  char** classpath,int cpSize);
+JNIEnv* create_vm(JavaVM **jvm,const char* libPath,  char** classpath,int cpSize);
 
 int callJavaMethodInt(JNIEnv* env, const char* className, const char* methodName, const char* signature, ...);
 void callJavaMethodVoid(JNIEnv* env, const char* className, const char* methodName, const char* signature, ...);
