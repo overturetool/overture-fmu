@@ -9,7 +9,8 @@ CC_FLAGS = -O0 -g -c -DFMI_COSIMULATION -I$(JAVA_HOME)/include -I$(JAVA_HOME)/$(
 #CFLAGS = -Wall -shared -L/Library/Java/JavaVirtualMachines/jdk1.7.0_75.jdk/Contents/Home/jre/lib/server -DFMI_COSIMULATION -I/Library/Java/JavaVirtualMachines/jdk1.7.0_75.jdk/Contents/Home/include -I/Library/Java/JavaVirtualMachines/jdk1.7.0_75.jdk/Contents/Home/include/darwin -O0 -g3 -Wall -c -fmessage-length=0
 
 LD_LIBS = -ljvm
-LDFLAGS = -shared -L$(JAVA_HOME)/jre/lib/amd64/server
+JAVA_JVM_LIB_PATH?=server
+LDFLAGS = -shared -L$(JAVA_HOME)/jre/lib/$(JAVA_JVM_LIB_PATH)
 LINK.so = $(CC) $(LDFLAGS) $(LD_LIBS)
 
 
