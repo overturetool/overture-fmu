@@ -1,9 +1,9 @@
 # Declaration of variables
-JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.7.0_75.jdk/Contents/Home
+JAVA_HOME?=/Library/Java/JavaVirtualMachines/jdk1.7.0_75.jdk/Contents/Home
 CC? = gcc
 
-JAVA_INCLUDE=include/darwin
-CC_FLAGS = -O0 -g -c -L$(JAVA_HOME)/jre/lib/server -DFMI_COSIMULATION -I$(JAVA_HOME)/include -I$(JAVA_HOME)/$(JAVA_INCLUDE) -O0 -g3 -Wall -c -fmessage-length=0
+JAVA_INCLUDE?=include/darwin
+CC_FLAGS = -O0 -g -c -DFMI_COSIMULATION -I$(JAVA_HOME)/include -I$(JAVA_HOME)/$(JAVA_INCLUDE) -O0 -g3 -Wall -c -fmessage-length=0
 
 #LIBS  = -ljvm
 #CFLAGS = -Wall -shared -L/Library/Java/JavaVirtualMachines/jdk1.7.0_75.jdk/Contents/Home/jre/lib/server -DFMI_COSIMULATION -I/Library/Java/JavaVirtualMachines/jdk1.7.0_75.jdk/Contents/Home/include -I/Library/Java/JavaVirtualMachines/jdk1.7.0_75.jdk/Contents/Home/include/darwin -O0 -g3 -Wall -c -fmessage-length=0

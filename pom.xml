@@ -1,17 +1,71 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
+
+	<!-- Needed to make deployment work -->
 	<parent>
-		<groupId>org.destecs</groupId>
-		<artifactId>core</artifactId>
-		<version>2.0.5-SNAPSHOT</version>
+		<groupId>org.sonatype.oss</groupId>
+		<artifactId>oss-parent</artifactId>
+		<version>7</version>
 	</parent>
+
 	<groupId>org.destecs.core</groupId>
 	<artifactId>fmi</artifactId>
 	<packaging>pom</packaging>
 	<name>fmi</name>
+<version>2.0.7-SNAPSHOT</version>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<repositories>
+
+<repository>
+        <id>overture.au.dk</id>
+        <name>overture.au.dk-releases</name>
+        <url>http://overture.au.dk/artifactory/crescendo-development</url>
+    </repository>
+
+
+		<!-- repository> <id>mxtelecom</id> <name>mxtelecom.com</name> <url>http://opensource.mxtelecom.com/maven/repo</url> 
+			</repository -->
+	</repositories>
+
+
 	<modules>
 		<module>native-fmi</module>
 		<module>java-fmi</module>
 	
 	</modules>
+
+
+	<build>
+
+	<!-- Configuration of plugins for inheriting pom.xml files should
+         be in the pluginManagement tag
+    -->
+		<pluginManagement>
+			<plugins>
+				<!-- Configure the compiler for all Overture Projects -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>3.0</version>
+					<configuration>
+						<source>1.7</source>
+						<target>1.7</target>
+					</configuration>
+				</plugin>
+
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-antrun-plugin</artifactId>
+					<version>1.7</version>
+				</plugin>
+
+
+			</plugins>
+		</pluginManagement>
+		
+	</build>
 </project>
