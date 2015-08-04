@@ -1,0 +1,335 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.destecs.core</groupId>
+		<artifactId>fmi</artifactId>
+		<version>2.0.5-SNAPSHOT</version>
+	</parent>
+
+	<groupId>org.intocps.fmi</groupId>
+	<artifactId>jnifmuapi</artifactId>
+	<name>JNI interface for FMI</name>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+
+				<configuration>
+					<skipTests>true</skipTests>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+	<!-- In Project repository http://charlie.cu.cc/2012/06/how-add-external-libraries-maven/ -->
+
+
+
+
+	<profiles>
+
+
+
+
+		<profile>
+			<id>native-mac</id>
+			<properties>
+			</properties>
+
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+
+						<configuration>
+							<skipTests>false</skipTests>
+						</configuration>
+					</plugin>
+					<plugin>
+						<artifactId>maven-antrun-plugin</artifactId>
+						<version>1.7</version>
+						<executions>
+							<execution>
+								<!-- this execution happens just after compiling the java classes, 
+									and builds the native code. We use an antrun for this, rather than an exec, 
+									as it finds make on the system path. -->
+								<id>build-native-mac</id>
+								<phase>process-classes</phase>
+								<goals>
+									<goal>run</goal>
+								</goals>
+								<configuration>
+									<target>
+										<exec dir="src/main/native" executable="make"
+											failonerror="true">
+											<env key="JAVA_HOME" value="${user.java.64.home}" />
+											<env key="LIB_FOLDER" value="Mac-x86_64" />
+											<env key="CC" value="gcc" />
+											<env key="LIB_PREFIX" value="lib" />
+											<env key="LIB_EXTN" value=".dylib" />
+											<env key="JAVA_INCLUDE" value="include/darwin" />
+
+											<redirector outputproperty="redirector.out"
+												errorproperty="redirector.err">
+												<inputfilterchain>
+													<replacestring from="before" to="after" />
+												</inputfilterchain>
+												<outputmapper type="merge" to="target/redirector-mac.out" />
+												<errormapper type="merge" to="target/redirector-mac.err" />
+											</redirector>
+										</exec>
+									</target>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+
+
+		<profile>
+			<id>native-linux64</id>
+			<properties>
+			</properties>
+
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+
+						<configuration>
+							<skipTests>false</skipTests>
+						</configuration>
+					</plugin>
+					<plugin>
+						<artifactId>maven-antrun-plugin</artifactId>
+						<executions>
+							<execution>
+								<!-- this execution happens just after compiling the java classes, 
+									and builds the native code. We use an antrun for this, rather than an exec, 
+									as it finds make on the system path. -->
+								<id>build-native-linux64</id>
+								<phase>process-classes</phase>
+								<goals>
+									<goal>run</goal>
+								</goals>
+								<configuration>
+									<target>
+										<exec dir="src/main/native" executable="make"
+											failonerror="true">
+											<env key="JAVA_HOME" value="${user.java.64.home}" />
+											<env key="LIB_FOLDER" value="Linux-amd64" />
+											<env key="CC" value="gcc" />
+											<env key="LIB_PREFIX" value="lib" />
+											<env key="LIB_EXTN" value=".so" />
+											<env key="JAVA_INCLUDE" value="include/linux" />
+
+											<redirector outputproperty="redirector.out"
+												errorproperty="redirector.err">
+												<inputfilterchain>
+													<replacestring from="before" to="after" />
+												</inputfilterchain>
+												<outputmapper type="merge"
+													to="target/redirector-linux64.out" />
+												<errormapper type="merge"
+													to="target/redirector-linux64.err" />
+											</redirector>
+										</exec>
+									</target>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+
+
+		<profile>
+			<id>native-linux32</id>
+			<properties>
+			</properties>
+
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+
+						<configuration>
+							<skipTests>true</skipTests>
+						</configuration>
+					</plugin>
+					<plugin>
+						<artifactId>maven-antrun-plugin</artifactId>
+						<executions>
+							<execution>
+								<!-- this execution happens just after compiling the java classes, 
+									and builds the native code. We use an antrun for this, rather than an exec, 
+									as it finds make on the system path. -->
+								<id>build-native-linux32</id>
+								<phase>process-classes</phase>
+								<goals>
+									<goal>run</goal>
+								</goals>
+								<configuration>
+									<target>
+										<exec dir="src/main/native" executable="make"
+											failonerror="true">
+											<env key="JAVA_HOME" value="${user.java.32.home}" />
+											<env key="LIB_FOLDER" value="Linux-i386" />
+											<env key="CC" value="gcc" />
+											<env key="LIB_PREFIX" value="lib" />
+											<env key="LIB_EXTN" value=".so" />
+											<env key="JAVA_INCLUDE" value="include/linux" />
+
+											<redirector outputproperty="redirector.out"
+												errorproperty="redirector.err">
+												<inputfilterchain>
+													<replacestring from="before" to="after" />
+												</inputfilterchain>
+												<outputmapper type="merge"
+													to="target/redirector-linux64.out" />
+												<errormapper type="merge"
+													to="target/redirector-linux64.err" />
+											</redirector>
+										</exec>
+									</target>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+
+		<profile>
+			<id>native-win64</id>
+			<properties>
+			</properties>
+
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+
+						<configuration>
+							<skipTests>true</skipTests>
+						</configuration>
+					</plugin>
+					<plugin>
+						<artifactId>maven-antrun-plugin</artifactId>
+						<executions>
+							<execution>
+								<!-- this execution happens just after compiling the java classes, 
+									and builds the native code. We use an antrun for this, rather than an exec, 
+									as it finds make on the system path. -->
+								<id>build-native-win64</id>
+								<phase>process-classes</phase>
+								<goals>
+									<goal>run</goal>
+								</goals>
+								<configuration>
+									<target>
+										<exec dir="src/main/native" executable="make"
+											failonerror="true">
+											<env key="JAVA_HOME" value="${user.java.64.home}" />
+											<env key="LIB_FOLDER" value="Windows-amd64" />
+											<env key="CC" value="${user.mingw.64.gcc}" />
+											<env key="LIB_PREFIX" value="" />
+											<env key="LIB_EXTN" value=".dll" />
+											<!-- default value for windows is JAVA_INCLUDE = include/win32 -->
+											<env key="JAVA_INCLUDE" value="${user.win64.java.include}" />
+
+											<redirector outputproperty="redirector.out"
+												errorproperty="redirector.err">
+												<inputfilterchain>
+													<replacestring from="before" to="after" />
+												</inputfilterchain>
+												<outputmapper type="merge"
+													to="target/redirector-win64.out" />
+												<errormapper type="merge" to="target/redirector-win64.err" />
+											</redirector>
+										</exec>
+									</target>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+
+		<profile>
+			<id>native-win32</id>
+			<properties>
+			</properties>
+
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+
+						<configuration>
+							<skipTests>true</skipTests>
+						</configuration>
+					</plugin>
+					<plugin>
+						<artifactId>maven-antrun-plugin</artifactId>
+						<executions>
+							<execution>
+								<!-- this execution happens just after compiling the java classes, 
+									and builds the native code. We use an antrun for this, rather than an exec, 
+									as it finds make on the system path. -->
+								<id>build-native-win32</id>
+								<phase>process-classes</phase>
+								<goals>
+									<goal>run</goal>
+								</goals>
+								<configuration>
+									<target>
+										<exec dir="src/main/native" executable="make"
+											failonerror="true">
+											<env key="JAVA_HOME" value="${user.java.32.home}" />
+											<env key="LIB_FOLDER" value="Windows-x86" />
+											<env key="CC" value="${user.mingw.32.gcc}" />
+											<env key="LIB_PREFIX" value="" />
+											<env key="LIB_EXTN" value=".dll" />
+											<!-- default value for windows is JAVA_INCLUDE = include/win32 -->
+											<env key="JAVA_INCLUDE" value="${user.win32.java.include}" />
+
+											<redirector outputproperty="redirector.out"
+												errorproperty="redirector.err">
+												<inputfilterchain>
+													<replacestring from="before" to="after" />
+												</inputfilterchain>
+												<outputmapper type="merge"
+													to="target/redirector-win32.out" />
+												<errormapper type="merge" to="target/redirector-win32.err" />
+											</redirector>
+										</exec>
+									</target>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+
+
+
+
+
+	</profiles>
+</project>
+
