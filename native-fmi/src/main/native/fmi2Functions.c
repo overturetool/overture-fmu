@@ -90,7 +90,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
 	FILE * fp;
 
 	size_t len = 0;
-	ssize_t read;
+	size_t read;
 
 	const char* configPath = "/config.ini";
 	char *result = malloc(strlen(fmuResourceLocation) + strlen(configPath) + 1);

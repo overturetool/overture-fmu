@@ -38,7 +38,7 @@ JNIEnv* create_vm(JavaVM **jvm, const char* jvmLibPath, char** classpath, int cp
 	const char* functionName = "JNI_CreateJavaVM";
 
 #ifdef _WIN32
-	void* fp = (void*)GetProcAddress(m_hDllInstance, functionName);
+	CreateJavaVMPROC CreateJavaVM = (CreateJavaVMPROC)GetProcAddress(m_hDllInstance, functionName);
 #elif __APPLE__
 #include "TargetConditionals.h"
 #if TARGET_OS_MAC
@@ -50,7 +50,7 @@ JNIEnv* create_vm(JavaVM **jvm, const char* jvmLibPath, char** classpath, int cp
 #endif
 #elif __linux
 	// linux
-	void* fp = (void*)dlsym(m_hDllInstance, functionName);
+	CreateJavaVMPROC CreateJavaVM = (CreateJavaVMPROC)dlsym(m_hDllInstance, functionName);
 #endif
 
 	if (!CreateJavaVM)

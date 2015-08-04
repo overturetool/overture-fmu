@@ -129,6 +129,7 @@
 											<env key="LIB_PREFIX" value="lib" />
 											<env key="LIB_EXTN" value=".so" />
 											<env key="JAVA_INCLUDE" value="include/linux" />
+											<env key="JAVA_JVM_LIB_PATH" value="amd64/server"/>
 
 											<redirector outputproperty="redirector.out"
 												errorproperty="redirector.err">
