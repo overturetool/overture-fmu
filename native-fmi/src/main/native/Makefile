@@ -11,7 +11,7 @@ CC_FLAGS = -O0 -g -c -DFMI_COSIMULATION -I$(JAVA_HOME)/include -I$(JAVA_HOME)/$(
 
 LD_LIBS = -ljvm
 JAVA_JVM_LIB_PATH?=server
-LDFLAGS = -shared -L$(JAVA_HOME)/jre/lib/$(JAVA_JVM_LIB_PATH)
+LDFLAGS = -shared -L$(JAVA_HOME)/jre/$(JAVA_JVM_LIB_PATH)
 LINK.so = $(CC) $(LDFLAGS) $(LD_LIBS)
 
 LIB_FOLDER?=darwin64

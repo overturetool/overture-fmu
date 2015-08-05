@@ -72,6 +72,7 @@
 											<env key="LIB_PREFIX" value="lib" />
 											<env key="LIB_EXTN" value=".dylib" />
 											<env key="JAVA_INCLUDE" value="include/darwin" />
+											<env key="JAVA_JVM_LIB_PATH" value="lib/server"/>
 
 											<redirector outputproperty="redirector.out"
 												errorproperty="redirector.err">
@@ -129,7 +130,7 @@
 											<env key="LIB_PREFIX" value="lib" />
 											<env key="LIB_EXTN" value=".so" />
 											<env key="JAVA_INCLUDE" value="include/linux" />
-											<env key="JAVA_JVM_LIB_PATH" value="amd64/server"/>
+											<env key="JAVA_JVM_LIB_PATH" value="lib/amd64/server"/>
 
 											<redirector outputproperty="redirector.out"
 												errorproperty="redirector.err">
@@ -188,7 +189,7 @@
 											<env key="CC" value="gcc" />
 											<env key="LIB_PREFIX" value="lib" />
 											<env key="LIB_EXTN" value=".so" />
-											<env key="JAVA_INCLUDE" value="include/linux" />
+											<env key="JAVA_INCLUDE" value="lib/include/linux" />
 
 											<redirector outputproperty="redirector.out"
 												errorproperty="redirector.err">
@@ -248,6 +249,7 @@
 											<env key="LIB_EXTN" value=".dll" />
 											<!-- default value for windows is JAVA_INCLUDE = include/win32 -->
 											<env key="JAVA_INCLUDE" value="${user.win64.java.include}" />
+											<env key="JAVA_JVM_LIB_PATH" value="bin/server"/>
 
 											<redirector outputproperty="redirector.out"
 												errorproperty="redirector.err">
