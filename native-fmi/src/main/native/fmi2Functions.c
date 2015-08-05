@@ -97,7 +97,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
 
 	strcpy(result, fmuResourceLocation);
 	strcat(result, configPath);
-
+//	printf("opening file %s\n", result);
 	fp = fopen(result, "r");
 	free(result);
 	if (fp == NULL)
@@ -112,60 +112,100 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
 	int classpathSize = 0;
 	int i = 0;
 
+	int size = 1024, pos;
+	int c;
+	char *buffer = (char *) malloc(size);
 
-	while ((read = getdelim(&line, &len, '\n', fp)) != -1)
+//	printf("reade for line read\n");
+	if (fp)
 	{
-//		printf("Retrieved line of length %zu :\n", read);
-//		printf("%s\n", line);
-//
-//		for (int i = 0; i < read; i++)
-//		{
-//			char ch = line[i];
-//			printf("%x ", ch & 0xff);
-//		}
-//		printf("\n");
-
-		if (line[read - 1] == '\n')
-		{
-			line[read - 1] = 0;
-			read--;
-		}
-
-//		for (int i = 0; i < read; i++)
-//		{
-//			char ch = line[i];
-//			printf("%x ", ch & 0xff);
-//		}
-//		printf("\n");
-
-		char * tmp = malloc(read + 1);
-//		printf(" line of length %zu :\n", read);
-
-		stpncpy(tmp, line, read);
-		tmp[read] = 0;
-//		printf("---- Path: '%s'\n", tmp);
-//		for (int i = 0; i < read; i++)
-//		{
-//			char ch = tmp[i];
-//			printf("%x ", ch & 0xff);
-//		}
-//		printf("\n");
-
-		if (i == 0)
-		{
-			jvmLibPath = tmp;
-
-		} else
-		{
-			classpath[classpathSize] = concat(fmuResourceLocation, tmp);
-			classpathSize++;
-		}
-		i++;
+		do
+		{ // read all lines in file
+			pos = 0;
+			do
+			{ // read one line
+				c = fgetc(fp);
+				if (c != EOF && c != '\n')
+					buffer[pos++] = (char) c;
+				if (pos >= size - 1)
+				{ // increase buffer length - leave room for 0
+					size *= 2;
+					buffer = (char*) realloc(buffer, size);
+				}
+			} while (c != EOF && c != '\n');
+			buffer[pos] = 0;
+			// line is now in buffer
+			//handle_line(buffer);
+//			printf("Read line: %s\n", buffer);
+			if (i == 0)
+			{
+				jvmLibPath = malloc(strlen(buffer));
+				//jvmLibPath = buffer;
+				strcpy(jvmLibPath, buffer);
+			} else
+			{
+				classpath[classpathSize] = concat(fmuResourceLocation, buffer);
+				classpathSize++;
+			}
+			i++;
+		} while (c != EOF);
+		fclose(fp);
 	}
+	free(buffer);
 
-	fclose(fp);
-	if (line)
-		free(line);
+//	while ((read = getdelim(&line, &len, '\n', fp)) != -1)
+//	{
+////		printf("Retrieved line of length %zu :\n", read);
+////		printf("%s\n", line);
+////
+////		for (int i = 0; i < read; i++)
+////		{
+////			char ch = line[i];
+////			printf("%x ", ch & 0xff);
+////		}
+////		printf("\n");
+//
+//		if (line[read - 1] == '\n')
+//		{
+//			line[read - 1] = 0;
+//			read--;
+//		}
+//
+////		for (int i = 0; i < read; i++)
+////		{
+////			char ch = line[i];
+////			printf("%x ", ch & 0xff);
+////		}
+////		printf("\n");
+//
+//		char * tmp = malloc(read + 1);
+////		printf(" line of length %zu :\n", read);
+//
+//		stpncpy(tmp, line, read);
+//		tmp[read] = 0;
+////		printf("---- Path: '%s'\n", tmp);
+////		for (int i = 0; i < read; i++)
+////		{
+////			char ch = tmp[i];
+////			printf("%x ", ch & 0xff);
+////		}
+////		printf("\n");
+//
+//		if (i == 0)
+//		{
+//			jvmLibPath = tmp;
+//
+//		} else
+//		{
+//			classpath[classpathSize] = concat(fmuResourceLocation, tmp);
+//			classpathSize++;
+//		}
+//		i++;
+//	}
+//
+//	fclose(fp);
+//	if (line)
+//		free(line);
 
 //	printf("JVM lib path: %s\n", jvmLibPath);
 //	printf("JVM lib opt1: %s\n", jvmOption1);

@@ -8,8 +8,8 @@
 		<version>2.0.7-SNAPSHOT</version>
 	</parent>
 
-	<groupId>org.intocps.fmi</groupId>
-	<artifactId>jnifmuapi</artifactId>
+	<groupId>org.destecs.core.fmi</groupId>
+	<artifactId>native-fmi</artifactId>
 	<name>JNI interface for FMI</name>
 
 	<build>

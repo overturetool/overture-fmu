@@ -48,3 +48,6 @@ $(C_BUILD_DIR)/%.o: %.c
 # To remove generated files
 clean:
 	rm -f $(EXEC) $(OBJECTS)
+	
+test: all
+	cp $(EXEC) /Users/kel/data/into-cps/intocps-coe/orchestration/coe/src/test/resources/complete-models/cascading/controller/binaries/darwin64/controller.dylib
