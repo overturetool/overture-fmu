@@ -25,6 +25,7 @@ Vagrant.configure(2) do |config|
 	chown -R vagrant /home/vagrant/.m2/
 	cp -f /shared-host-folder/settings.xml /home/vagrant/.m2/settings.xml
 	JAVA_HOME=$(readlink -f /usr/bin/javac | sed "s:bin/javac::")
+	JAVA_HOME=${JAVA_HOME%/}
 	sed -i "s|JAVA_HOME32|$JAVA_HOME|g" /home/vagrant/.m2/settings.xml
 	chown vagrant /home/vagrant/.m2/settings.xml
    

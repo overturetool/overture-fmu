@@ -24,6 +24,9 @@
 
       <user.mingw.32.gcc>i586-mingw32msvc-gcc</user.mingw.32.gcc>
       
+      <user.win64.additional.ld.flags>-L/shared-host-folder/java-win64/lib/</user.win64.additional.ld.flags>
+      <user.win32.additional.ld.flags>-L/shared-host-folder/java-win32/lib/</user.win32.additional.ld.flags>
+      
       
 
 			</properties>

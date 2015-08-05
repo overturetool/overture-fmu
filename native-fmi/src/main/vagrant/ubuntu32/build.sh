@@ -8,7 +8,7 @@ repo=repo
 
 vagrant up --provider parallels
 
-target=/shared-host-folder-project-root/target/classes/lib/
+target=/shared-host-folder-project-root/target/fmu/binaries/
 
 
 
