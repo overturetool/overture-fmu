@@ -1,3 +1,4 @@
+
 # Declaration of variables
 JAVA_HOME?=/Library/Java/JavaVirtualMachines/jdk1.7.0_75.jdk/Contents/Home
 CC? = gcc
@@ -13,17 +14,22 @@ JAVA_JVM_LIB_PATH?=server
 LDFLAGS = -shared -L$(JAVA_HOME)/jre/lib/$(JAVA_JVM_LIB_PATH)
 LINK.so = $(CC) $(LDFLAGS) $(LD_LIBS)
 
+LIB_FOLDER?=darwin64
+C_BUILD_DIR?=../../../target/native-$(LIB_FOLDER)
+
 
 LIB_PREFIX?= 
 LIB_EXTN?=.dylib
 
-FMU_BIN_DIR?=../../../target/fmu/binaries/darwin64
+FMU_BIN_DIR?=../../../target/fmu/binaries/$(LIB_FOLDER)
 LIBNAME?=fmi2java
 
 # File names
 EXEC = $(FMU_BIN_DIR)/$(LIB_PREFIX)$(LIBNAME)$(LIB_EXTN)
 SOURCES = $(wildcard *.c)
-OBJECTS = $(SOURCES:.c=.o)
+#OBJECTS = $(SOURCES:.c=.o)
+
+OBJECTS = $(addprefix $(C_BUILD_DIR)/,$(subst .c,.o,$(SOURCES)))
 
 all : $(EXEC)
 
@@ -34,7 +40,9 @@ $(EXEC): $(OBJECTS)
 	$(LINK.so) $(OUTPUT_OPTION) $^
 
 # To obtain object files
-%.o: %.c
+$(C_BUILD_DIR)/%.o: %.c
+	@mkdir -p `dirname $@`
+	echo $<
 	$(CC) -c $(CC_FLAGS) $< -o $@
 
 # To remove generated files
