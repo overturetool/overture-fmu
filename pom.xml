@@ -33,8 +33,9 @@
 
 
 	<modules>
-		<module>native-fmi</module>
-		<module>java-fmi</module>
+		<!--module>native-fmi</module-->
+		<!--module>java-fmi</module-->
+<module>crescendo-fmi</module>
 	
 	</modules>
 
