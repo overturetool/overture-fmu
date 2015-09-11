@@ -83,9 +83,9 @@ public class CrescendoGrpcFmu implements FmuGrpc.Fmu {
 
 			List<File> specfiles = new Vector<File>();
 
-			//File root = new File(request.getFmuResourceLocation())
-				//	.getParentFile();
-			File root = new File("/home/parallels/Desktop/vdm-tankcontroller");
+			File root = new File(request.getFmuResourceLocation())
+					.getParentFile();
+			//File root = new File("/home/parallels/Desktop/vdm-tankcontroller");
 			File sourceRoot = new File(root, "sources");
 			System.out.println("Source root: " + sourceRoot);
 
