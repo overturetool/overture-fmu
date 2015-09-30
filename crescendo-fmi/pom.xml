@@ -24,7 +24,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.intocps.java.fmi</groupId>
-			<artifactId>fmi-server</artifactId>
+			<artifactId>fmi-shm-server</artifactId>
 			<version>7</version>
 		</dependency>
 	</dependencies>
@@ -39,7 +39,7 @@
 					<archive>
 						<manifest>
 							<addClasspath>true</addClasspath>
-							<mainClass>org.crescendo.fmi.GrpcServer</mainClass>
+							<mainClass>org.crescendo.fmi.ShmServer</mainClass>
 						</manifest>
 					</archive>
 					<descriptorRefs>

@@ -1,7 +1,5 @@
 package org.crescendo.fmi;
 
-import io.grpc.stub.StreamObserver;
-
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
@@ -15,11 +13,13 @@ import org.destecs.protocol.structs.StepStruct;
 import org.destecs.protocol.structs.StepinputsStructParam;
 import org.destecs.vdm.SimulationManager;
 import org.destecs.vdmj.VDMCO;
+import org.intocps.java.fmi.service.IServiceProtocol;
 import org.overture.config.Settings;
 import org.overture.interpreter.scheduler.SystemClock;
 import org.overture.interpreter.scheduler.SystemClock.TimeUnit;
 
-import com.lausdahl.examples.FmuGrpc;
+import com.google.protobuf.GeneratedMessage;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.lausdahl.examples.Service.DoStepRequest;
 import com.lausdahl.examples.Service.Empty;
 import com.lausdahl.examples.Service.Fmi2StatusReply;
@@ -30,7 +30,6 @@ import com.lausdahl.examples.Service.GetIntegerReply;
 import com.lausdahl.examples.Service.GetMaxStepSizeReply;
 import com.lausdahl.examples.Service.GetRealReply;
 import com.lausdahl.examples.Service.GetRequest;
-import com.lausdahl.examples.Service.GetStringReply;
 import com.lausdahl.examples.Service.InstantiateRequest;
 import com.lausdahl.examples.Service.SetBooleanRequest;
 import com.lausdahl.examples.Service.SetDebugLoggingRequest;
@@ -39,101 +38,70 @@ import com.lausdahl.examples.Service.SetRealRequest;
 import com.lausdahl.examples.Service.SetStringRequest;
 import com.lausdahl.examples.Service.SetupExperimentRequest;
 
-public class CrescendoGrpcFmu implements FmuGrpc.Fmu {
+public class CrescendoGrpcFmu implements IServiceProtocol {
 
 	StateCache state;
 	Double time = (double) 0;
 
-	private static void status(
-			StreamObserver<Fmi2StatusReply> responseObserver, Status status) {
-		responseObserver.onValue(Fmi2StatusReply.newBuilder().setStatus(status)
-				.build());
-		responseObserver.onCompleted();
+	static final Fmi2StatusReply ok = Fmi2StatusReply.newBuilder().setStatus(Status.Ok).build();
+	static final Fmi2StatusReply fatal = Fmi2StatusReply.newBuilder().setStatus(Status.Fatal).build();
+	static final Fmi2StatusReply error = Fmi2StatusReply.newBuilder().setStatus(Status.Error).build();
+
+	@Override
+	public void error(String string) {
+		System.err.println(string);
 	}
 
 	@Override
-	public void fmi2Instantiate(InstantiateRequest request,
-			StreamObserver<Fmi2StatusReply> responseObserver) {
-		System.out
-				.println(String
-						.format("Instantiating %s.%s with loggingOn = %s, resource location='%s'",
-								request.getFmuGuid(),
-								request.getInstanceName(),
-								request.getLogginOn() + "",
-								request.getFmuResourceLocation()));
-		// default state
-		// state.reals[minLevelId] = 1.0;
-		// state.reals[maxLevelId] = 3.0;
+	public Fmi2StatusReply DoStep(DoStepRequest request) {
+		// TODO Auto-generated method stub
+
+		// System.out.println("doStep in external java");
+
 		try {
-			SimulationManager.getInstance().initialize();
+			List<StepinputsStructParam> inputs = state.collectInputsFromCache();
 
-			VDMCO.replaceNewIdentifier.clear();
+			double timeTmp = new Double(SystemClock.timeToInternal(TimeUnit.seconds,
+					request.getCurrentCommunicationPoint() + request.getCommunicationStepSize()));
+			StepStruct res = SimulationManager.getInstance().step(timeTmp, inputs, new Vector<String>());
 
-			Settings.prechecks = true;
-			Settings.postchecks = true;
-			Settings.invchecks = true;
-			Settings.dynamictypechecks = true;
-			Settings.measureChecks = true;
-			boolean disableRtLog = false;
-			boolean disableCoverage = false;
-			boolean disableOptimization = false;
+			res.time = SystemClock.internalToTime(TimeUnit.seconds, res.time.longValue());
+			state.syncOutputsToCache(res.outputs);
 
-			Settings.usingCmdLine = true;
-			Settings.usingDBGP = false;
-
-			List<File> specfiles = new Vector<File>();
-
-			File root = new File(request.getFmuResourceLocation())
-					.getParentFile();
-			//File root = new File("/home/parallels/Desktop/vdm-tankcontroller");
-			File sourceRoot = new File(root, "sources");
-			System.out.println("Source root: " + sourceRoot);
-
-			for (File file : sourceRoot.listFiles()) {
-				if (file.getName().endsWith(".vdmrt")) {
-					specfiles.add(file);
-				}
-			}
-
-			File linkFile = new File(sourceRoot,
-					"modelDescription.xml".replace('/', File.separatorChar));
-			File baseDirFile = new File(".");
-
-			state = new StateCache(linkFile);
-
-			SimulationManager.getInstance().load(specfiles, state.links,
-					new File("."), baseDirFile, disableRtLog, disableCoverage,
-					disableOptimization);
-
+			time = res.time;
 		} catch (Exception e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
-			responseObserver.onError(e);
+			return fatal;
 		}
-		status(responseObserver, Status.Ok);
+		return ok;
 	}
 
 	@Override
-	public void fmi2SetupExperiment(SetupExperimentRequest request,
-			StreamObserver<Fmi2StatusReply> responseObserver) {
-		status(responseObserver, Status.Ok);
-
+	public Fmi2StatusReply Terminate(Empty parseFrom) {
+		System.out.println("terminate");
+		try {
+			SimulationManager.getInstance().stopSimulation();
+		} catch (RemoteSimulationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return fatal;
+		}
+		return ok;
 	}
 
 	@Override
-	public void fmi2EnterInitializationMode(Empty request,
-			StreamObserver<Fmi2StatusReply> responseObserver) {
-		status(responseObserver, Status.Ok);
+	public Fmi2StatusReply EnterInitializationMode(Empty parseFrom) {
+		return ok;
 	}
 
 	@Override
-	public void fmi2ExitInitializationMode(Empty request,
-			StreamObserver<Fmi2StatusReply> responseObserver) {
+	public Fmi2StatusReply ExitInitializationMode(Empty parseFrom) {
 		try {
 			// set sdp
 			List<Map<String, Object>> parameters = new Vector<Map<String, Object>>();
 
-			for (Entry<String, LinkInfo> link : state.links
-					.getSharedDesignParameters().entrySet()) {
+			for (Entry<String, LinkInfo> link : state.links.getSharedDesignParameters().entrySet()) {
 				int index = Integer.valueOf(link.getKey());
 
 				ExtendedLinkInfo info = (ExtendedLinkInfo) link.getValue();
@@ -170,157 +138,156 @@ public class CrescendoGrpcFmu implements FmuGrpc.Fmu {
 		} catch (RemoteSimulationException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			responseObserver.onError(e);
+			return fatal;
 		}
 		System.out.println("exit init");
-		status(responseObserver, Status.Ok);
-
+		return ok;
 	}
 
 	@Override
-	public void fmi2Terminate(Empty request,
-			StreamObserver<Fmi2StatusReply> responseObserver) {
-		System.out.println("terminate");
-		try {
-			SimulationManager.getInstance().stopSimulation();
-		} catch (RemoteSimulationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			responseObserver.onError(e);
-		}
-		status(responseObserver, Status.Ok);
-
-	}
-
-	@Override
-	public void fmi2Reset(Empty request,
-			StreamObserver<Fmi2StatusReply> responseObserver) {
-		status(responseObserver, Status.Error);
-	}
-
-	@Override
-	public void fmi2SetDebugLogging(SetDebugLoggingRequest request,
-			StreamObserver<Fmi2StatusReply> responseObserver) {
-		status(responseObserver, Status.Ok);
-	}
-
-	@Override
-	public void fmi2GetReal(GetRequest request,
-			StreamObserver<GetRealReply> responseObserver) {
-		com.lausdahl.examples.Service.GetRealReply.Builder reply = GetRealReply
-				.newBuilder();
-
-		for (int i = 0; i < request.getValueReferenceCount(); i++) {
-			long id = request.getValueReference(i);
-			// values[i] = state.reals[new Long(id).intValue()];
-			reply.addValues(state.reals[new Long(id).intValue()]);
-		}
-		responseObserver.onValue(reply.build());
-		responseObserver.onCompleted();
-	}
-
-	@Override
-	public void fmi2GetInteger(GetRequest request,
-			StreamObserver<GetIntegerReply> responseObserver) {
-		// TODO Auto-generated method stub
-		responseObserver.onError(null);
-	}
-
-	@Override
-	public void fmi2GetBoolean(GetRequest request,
-			StreamObserver<GetBooleanReply> responseObserver) {
-
+	public GetBooleanReply GetBoolean(GetRequest request) {
 		Builder reply = GetBooleanReply.newBuilder();
-		
 
 		for (int i = 0; i < request.getValueReferenceCount(); i++) {
 			long id = request.getValueReference(i);
 			reply.addValues(state.booleans[new Long(id).intValue()]);
 			// values[i] = state.booleans[new Long(id).intValue()];
 		}
-		responseObserver.onValue(reply.build());
-		responseObserver.onCompleted();
-
+		return (reply.build());
 	}
 
 	@Override
-	public void fmi2GetString(GetRequest request,
-			StreamObserver<GetStringReply> responseObserver) {
+	public GetIntegerReply GetInteger(GetRequest parseFrom) {
 		// TODO Auto-generated method stub
-		// status(responseObserver,Status.Error);
-		responseObserver.onError(null);
+		return GetIntegerReply.newBuilder().build();
 	}
 
 	@Override
-	public void fmi2SetReal(SetRealRequest request,
-			StreamObserver<Fmi2StatusReply> responseObserver) {
+	public GetMaxStepSizeReply GetMaxStepSize(Empty parseFrom) {
+		return (GetMaxStepSizeReply.newBuilder().setMaxStepSize(Double.MAX_VALUE).build());
+
+	}
+
+	@Override
+	public GetRealReply GetReal(GetRequest request) {
+		com.lausdahl.examples.Service.GetRealReply.Builder reply = GetRealReply.newBuilder();
+
 		for (int i = 0; i < request.getValueReferenceCount(); i++) {
 			long id = request.getValueReference(i);
-			state.reals[new Long(id).intValue()] = request.getValues(i);
+			// values[i] = state.reals[new Long(id).intValue()];
+			reply.addValues(state.reals[new Long(id).intValue()]);
 		}
-		status(responseObserver, Status.Ok);
+		return (reply.build());
 	}
 
 	@Override
-	public void fmi2SetInteger(SetIntegerRequest request,
-			StreamObserver<Fmi2StatusReply> responseObserver) {
-		// TODO Auto-generated method stub
-		status(responseObserver, Status.Error);
+	public GeneratedMessage GetString(GetRequest parseFrom) {
+		return error;
 	}
 
 	@Override
-	public void fmi2SetBoolean(SetBooleanRequest request,
-			StreamObserver<Fmi2StatusReply> responseObserver) {
+	public Fmi2StatusReply Instantiate(InstantiateRequest request) {
+		System.out.println(
+				String.format("Instantiating %s.%s with loggingOn = %s, resource location='%s'", request.getFmuGuid(),
+						request.getInstanceName(), request.getLogginOn() + "", request.getFmuResourceLocation()));
+		// default state
+		// state.reals[minLevelId] = 1.0;
+		// state.reals[maxLevelId] = 3.0;
+		try {
+			SimulationManager.getInstance().initialize();
+
+			VDMCO.replaceNewIdentifier.clear();
+
+			Settings.prechecks = true;
+			Settings.postchecks = true;
+			Settings.invchecks = true;
+			Settings.dynamictypechecks = true;
+			Settings.measureChecks = true;
+			boolean disableRtLog = false;
+			boolean disableCoverage = false;
+			boolean disableOptimization = false;
+
+			Settings.usingCmdLine = true;
+			Settings.usingDBGP = false;
+
+			List<File> specfiles = new Vector<File>();
+
+			File root = new File(request.getFmuResourceLocation()).getParentFile();
+			// File root = new
+			// File("/home/parallels/Desktop/vdm-tankcontroller");
+			File sourceRoot = new File(root, "sources");
+			System.out.println("Source root: " + sourceRoot);
+
+			for (File file : sourceRoot.listFiles()) {
+				if (file.getName().endsWith(".vdmrt")) {
+					specfiles.add(file);
+				}
+			}
+
+			File linkFile = new File(sourceRoot, "modelDescription.xml".replace('/', File.separatorChar));
+			File baseDirFile = new File(".");
+
+			state = new StateCache(linkFile);
+
+			SimulationManager.getInstance().load(specfiles, state.links, new File("."), baseDirFile, disableRtLog,
+					disableCoverage, disableOptimization);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			// TODO
+			return fatal;
+		}
+		return ok;
+	}
+
+	@Override
+	public Fmi2StatusReply Reset(Empty parseFrom) {
+		return error;
+	}
+
+	@Override
+	public Fmi2StatusReply SetBoolean(SetBooleanRequest request) {
 		for (int i = 0; i < request.getValueReferenceCount(); i++) {
 			long id = request.getValueReference(i);
 			state.booleans[new Long(id).intValue()] = request.getValues(i);
 		}
-		status(responseObserver, Status.Ok);
-
+		return ok;
 	}
 
 	@Override
-	public void fmi2SetString(SetStringRequest request,
-			StreamObserver<Fmi2StatusReply> responseObserver) {
-		// TODO Auto-generated method stub
-		status(responseObserver, Status.Error);
+	public Fmi2StatusReply SetDebugLogging(SetDebugLoggingRequest parseFrom) {
+		return ok;
 	}
 
 	@Override
-	public void fmi2DoStep(DoStepRequest request,
-			StreamObserver<Fmi2StatusReply> responseObserver) {
+	public Fmi2StatusReply SetInteger(SetIntegerRequest parseFrom) {
 		// TODO Auto-generated method stub
+		return error;
+	}
 
-		// System.out.println("doStep in external java");
-
-		try {
-			List<StepinputsStructParam> inputs = state.collectInputsFromCache();
-
-			double timeTmp = new Double(SystemClock.timeToInternal(
-					TimeUnit.seconds, request.getCurrentCommunicationPoint()
-							+ request.getCommunicationStepSize()));
-			StepStruct res = SimulationManager.getInstance().step(timeTmp,
-					inputs, new Vector<String>());
-
-			res.time = SystemClock.internalToTime(TimeUnit.seconds,
-					res.time.longValue());
-			state.syncOutputsToCache(res.outputs);
-
-			time = res.time;
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			responseObserver.onError(e);
+	@Override
+	public Fmi2StatusReply SetReal(SetRealRequest request) {
+		for (int i = 0; i < request.getValueReferenceCount(); i++) {
+			long id = request.getValueReference(i);
+			state.reals[new Long(id).intValue()] = request.getValues(i);
 		}
-		status(responseObserver, Status.Ok);
+		return ok;
 	}
 
 	@Override
-	public void fmi2GetMaxStepSize(Empty request,
-			StreamObserver<GetMaxStepSizeReply> responseObserver) {
+	public Fmi2StatusReply SetString(SetStringRequest parseFrom) {
+		// TODO Auto-generated method stub
+		return error;
+	}
 
-		responseObserver.onValue(GetMaxStepSizeReply.newBuilder().setMaxStepSize(Double.MAX_VALUE).build());
-		responseObserver.onCompleted();
+	@Override
+	public Fmi2StatusReply SetupExperiment(SetupExperimentRequest parseFrom) {
+		return ok;
+	}
+
+	@Override
+	public void error(InvalidProtocolBufferException e) {
+		e.printStackTrace();
 	}
 
 }
