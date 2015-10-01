@@ -1,7 +1,6 @@
 package org.crescendo.fmi;
 
 import org.intocps.java.fmi.service.ProtocolDriver;
-import org.intocps.java.fmi.service.test.TestResponder;
 import org.intocps.java.fmi.shm.SharedMemory;
 
 public class ShmServer {
@@ -19,11 +18,9 @@ public class ShmServer {
 		}
 
 		System.out.println("Starting Crescendo ShmServer with key: '"+memoryKey+"'");
-		if (args.length > 0) {
-			memoryKey = args[0];
-		}
+	
 
-		ProtocolDriver driver = new ProtocolDriver(memoryKey, new TestResponder());
+		ProtocolDriver driver = new ProtocolDriver(memoryKey, new CrescendoGrpcFmu());
 
 		driver.start();
 
