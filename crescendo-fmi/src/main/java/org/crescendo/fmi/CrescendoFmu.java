@@ -38,7 +38,7 @@ import com.lausdahl.examples.Service.SetRealRequest;
 import com.lausdahl.examples.Service.SetStringRequest;
 import com.lausdahl.examples.Service.SetupExperimentRequest;
 
-public class CrescendoGrpcFmu implements IServiceProtocol {
+public class CrescendoFmu implements IServiceProtocol {
 
 	StateCache state;
 	Double time = (double) 0;
