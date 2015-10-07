@@ -38,9 +38,8 @@ public class StateCache {
 
 	public final Links links;
 
-	public StateCache(File linkFile) throws XPathExpressionException,
-			DOMException, SAXException, IOException,
-			ParserConfigurationException {
+	public StateCache(File linkFile)
+			throws XPathExpressionException, DOMException, SAXException, IOException, ParserConfigurationException {
 		links = createVdmLinks(linkFile);
 	}
 
@@ -67,9 +66,8 @@ public class StateCache {
 
 			}
 
-			inputs.add(new StepinputsStructParam(entry.getKey(), Arrays
-					.asList(new Double[] { value }), Arrays
-					.asList(new Integer[] { 1 })));
+			inputs.add(new StepinputsStructParam(entry.getKey(), Arrays.asList(new Double[] { value }),
+					Arrays.asList(new Integer[] { 1 })));
 		}
 
 		return inputs;
@@ -79,8 +77,7 @@ public class StateCache {
 		for (StepStructoutputsStruct output : outputs) {
 			// System.out.println(String.format("\tOutput %s = %s", output.name,
 			// output.value.get(0)));
-			ExtendedLinkInfo link = (ExtendedLinkInfo) links.getLinks().get(
-					output.name);
+			ExtendedLinkInfo link = (ExtendedLinkInfo) links.getLinks().get(output.name);
 
 			int index = Integer.valueOf(output.name);
 			switch (link.type) {
@@ -104,11 +101,9 @@ public class StateCache {
 
 	}
 
-	static Links createVdmLinks(File linkFile) throws SAXException,
-			IOException, ParserConfigurationException,
-			XPathExpressionException, DOMException {
-		DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory
-				.newInstance();
+	static Links createVdmLinks(File linkFile)
+			throws SAXException, IOException, ParserConfigurationException, XPathExpressionException, DOMException {
+		DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
 		Document doc = docBuilderFactory.newDocumentBuilder().parse(linkFile);
 
 		XPathFactory xPathfactory = XPathFactory.newInstance();
@@ -121,10 +116,19 @@ public class StateCache {
 
 		for (Node n : new NodeIterator(lookup(doc, xpath, "//ScalarVariable"))) {
 			NamedNodeMap attributes = n.getAttributes();
+			String valRef = attributes.getNamedItem("valueReference").getNodeValue();
 
-			String name = attributes.getNamedItem("name").getNodeValue();
-			String valRef = attributes.getNamedItem("valueReference")
-					.getNodeValue();
+			String name = null;
+
+			NodeList nameNodes = lookup(doc, xpath, "/fmiModelDescription/Overture/link[@valueReference='" + valRef + "']/@name");
+			if (nameNodes != null && nameNodes.getLength() > 0) {
+
+				name = nameNodes.item(0).getNodeValue();
+			}
+
+			if (name == null) {
+				name = attributes.getNamedItem("name").getNodeValue();
+			}
 
 			List<String> qualifiedName = Arrays.asList(name.split("\\."));
 			ExtendedLinkInfo.Type type = ExtendedLinkInfo.Type.Real;
@@ -144,11 +148,9 @@ public class StateCache {
 				type = ExtendedLinkInfo.Type.Integer;
 			}
 
-			link.put(valRef, new ExtendedLinkInfo(valRef, qualifiedName, 0,
-					type));
+			link.put(valRef, new ExtendedLinkInfo(valRef, qualifiedName, 0, type));
 
-			String causality = attributes.getNamedItem("causality")
-					.getNodeValue();
+			String causality = attributes.getNamedItem("causality").getNodeValue();
 
 			if ("output".equals(causality)) {
 				outputs.add(valRef);
@@ -160,21 +162,18 @@ public class StateCache {
 
 		}
 
-		return new Links(link, outputs, inputs, new Vector<String>(),
-				designParameters, new Vector<String>());
+		return new Links(link, outputs, inputs, new Vector<String>(), designParameters, new Vector<String>());
 	}
 
 	final static boolean DEBUG = false;
 
-	static NodeList lookup(Object doc, XPath xpath, String expression)
-			throws XPathExpressionException {
+	static NodeList lookup(Object doc, XPath xpath, String expression) throws XPathExpressionException {
 		XPathExpression expr = xpath.compile(expression);
 
 		if (DEBUG) {
 			// System.out.println("Starting from: " + formateNodeWithAtt(doc));
 		}
-		final NodeList list = (NodeList) expr.evaluate(doc,
-				XPathConstants.NODESET);
+		final NodeList list = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
 
 		if (DEBUG) {
 			System.out.print("\tFound: ");
@@ -183,7 +182,7 @@ public class StateCache {
 		for (@SuppressWarnings("unused")
 		Node n : new NodeIterator(list)) {
 			if (DEBUG) {
-				// System.out.println((!first ? "\t       " : "")
+				// System.out.println((!first ? "\t " : "")
 				// + formateNodeWithAtt(n));
 			}
 			first = false;

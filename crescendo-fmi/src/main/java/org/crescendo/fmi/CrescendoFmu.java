@@ -40,12 +40,30 @@ import com.lausdahl.examples.Service.SetupExperimentRequest;
 
 public class CrescendoFmu implements IServiceProtocol {
 
+	enum CrescendoStateType {
+		None, Instantiated, Initialized, Stepping, Terminated
+	}
+
 	StateCache state;
 	Double time = (double) 0;
+	final String name;
+	CrescendoStateType protocolState = CrescendoStateType.None;
 
 	static final Fmi2StatusReply ok = Fmi2StatusReply.newBuilder().setStatus(Status.Ok).build();
 	static final Fmi2StatusReply fatal = Fmi2StatusReply.newBuilder().setStatus(Status.Fatal).build();
 	static final Fmi2StatusReply error = Fmi2StatusReply.newBuilder().setStatus(Status.Error).build();
+
+	public CrescendoFmu(String memoryKey) {
+		this.name = memoryKey;
+	}
+
+	boolean checkStats(CrescendoStateType... st) {
+		for (CrescendoStateType crescendoStateType : st) {
+			if (crescendoStateType == protocolState)
+				return true;
+		}
+		return false;
+	}
 
 	@Override
 	public void error(String string) {
@@ -54,6 +72,9 @@ public class CrescendoFmu implements IServiceProtocol {
 
 	@Override
 	public Fmi2StatusReply DoStep(DoStepRequest request) {
+
+		if (!checkStats(CrescendoStateType.Initialized))
+			return fatal;
 		// TODO Auto-generated method stub
 
 		// System.out.println("doStep in external java");
@@ -63,6 +84,7 @@ public class CrescendoFmu implements IServiceProtocol {
 
 			double timeTmp = new Double(SystemClock.timeToInternal(TimeUnit.seconds,
 					request.getCurrentCommunicationPoint() + request.getCommunicationStepSize()));
+			System.out.println("DoStem VDM time: "+timeTmp);
 			StepStruct res = SimulationManager.getInstance().step(timeTmp, inputs, new Vector<String>());
 
 			res.time = SystemClock.internalToTime(TimeUnit.seconds, res.time.longValue());
@@ -97,6 +119,8 @@ public class CrescendoFmu implements IServiceProtocol {
 
 	@Override
 	public Fmi2StatusReply ExitInitializationMode(Empty parseFrom) {
+		if (!checkStats(CrescendoStateType.Instantiated))
+			return fatal;
 		try {
 			// set sdp
 			List<Map<String, Object>> parameters = new Vector<Map<String, Object>>();
@@ -135,6 +159,8 @@ public class CrescendoFmu implements IServiceProtocol {
 
 			// start
 			SimulationManager.getInstance().start(time.longValue());
+			
+			protocolState=CrescendoStateType.Initialized;
 		} catch (RemoteSimulationException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -146,6 +172,9 @@ public class CrescendoFmu implements IServiceProtocol {
 
 	@Override
 	public GetBooleanReply GetBoolean(GetRequest request) {
+//		if (!checkStats(CrescendoStateType.Instantiated))
+//			return fatal;
+		
 		Builder reply = GetBooleanReply.newBuilder();
 
 		for (int i = 0; i < request.getValueReferenceCount(); i++) {
@@ -170,6 +199,7 @@ public class CrescendoFmu implements IServiceProtocol {
 
 	@Override
 	public GetRealReply GetReal(GetRequest request) {
+		
 		com.lausdahl.examples.Service.GetRealReply.Builder reply = GetRealReply.newBuilder();
 
 		for (int i = 0; i < request.getValueReferenceCount(); i++) {
@@ -187,6 +217,8 @@ public class CrescendoFmu implements IServiceProtocol {
 
 	@Override
 	public Fmi2StatusReply Instantiate(InstantiateRequest request) {
+		if (!checkStats(CrescendoStateType.None))
+			return fatal;
 		System.out.println(
 				String.format("Instantiating %s.%s with loggingOn = %s, resource location='%s'", request.getFmuGuid(),
 						request.getInstanceName(), request.getLogginOn() + "", request.getFmuResourceLocation()));
@@ -224,13 +256,15 @@ public class CrescendoFmu implements IServiceProtocol {
 				}
 			}
 
-			File linkFile = new File(sourceRoot, "modelDescription.xml".replace('/', File.separatorChar));
+			File linkFile = new File(root, "modelDescription.xml".replace('/', File.separatorChar));
 			File baseDirFile = new File(".");
 
 			state = new StateCache(linkFile);
 
 			SimulationManager.getInstance().load(specfiles, state.links, new File("."), baseDirFile, disableRtLog,
 					disableCoverage, disableOptimization);
+			
+			protocolState = CrescendoStateType.Instantiated;
 
 		} catch (Exception e) {
 			e.printStackTrace();

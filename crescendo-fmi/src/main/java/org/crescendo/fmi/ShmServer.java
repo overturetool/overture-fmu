@@ -20,7 +20,7 @@ public class ShmServer {
 		System.out.println("Starting Crescendo ShmServer with key: '"+memoryKey+"'");
 	
 
-		ProtocolDriver driver = new ProtocolDriver(memoryKey, new CrescendoFmu());
+		ProtocolDriver driver = new ProtocolDriver(memoryKey, new CrescendoFmu(memoryKey));
 
 		driver.start();
 
