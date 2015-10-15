@@ -11,12 +11,11 @@
 
 	<repositories>
 
-		<repository>
-			<id>overture.au.dk</id>
-			<name>overture.au.dk-releases</name>
-			<url>http://overture.au.dk/artifactory/into-cps</url>
-		</repository>
-
+    <repository>
+      <id>intocps-development</id>
+      <name>intocps-development</name>
+      <url>http://overture.au.dk/artifactory/into-cps</url>
+    </repository>
 	</repositories>
 
 	<dependencies>
