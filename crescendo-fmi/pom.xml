@@ -16,11 +16,7 @@
 			<name>overture.au.dk-releases</name>
 			<url>http://overture.au.dk/artifactory/into-cps</url>
 		</repository>
-		<snapshotRepository>
-			<id>overture.au.dk</id>
-			<name>overture.au.dk-snapshots</name>
-			<url>http://overture.au.dk/artifactory/into-cps</url>
-		</snapshotRepository>
+
 	</repositories>
 
 	<dependencies>
