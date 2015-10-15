@@ -1,5 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<parent>
 		<groupId>org.destecs.core</groupId>
 		<artifactId>fmi</artifactId>
@@ -9,6 +8,21 @@
 	<groupId>org.destecs.core.fmi</groupId>
 	<artifactId>crescendo-fmi</artifactId>
 	<name>Fmi for crescendo</name>
+
+	<repositories>
+
+		<repository>
+			<id>overture.au.dk</id>
+			<name>overture.au.dk-releases</name>
+			<url>http://overture.au.dk/artifactory/into-cps</url>
+		</repository>
+		<snapshotRepository>
+			<id>overture.au.dk</id>
+			<name>overture.au.dk-snapshots</name>
+			<url>http://overture.au.dk/artifactory/into-cps</url>
+		</snapshotRepository>
+	</repositories>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.destecs.core</groupId>
@@ -25,7 +39,7 @@
 		<dependency>
 			<groupId>org.intocps.java.fmi</groupId>
 			<artifactId>fmi-shm-server</artifactId>
-			<version>7</version>
+			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 
