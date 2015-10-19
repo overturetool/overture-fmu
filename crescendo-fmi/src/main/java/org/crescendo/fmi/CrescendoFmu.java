@@ -1,6 +1,7 @@
 package org.crescendo.fmi;
 
 import java.io.File;
+import java.io.OutputStreamWriter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,9 @@ import org.destecs.vdm.SimulationManager;
 import org.destecs.vdmj.VDMCO;
 import org.intocps.java.fmi.service.IServiceProtocol;
 import org.overture.config.Settings;
+import org.overture.interpreter.messages.Console;
+import org.overture.interpreter.messages.StderrRedirector;
+import org.overture.interpreter.messages.StdoutRedirector;
 import org.overture.interpreter.scheduler.SystemClock;
 import org.overture.interpreter.scheduler.SystemClock.TimeUnit;
 
@@ -25,7 +29,6 @@ import com.lausdahl.examples.Service.Empty;
 import com.lausdahl.examples.Service.Fmi2StatusReply;
 import com.lausdahl.examples.Service.Fmi2StatusReply.Status;
 import com.lausdahl.examples.Service.GetBooleanReply;
-import com.lausdahl.examples.Service.GetBooleanReply.Builder;
 import com.lausdahl.examples.Service.GetIntegerReply;
 import com.lausdahl.examples.Service.GetMaxStepSizeReply;
 import com.lausdahl.examples.Service.GetRealReply;
@@ -38,9 +41,11 @@ import com.lausdahl.examples.Service.SetRealRequest;
 import com.lausdahl.examples.Service.SetStringRequest;
 import com.lausdahl.examples.Service.SetupExperimentRequest;
 
-public class CrescendoFmu implements IServiceProtocol {
+public class CrescendoFmu implements IServiceProtocol
+{
 
-	enum CrescendoStateType {
+	enum CrescendoStateType
+	{
 		None, Instantiated, Initialized, Stepping, Terminated
 	}
 
@@ -48,17 +53,50 @@ public class CrescendoFmu implements IServiceProtocol {
 	Double time = (double) 0;
 	final String name;
 	CrescendoStateType protocolState = CrescendoStateType.None;
+	private boolean loggingOn = true;
+	private List<String> enabledLoggingCategories = new Vector<String>();
 
 	static final Fmi2StatusReply ok = Fmi2StatusReply.newBuilder().setStatus(Status.Ok).build();
 	static final Fmi2StatusReply fatal = Fmi2StatusReply.newBuilder().setStatus(Status.Fatal).build();
 	static final Fmi2StatusReply error = Fmi2StatusReply.newBuilder().setStatus(Status.Error).build();
+	static final Fmi2StatusReply discard = Fmi2StatusReply.newBuilder().setStatus(Status.Discard).build();
 
-	public CrescendoFmu(String memoryKey) {
+	enum FmiLogCategory
+	{
+		Protocol, VdmOut, VdmErr, Error
+	}
+
+	public void fmiLog(FmiLogCategory category, String message)
+	{
+
+		if (loggingOn)
+		{
+			switch (category)
+			{
+				case Error:
+					System.err.println(message);
+					break;
+				case Protocol:
+				case VdmErr:
+				case VdmOut:
+					System.out.println(message);
+				default:
+					break;
+			}
+		}
+
+		// TODO: redirect to protocol
+	}
+
+	public CrescendoFmu(String memoryKey)
+	{
 		this.name = memoryKey;
 	}
 
-	boolean checkStats(CrescendoStateType... st) {
-		for (CrescendoStateType crescendoStateType : st) {
+	boolean checkStats(CrescendoStateType... st)
+	{
+		for (CrescendoStateType crescendoStateType : st)
+		{
 			if (crescendoStateType == protocolState)
 				return true;
 		}
@@ -66,85 +104,111 @@ public class CrescendoFmu implements IServiceProtocol {
 	}
 
 	@Override
-	public void error(String string) {
+	public void error(String string)
+	{
 		System.err.println(string);
 	}
 
 	@Override
-	public Fmi2StatusReply DoStep(DoStepRequest request) {
+	public Fmi2StatusReply DoStep(DoStepRequest request)
+	{
 
 		if (!checkStats(CrescendoStateType.Initialized))
 			return fatal;
-		// TODO Auto-generated method stub
 
-		// System.out.println("doStep in external java");
-
-		try {
+		try
+		{
 			List<StepinputsStructParam> inputs = state.collectInputsFromCache();
 
-			double timeTmp = new Double(SystemClock.timeToInternal(TimeUnit.seconds,
-					request.getCurrentCommunicationPoint() + request.getCommunicationStepSize()));
-			System.out.println("DoStem VDM time: "+timeTmp);
-			StepStruct res = SimulationManager.getInstance().step(timeTmp, inputs, new Vector<String>());
+			double nextFmiTime = request.getCurrentCommunicationPoint()
+					+ request.getCommunicationStepSize();
+			
+			fmiLog(FmiLogCategory.Protocol, "DoStep called: "+nextFmiTime);
 
+			if (nextFmiTime < time)
+			{
+				fmiLog(FmiLogCategory.Protocol, "DoStep skipping execution next time is: "+time);
+				return ok;
+			}
+
+			double internalVdmClockTime = new Double(SystemClock.timeToInternal(TimeUnit.seconds, nextFmiTime));
+
+			System.out.println("DoStem VDM time: " + internalVdmClockTime);
+			StepStruct res = SimulationManager.getInstance().step(internalVdmClockTime, inputs, new Vector<String>());
+
+			// Convert back to SI from internal VDM clock
 			res.time = SystemClock.internalToTime(TimeUnit.seconds, res.time.longValue());
+
+			// Write changes to the FMI cache
 			state.syncOutputsToCache(res.outputs);
 
 			time = res.time;
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
+			fmiLog(FmiLogCategory.Protocol, "DoStep waiting for next DoStep at: "+time);
+			
+		} catch (Exception e)
+		{
 			e.printStackTrace();
+			fmiLog(FmiLogCategory.Error, "Error in DoStep: "+e.getMessage());
 			return fatal;
 		}
 		return ok;
 	}
 
 	@Override
-	public Fmi2StatusReply Terminate(Empty parseFrom) {
+	public Fmi2StatusReply Terminate(Empty parseFrom)
+	{
 		System.out.println("terminate");
-		try {
+		try
+		{
 			SimulationManager.getInstance().stopSimulation();
-		} catch (RemoteSimulationException e) {
-			// TODO Auto-generated catch block
+		} catch (RemoteSimulationException e)
+		{
 			e.printStackTrace();
+			fmiLog(FmiLogCategory.Error, "Error in Terminate: "+e.getMessage());
 			return fatal;
 		}
 		return ok;
 	}
 
 	@Override
-	public Fmi2StatusReply EnterInitializationMode(Empty parseFrom) {
+	public Fmi2StatusReply EnterInitializationMode(Empty parseFrom)
+	{
 		return ok;
 	}
 
 	@Override
-	public Fmi2StatusReply ExitInitializationMode(Empty parseFrom) {
+	public Fmi2StatusReply ExitInitializationMode(Empty parseFrom)
+	{
 		if (!checkStats(CrescendoStateType.Instantiated))
 			return fatal;
-		try {
+		try
+		{
 			// set sdp
 			List<Map<String, Object>> parameters = new Vector<Map<String, Object>>();
 
-			for (Entry<String, LinkInfo> link : state.links.getSharedDesignParameters().entrySet()) {
+			for (Entry<String, LinkInfo> link : state.links.getSharedDesignParameters().entrySet())
+			{
 				int index = Integer.valueOf(link.getKey());
 
 				ExtendedLinkInfo info = (ExtendedLinkInfo) link.getValue();
 
 				Double value = 0.0;
-				switch (info.type) {
-				case Boolean:
-					value = state.booleans[index] ? 1.0 : 0.0;
-					break;
-				case Integer:
-					value = new Double(state.integers[index]);
-					break;
-				case Real:
-					value = state.reals[index];
-					break;
-				case String:
-					break;
-				default:
-					break;
+				switch (info.type)
+				{
+					case Boolean:
+						value = state.booleans[index] ? 1.0 : 0.0;
+						break;
+					case Integer:
+						value = new Double(state.integers[index]);
+						break;
+					case Real:
+						value = state.reals[index];
+						break;
+					case String:
+						// TODO:
+						break;
+					default:
+						break;
 
 				}
 
@@ -159,11 +223,12 @@ public class CrescendoFmu implements IServiceProtocol {
 
 			// start
 			SimulationManager.getInstance().start(time.longValue());
-			
-			protocolState=CrescendoStateType.Initialized;
-		} catch (RemoteSimulationException e) {
-			// TODO Auto-generated catch block
+
+			protocolState = CrescendoStateType.Initialized;
+		} catch (RemoteSimulationException e)
+		{
 			e.printStackTrace();
+			fmiLog(FmiLogCategory.Error, "Error in ExitInitializationMode (setDesignParameters, start): "+e.getMessage());
 			return fatal;
 		}
 		System.out.println("exit init");
@@ -171,62 +236,92 @@ public class CrescendoFmu implements IServiceProtocol {
 	}
 
 	@Override
-	public GetBooleanReply GetBoolean(GetRequest request) {
-//		if (!checkStats(CrescendoStateType.Instantiated))
-//			return fatal;
-		
-		Builder reply = GetBooleanReply.newBuilder();
+	public GetRealReply GetReal(GetRequest request)
+	{
 
-		for (int i = 0; i < request.getValueReferenceCount(); i++) {
+		GetRealReply.Builder reply = GetRealReply.newBuilder();
+
+		for (int i = 0; i < request.getValueReferenceCount(); i++)
+		{
 			long id = request.getValueReference(i);
-			reply.addValues(state.booleans[new Long(id).intValue()]);
-			// values[i] = state.booleans[new Long(id).intValue()];
-		}
-		return (reply.build());
-	}
-
-	@Override
-	public GetIntegerReply GetInteger(GetRequest parseFrom) {
-		// TODO Auto-generated method stub
-		return GetIntegerReply.newBuilder().build();
-	}
-
-	@Override
-	public GetMaxStepSizeReply GetMaxStepSize(Empty parseFrom) {
-		return (GetMaxStepSizeReply.newBuilder().setMaxStepSize(Double.MAX_VALUE).build());
-
-	}
-
-	@Override
-	public GetRealReply GetReal(GetRequest request) {
-		
-		com.lausdahl.examples.Service.GetRealReply.Builder reply = GetRealReply.newBuilder();
-
-		for (int i = 0; i < request.getValueReferenceCount(); i++) {
-			long id = request.getValueReference(i);
-			// values[i] = state.reals[new Long(id).intValue()];
 			reply.addValues(state.reals[new Long(id).intValue()]);
 		}
 		return (reply.build());
 	}
 
 	@Override
-	public GeneratedMessage GetString(GetRequest parseFrom) {
-		return error;
+	public GetBooleanReply GetBoolean(GetRequest request)
+	{
+
+		GetBooleanReply.Builder reply = GetBooleanReply.newBuilder();
+
+		for (int i = 0; i < request.getValueReferenceCount(); i++)
+		{
+			long id = request.getValueReference(i);
+			reply.addValues(state.booleans[new Long(id).intValue()]);
+		}
+		return (reply.build());
 	}
 
 	@Override
-	public Fmi2StatusReply Instantiate(InstantiateRequest request) {
+	public GetIntegerReply GetInteger(GetRequest request)
+	{
+
+		GetIntegerReply.Builder reply = GetIntegerReply.newBuilder();
+
+		for (int i = 0; i < request.getValueReferenceCount(); i++)
+		{
+			long id = request.getValueReference(i);
+			reply.addValues(state.integers[new Long(id).intValue()]);
+		}
+		return (reply.build());
+
+	}
+
+	@Override
+	public GeneratedMessage GetString(GetRequest parseFrom)
+	{
+		return discard;
+	}
+
+	/***
+	 * Addition to INTO-CPS
+	 */
+	@Override
+	public GetMaxStepSizeReply GetMaxStepSize(Empty parseFrom)
+	{
+		return (GetMaxStepSizeReply.newBuilder().setMaxStepSize(time).build());
+	}
+
+	@Override
+	public Fmi2StatusReply Instantiate(InstantiateRequest request)
+	{
 		if (!checkStats(CrescendoStateType.None))
 			return fatal;
-		System.out.println(
-				String.format("Instantiating %s.%s with loggingOn = %s, resource location='%s'", request.getFmuGuid(),
-						request.getInstanceName(), request.getLogginOn() + "", request.getFmuResourceLocation()));
-		// default state
-		// state.reals[minLevelId] = 1.0;
-		// state.reals[maxLevelId] = 3.0;
-		try {
+		System.out.println(String.format("Instantiating %s.%s with loggingOn = %s, resource location='%s'", request.getFmuGuid(), request.getInstanceName(), request.getLogginOn()
+				+ "", request.getFmuResourceLocation()));
+		try
+		{
 			SimulationManager.getInstance().initialize();
+
+			final CrescendoFmu finalThis = this;
+
+			Console.out = new StdoutRedirector(new OutputStreamWriter(System.out, "UTF-8"))
+			{
+				@Override
+				public void print(String message)
+				{
+					finalThis.fmiLog(FmiLogCategory.VdmErr, message);
+				}
+			};
+			Console.err = new StderrRedirector(new OutputStreamWriter(System.err, "UTF-8"))
+			{
+				@Override
+				public void print(String message)
+				{
+					finalThis.fmiLog(FmiLogCategory.VdmOut, message);
+				}
+			};
 
 			VDMCO.replaceNewIdentifier.clear();
 
@@ -245,13 +340,13 @@ public class CrescendoFmu implements IServiceProtocol {
 			List<File> specfiles = new Vector<File>();
 
 			File root = new File(request.getFmuResourceLocation()).getParentFile();
-			// File root = new
-			// File("/home/parallels/Desktop/vdm-tankcontroller");
 			File sourceRoot = new File(root, "sources");
 			System.out.println("Source root: " + sourceRoot);
 
-			for (File file : sourceRoot.listFiles()) {
-				if (file.getName().endsWith(".vdmrt")) {
+			for (File file : sourceRoot.listFiles())
+			{
+				if (file.getName().endsWith(".vdmrt"))
+				{
 					specfiles.add(file);
 				}
 			}
@@ -261,47 +356,42 @@ public class CrescendoFmu implements IServiceProtocol {
 
 			state = new StateCache(linkFile);
 
-			SimulationManager.getInstance().load(specfiles, state.links, new File("."), baseDirFile, disableRtLog,
-					disableCoverage, disableOptimization);
-			
+			SimulationManager.getInstance().load(specfiles, state.links, new File("."), baseDirFile, disableRtLog, disableCoverage, disableOptimization);
+
 			protocolState = CrescendoStateType.Instantiated;
 
-		} catch (Exception e) {
+		} catch (Exception e)
+		{
 			e.printStackTrace();
-			// TODO
+			fmiLog(FmiLogCategory.Error, "Error in instantiate: "+e.getMessage());
 			return fatal;
 		}
 		return ok;
 	}
 
 	@Override
-	public Fmi2StatusReply Reset(Empty parseFrom) {
+	public Fmi2StatusReply Reset(Empty parseFrom)
+	{
+		fmiLog(FmiLogCategory.Protocol, "Reset not supported");
 		return error;
 	}
 
 	@Override
-	public Fmi2StatusReply SetBoolean(SetBooleanRequest request) {
-		for (int i = 0; i < request.getValueReferenceCount(); i++) {
-			long id = request.getValueReference(i);
-			state.booleans[new Long(id).intValue()] = request.getValues(i);
+	public Fmi2StatusReply SetDebugLogging(SetDebugLoggingRequest request)
+	{
+		loggingOn = request.getLoggingOn();
+		for (int i = 0; i < request.getCatogoriesCount(); i++)
+		{
+			enabledLoggingCategories.add(request.getCatogories(i));
 		}
 		return ok;
 	}
 
 	@Override
-	public Fmi2StatusReply SetDebugLogging(SetDebugLoggingRequest parseFrom) {
-		return ok;
-	}
-
-	@Override
-	public Fmi2StatusReply SetInteger(SetIntegerRequest parseFrom) {
-		// TODO Auto-generated method stub
-		return error;
-	}
-
-	@Override
-	public Fmi2StatusReply SetReal(SetRealRequest request) {
-		for (int i = 0; i < request.getValueReferenceCount(); i++) {
+	public Fmi2StatusReply SetReal(SetRealRequest request)
+	{
+		for (int i = 0; i < request.getValueReferenceCount(); i++)
+		{
 			long id = request.getValueReference(i);
 			state.reals[new Long(id).intValue()] = request.getValues(i);
 		}
@@ -309,19 +399,46 @@ public class CrescendoFmu implements IServiceProtocol {
 	}
 
 	@Override
-	public Fmi2StatusReply SetString(SetStringRequest parseFrom) {
-		// TODO Auto-generated method stub
-		return error;
-	}
-
-	@Override
-	public Fmi2StatusReply SetupExperiment(SetupExperimentRequest parseFrom) {
+	public Fmi2StatusReply SetInteger(SetIntegerRequest request)
+	{
+		for (int i = 0; i < request.getValueReferenceCount(); i++)
+		{
+			long id = request.getValueReference(i);
+			state.integers[new Long(id).intValue()] = request.getValues(i);
+		}
 		return ok;
 	}
 
 	@Override
-	public void error(InvalidProtocolBufferException e) {
+	public Fmi2StatusReply SetBoolean(SetBooleanRequest request)
+	{
+		for (int i = 0; i < request.getValueReferenceCount(); i++)
+		{
+			long id = request.getValueReference(i);
+			state.booleans[new Long(id).intValue()] = request.getValues(i);
+		}
+		return ok;
+	}
+
+	@Override
+	public Fmi2StatusReply SetString(SetStringRequest parseFrom)
+	{
+		// TODO Auto-generated method stub
+		fmiLog(FmiLogCategory.Protocol, "SetString not supported");
+		return discard;
+	}
+
+	@Override
+	public Fmi2StatusReply SetupExperiment(SetupExperimentRequest parseFrom)
+	{
+		return ok;
+	}
+
+	@Override
+	public void error(InvalidProtocolBufferException e)
+	{
 		e.printStackTrace();
+		fmiLog(FmiLogCategory.Protocol, "Internal error: "+e.getMessage());
 	}
 
 }
