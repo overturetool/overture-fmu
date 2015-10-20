@@ -21,28 +21,35 @@ import org.overture.interpreter.messages.StderrRedirector;
 import org.overture.interpreter.messages.StdoutRedirector;
 import org.overture.interpreter.scheduler.SystemClock;
 import org.overture.interpreter.scheduler.SystemClock.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.lausdahl.examples.Service.DoStepRequest;
-import com.lausdahl.examples.Service.Empty;
+import com.lausdahl.examples.Service.Fmi2BooleanStatusReply;
+import com.lausdahl.examples.Service.Fmi2DoStepRequest;
+import com.lausdahl.examples.Service.Fmi2Empty;
+import com.lausdahl.examples.Service.Fmi2GetBooleanReply;
+import com.lausdahl.examples.Service.Fmi2GetIntegerReply;
+import com.lausdahl.examples.Service.Fmi2GetMaxStepSizeReply;
+import com.lausdahl.examples.Service.Fmi2GetRealReply;
+import com.lausdahl.examples.Service.Fmi2GetRequest;
+import com.lausdahl.examples.Service.Fmi2InstantiateRequest;
+import com.lausdahl.examples.Service.Fmi2IntegerStatusReply;
+import com.lausdahl.examples.Service.Fmi2RealStatusReply;
+import com.lausdahl.examples.Service.Fmi2SetBooleanRequest;
+import com.lausdahl.examples.Service.Fmi2SetDebugLoggingRequest;
+import com.lausdahl.examples.Service.Fmi2SetIntegerRequest;
+import com.lausdahl.examples.Service.Fmi2SetRealRequest;
+import com.lausdahl.examples.Service.Fmi2SetStringRequest;
+import com.lausdahl.examples.Service.Fmi2SetupExperimentRequest;
 import com.lausdahl.examples.Service.Fmi2StatusReply;
-import com.lausdahl.examples.Service.Fmi2StatusReply.Status;
-import com.lausdahl.examples.Service.GetBooleanReply;
-import com.lausdahl.examples.Service.GetIntegerReply;
-import com.lausdahl.examples.Service.GetMaxStepSizeReply;
-import com.lausdahl.examples.Service.GetRealReply;
-import com.lausdahl.examples.Service.GetRequest;
-import com.lausdahl.examples.Service.InstantiateRequest;
-import com.lausdahl.examples.Service.SetBooleanRequest;
-import com.lausdahl.examples.Service.SetDebugLoggingRequest;
-import com.lausdahl.examples.Service.SetIntegerRequest;
-import com.lausdahl.examples.Service.SetRealRequest;
-import com.lausdahl.examples.Service.SetStringRequest;
-import com.lausdahl.examples.Service.SetupExperimentRequest;
+import com.lausdahl.examples.Service.Fmi2StatusRequest;
+import com.lausdahl.examples.Service.Fmi2StringStatusReply;
 
 public class CrescendoFmu implements IServiceProtocol
 {
+	final static Logger logger = LoggerFactory.getLogger(CrescendoFmu.class);
 
 	enum CrescendoStateType
 	{
@@ -56,10 +63,10 @@ public class CrescendoFmu implements IServiceProtocol
 	private boolean loggingOn = true;
 	private List<String> enabledLoggingCategories = new Vector<String>();
 
-	static final Fmi2StatusReply ok = Fmi2StatusReply.newBuilder().setStatus(Status.Ok).build();
-	static final Fmi2StatusReply fatal = Fmi2StatusReply.newBuilder().setStatus(Status.Fatal).build();
-	static final Fmi2StatusReply error = Fmi2StatusReply.newBuilder().setStatus(Status.Error).build();
-	static final Fmi2StatusReply discard = Fmi2StatusReply.newBuilder().setStatus(Status.Discard).build();
+	static final Fmi2StatusReply ok = Fmi2StatusReply.newBuilder().setStatus(Fmi2StatusReply.Status.Ok).build();
+	static final Fmi2StatusReply fatal = Fmi2StatusReply.newBuilder().setStatus(Fmi2StatusReply.Status.Fatal).build();
+	static final Fmi2StatusReply error = Fmi2StatusReply.newBuilder().setStatus(Fmi2StatusReply.Status.Error).build();
+	static final Fmi2StatusReply discard = Fmi2StatusReply.newBuilder().setStatus(Fmi2StatusReply.Status.Discard).build();
 
 	enum FmiLogCategory
 	{
@@ -110,7 +117,7 @@ public class CrescendoFmu implements IServiceProtocol
 	}
 
 	@Override
-	public Fmi2StatusReply DoStep(DoStepRequest request)
+	public Fmi2StatusReply DoStep(Fmi2DoStepRequest request)
 	{
 
 		if (!checkStats(CrescendoStateType.Initialized))
@@ -155,7 +162,7 @@ public class CrescendoFmu implements IServiceProtocol
 	}
 
 	@Override
-	public Fmi2StatusReply Terminate(Empty parseFrom)
+	public Fmi2StatusReply Terminate(Fmi2Empty parseFrom)
 	{
 		System.out.println("terminate");
 		try
@@ -171,13 +178,13 @@ public class CrescendoFmu implements IServiceProtocol
 	}
 
 	@Override
-	public Fmi2StatusReply EnterInitializationMode(Empty parseFrom)
+	public Fmi2StatusReply EnterInitializationMode(Fmi2Empty parseFrom)
 	{
 		return ok;
 	}
 
 	@Override
-	public Fmi2StatusReply ExitInitializationMode(Empty parseFrom)
+	public Fmi2StatusReply ExitInitializationMode(Fmi2Empty parseFrom)
 	{
 		if (!checkStats(CrescendoStateType.Instantiated))
 			return fatal;
@@ -217,10 +224,12 @@ public class CrescendoFmu implements IServiceProtocol
 				pMax.put("value", new Double[] { value });
 				pMax.put("size", new Integer[] { 1 });
 				parameters.add(pMax);
+				logger.debug("Added sdp with name: '{}' value: '{}' size: '{}' valueref: '{}'",state.links.getQualifiedName(link.getKey()),value,1,link.getKey());
 			}
 
 			SimulationManager.getInstance().setDesignParameters(parameters);
 
+			logger.debug("Starting simulation manager with time: {}",time.longValue());
 			// start
 			SimulationManager.getInstance().start(time.longValue());
 
@@ -236,10 +245,10 @@ public class CrescendoFmu implements IServiceProtocol
 	}
 
 	@Override
-	public GetRealReply GetReal(GetRequest request)
+	public Fmi2GetRealReply GetReal(Fmi2GetRequest request)
 	{
 
-		GetRealReply.Builder reply = GetRealReply.newBuilder();
+		Fmi2GetRealReply.Builder reply = Fmi2GetRealReply.newBuilder();
 
 		for (int i = 0; i < request.getValueReferenceCount(); i++)
 		{
@@ -250,10 +259,10 @@ public class CrescendoFmu implements IServiceProtocol
 	}
 
 	@Override
-	public GetBooleanReply GetBoolean(GetRequest request)
+	public Fmi2GetBooleanReply GetBoolean(Fmi2GetRequest request)
 	{
 
-		GetBooleanReply.Builder reply = GetBooleanReply.newBuilder();
+		Fmi2GetBooleanReply.Builder reply = Fmi2GetBooleanReply.newBuilder();
 
 		for (int i = 0; i < request.getValueReferenceCount(); i++)
 		{
@@ -264,10 +273,10 @@ public class CrescendoFmu implements IServiceProtocol
 	}
 
 	@Override
-	public GetIntegerReply GetInteger(GetRequest request)
+	public Fmi2GetIntegerReply GetInteger(Fmi2GetRequest request)
 	{
 
-		GetIntegerReply.Builder reply = GetIntegerReply.newBuilder();
+		Fmi2GetIntegerReply.Builder reply = Fmi2GetIntegerReply.newBuilder();
 
 		for (int i = 0; i < request.getValueReferenceCount(); i++)
 		{
@@ -279,7 +288,7 @@ public class CrescendoFmu implements IServiceProtocol
 	}
 
 	@Override
-	public GeneratedMessage GetString(GetRequest parseFrom)
+	public GeneratedMessage GetString(Fmi2GetRequest parseFrom)
 	{
 		return discard;
 	}
@@ -288,13 +297,13 @@ public class CrescendoFmu implements IServiceProtocol
 	 * Addition to INTO-CPS
 	 */
 	@Override
-	public GetMaxStepSizeReply GetMaxStepSize(Empty parseFrom)
+	public Fmi2GetMaxStepSizeReply GetMaxStepSize(Fmi2Empty parseFrom)
 	{
-		return (GetMaxStepSizeReply.newBuilder().setMaxStepSize(time).build());
+		return (Fmi2GetMaxStepSizeReply.newBuilder().setMaxStepSize(time).build());
 	}
 
 	@Override
-	public Fmi2StatusReply Instantiate(InstantiateRequest request)
+	public Fmi2StatusReply Instantiate(Fmi2InstantiateRequest request)
 	{
 		if (!checkStats(CrescendoStateType.None))
 			return fatal;
@@ -370,14 +379,14 @@ public class CrescendoFmu implements IServiceProtocol
 	}
 
 	@Override
-	public Fmi2StatusReply Reset(Empty parseFrom)
+	public Fmi2StatusReply Reset(Fmi2Empty parseFrom)
 	{
 		fmiLog(FmiLogCategory.Protocol, "Reset not supported");
 		return error;
 	}
 
 	@Override
-	public Fmi2StatusReply SetDebugLogging(SetDebugLoggingRequest request)
+	public Fmi2StatusReply SetDebugLogging(Fmi2SetDebugLoggingRequest request)
 	{
 		loggingOn = request.getLoggingOn();
 		for (int i = 0; i < request.getCatogoriesCount(); i++)
@@ -388,7 +397,7 @@ public class CrescendoFmu implements IServiceProtocol
 	}
 
 	@Override
-	public Fmi2StatusReply SetReal(SetRealRequest request)
+	public Fmi2StatusReply SetReal(Fmi2SetRealRequest request)
 	{
 		for (int i = 0; i < request.getValueReferenceCount(); i++)
 		{
@@ -399,7 +408,7 @@ public class CrescendoFmu implements IServiceProtocol
 	}
 
 	@Override
-	public Fmi2StatusReply SetInteger(SetIntegerRequest request)
+	public Fmi2StatusReply SetInteger(Fmi2SetIntegerRequest request)
 	{
 		for (int i = 0; i < request.getValueReferenceCount(); i++)
 		{
@@ -410,7 +419,7 @@ public class CrescendoFmu implements IServiceProtocol
 	}
 
 	@Override
-	public Fmi2StatusReply SetBoolean(SetBooleanRequest request)
+	public Fmi2StatusReply SetBoolean(Fmi2SetBooleanRequest request)
 	{
 		for (int i = 0; i < request.getValueReferenceCount(); i++)
 		{
@@ -421,7 +430,7 @@ public class CrescendoFmu implements IServiceProtocol
 	}
 
 	@Override
-	public Fmi2StatusReply SetString(SetStringRequest parseFrom)
+	public Fmi2StatusReply SetString(Fmi2SetStringRequest parseFrom)
 	{
 		// TODO Auto-generated method stub
 		fmiLog(FmiLogCategory.Protocol, "SetString not supported");
@@ -429,7 +438,7 @@ public class CrescendoFmu implements IServiceProtocol
 	}
 
 	@Override
-	public Fmi2StatusReply SetupExperiment(SetupExperimentRequest parseFrom)
+	public Fmi2StatusReply SetupExperiment(Fmi2SetupExperimentRequest parseFrom)
 	{
 		return ok;
 	}
@@ -439,6 +448,59 @@ public class CrescendoFmu implements IServiceProtocol
 	{
 		e.printStackTrace();
 		fmiLog(FmiLogCategory.Protocol, "Internal error: "+e.getMessage());
+	}
+
+	@Override
+	public Fmi2StatusReply GetStatus(Fmi2StatusRequest request) {
+		// TODO Auto-generated method stub
+		fmiLog(FmiLogCategory.Protocol, "GetStatus not supported");
+		return discard;
+	}
+
+	@Override
+	public Fmi2RealStatusReply GetRealStatus(Fmi2StatusRequest request) {
+		
+		switch(request.getStatus())
+		{
+		case UNRECOGNIZED:
+			break;
+		case fmi2DoStepStatus:
+			break;
+		case fmi2LastSuccessfulTime:
+			return Fmi2RealStatusReply.newBuilder().setValue(time).build();
+		case fmi2PendingStatus:
+			break;
+		case fmi2Terminated:
+			break;
+		default:
+			break;
+		
+		}
+		
+		// TODO Auto-generated method stub
+		fmiLog(FmiLogCategory.Protocol, "GetRealStatus not supported");
+		return null;
+	}
+
+	@Override
+	public Fmi2IntegerStatusReply GetIntegerStatus(Fmi2StatusRequest request) {
+		// TODO Auto-generated method stub
+		fmiLog(FmiLogCategory.Protocol, "GetIntegerStatus not supported");
+		return null;
+	}
+
+	@Override
+	public Fmi2BooleanStatusReply GetBooleanStatus(Fmi2StatusRequest request) {
+		// TODO Auto-generated method stub
+		fmiLog(FmiLogCategory.Protocol, "GetBooleanStatus not supported");
+		return null;
+	}
+
+	@Override
+	public Fmi2StringStatusReply GetStringStatus(Fmi2StatusRequest request) {
+		// TODO Auto-generated method stub
+		fmiLog(FmiLogCategory.Protocol, "GetStringStatus not supported");
+		return null;
 	}
 
 }
