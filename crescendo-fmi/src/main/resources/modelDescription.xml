@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<fmiModelDescription fmiVersion="2.0" modelName="{modelName}"
+	guid="{guid}" description="{description}" author="{author}" version="Version 1"
+	copyright="Copyright Overture tool (Aarhus University)" license="Some Overture FMI License"
+
+	generationTool="Overture Tool FMI Exporter" generationDateAndTime="{generationDateAndTime}"
+	variableNamingConvention="flat" numberOfEventIndicators="0">
+
+	<VendorAnnotations>
+		<!-- Set VDM Settings and Properties here -->
+		<Release>vdm-10</Release>
+		<Dialect>vdm_rt</Dialect>
+	</VendorAnnotations>
+
+	<CoSimulation modelIdentifier="{modelIdentifier}"
+		needsExecutionTool="true" canHandleVariableCommunicationStepSize="true"
+		canInterpolateInputs="false" maxOutputDerivativeOrder="0"
+		canRunAsynchronuously="false" canBeInstantiatedOnlyOncePerProcess="true"
+		canNotUseMemoryManagementFunctions="true" canGetAndSetFMUstate="false"
+		canSerializeFMUstate="false" providesDirectionalDerivative="false" />
+
+	<SourceFiles>
+		<!-- Add VDM source files here, relative to source folder -->
+		<!-- File name="" / -->
+	</SourceFiles>
+
+	<LogCategories>
+		<Category name="logAll" />
+		<Category name="logError" />
+		<Category name="logFmiCall" />
+
+		<Category name="Protocol" />
+		<Category name="VdmOut" />
+		<Category name="VdmErr" />
+		<Category name="Error" />
+	</LogCategories>
+
+	<ModelVariables>
+
+		<!-- Add values here like -->
+		<!-- ScalarVariable name="Controller.maxLevel" valueReference="0" description="the 
+			max tank level" causality="parameter" variability="fixed" initial="exact"> 
+			<Real start="5" /> </ScalarVariable -->
+
+		<!-- Add inputs like -->
+
+		<ScalarVariable name="System.levelSensor.level"
+			valueReference="3" description="the tank level" causality="input"
+			variability="continuous">
+			<Real start="1" />
+		</ScalarVariable>
+
+		<!-- ScalarVariable name="System.valveActuator.valveState" valueReference="4" 
+			description="the tank valve state" causality="output" variability="discrete" 
+			initial="calculated"> <Boolean /> </ScalarVariable -->
+
+
+
+		<!-- Add outputs like -->
+		<!-- ScalarVariable name="System.valveActuator.valveState" valueReference="4" 
+			description="the tank valve state" causality="output" variability="discrete" 
+			initial="calculated"> <Boolean /> </ScalarVariable -->
+
+	</ModelVariables>
+
+	<ModelStructure>
+		<Outputs>
+			<!-- List all outputs here remember to use index and not value reference -->
+			<!-- Unknown index="2" / -->
+
+		</Outputs>
+
+	</ModelStructure>
+
+</fmiModelDescription>
