@@ -55,7 +55,6 @@
 			initial="calculated"> <Boolean /> </ScalarVariable -->
 
 
-
 		<!-- Add outputs like -->
 		<!-- ScalarVariable name="System.valveActuator.valveState" valueReference="4" 
 			description="the tank valve state" causality="output" variability="discrete" 
