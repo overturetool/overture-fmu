@@ -22,6 +22,8 @@ import org.destecs.core.vdmlink.LinkInfo;
 import org.destecs.core.vdmlink.Links;
 import org.destecs.protocol.structs.StepStructoutputsStruct;
 import org.destecs.protocol.structs.StepinputsStructParam;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
@@ -30,6 +32,8 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 public class StateCache {
+	
+	final static Logger logger = LoggerFactory.getLogger(StateCache.class);
 
 	final int size = 20;
 	public final double[] reals = new double[size];
@@ -68,6 +72,7 @@ public class StateCache {
 
 			inputs.add(new StepinputsStructParam(entry.getKey(), Arrays.asList(new Double[] { value }),
 					Arrays.asList(new Integer[] { 1 })));
+			logger.debug("Collecting inputs from cache name: '{}' value: '{}' size: '{}' valueref: '{}'",links.getBoundVariableInfo(entry.getKey()).getQualifiedNameString(),value,1,entry.getKey());
 		}
 
 		return inputs;
@@ -78,24 +83,33 @@ public class StateCache {
 			// System.out.println(String.format("\tOutput %s = %s", output.name,
 			// output.value.get(0)));
 			ExtendedLinkInfo link = (ExtendedLinkInfo) links.getLinks().get(output.name);
+			
+			Object vdmName = link.getQualifiedNameString();
 
 			int index = Integer.valueOf(output.name);
 			switch (link.type) {
 			case Boolean:
 				booleans[index] = output.value.get(0) > 0;
+				logger.debug("Sync output to fmi struct name: '{}' value: '{}' valueref: '{}'",vdmName,booleans[index],index);
 				break;
 			case Integer:
 				integers[index] = output.value.get(0).intValue();
+				logger.debug("Sync output to fmi struct name: '{}' value: '{}' valueref: '{}'",vdmName,integers[index],index);
 				break;
 			case Real:
 				reals[index] = output.value.get(0);
+				logger.debug("Sync output to fmi struct name: '{}' value: '{}' valueref: '{}'",vdmName,reals[index],index);
 				break;
 			case String:
+				
+				//logger.debug("Sync output to fmi struct name: '{}' value: '{}' valueref: '{}'",vdmName,strings[index],index);
 				break;
 			default:
 				break;
 
 			}
+			
+			
 
 		}
 
