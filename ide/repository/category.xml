@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <feature id="org.overture.fmi.ide.features.fmuexport">
+      <category name="mytool.category.id"/>
+   </feature>
+   <category-def name="mytool.category.id" label="My Tool">
+      <description>
+         My Eclipse tool built with Tycho
+      </description>
+   </category-def>
+</site>

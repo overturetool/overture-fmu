@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.ui.commands">
+      <command
+            defaultHandler="org.overture.ide.plugins.uml2.commands.Vdm2UmlCommand"
+            id="org.overture.ide.plugins.uml2.vdm2uml"
+            name="VDM to UML">
+      </command>
+       <command
+            defaultHandler="org.overture.ide.plugins.uml2.commands.Uml2VdmCommand"
+            id="org.overture.ide.plugins.uml2.uml2vdm"
+            name="UML to VDM">
+      </command>
+   </extension>
+   
+    <extension
+         point="org.eclipse.ui.menus">
+         <menuContribution
+           locationURI="popup:org.overture.ide.ui.VdmExplorer">
+        <menu
+              icon="icons/uml.png"
+              id="org.overture.ide.plugins.uml2"
+              label="UML Transformation">
+           <command
+                 commandId="org.overture.ide.plugins.uml2.vdm2uml"
+                 label="Convert to UML"
+                 style="push">
+              <visibleWhen
+                    checkEnabled="false">
+                 <iterate
+                       ifEmpty="false">
+                     
+                            <adapt
+                            type="org.overture.ide.core.resources.IVdmProject">
+                         
+                         <or>
+                         	<test
+	                               property="org.overture.ide.core.resources.dialect"
+	                               value="VDM_RT">
+	                        </test>
+	                        <test
+	                               property="org.overture.ide.core.resources.dialect"
+	                               value="VDM_PP">
+	                        </test>
+                         </or>
+                      </adapt>
+                       
+                 </iterate>
+              </visibleWhen>
+           </command>
+           
+            <command
+                 commandId="org.overture.ide.plugins.uml2.uml2vdm"
+                 label="Convert to VDM"
+                 style="push">
+              <visibleWhen
+                    checkEnabled="false">
+                 <iterate
+                       ifEmpty="false">
+                     
+                            <adapt type="org.eclipse.core.resources.IResource">
+                               <test
+                                     property="org.eclipse.core.resources.extension"
+                                     value="uml">
+                               </test>
+                            </adapt>
+                       
+                 </iterate>
+              </visibleWhen>
+           </command>
+        </menu>
+     </menuContribution>
+   </extension>
+    <extension
+          point="org.eclipse.ui.bindings">
+       <key
+             commandId="org.overture.ide.plugins.uml2.vdm2uml"
+             contextId="org.eclipse.ui.contexts.window"
+             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+             sequence="Ctrl+Alt+E">
+       </key>
+       
+        <key
+             commandId="org.overture.ide.plugins.uml2.uml2vdm"
+             contextId="org.eclipse.ui.contexts.window"
+             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+             sequence="Ctrl+Alt+I">
+       </key>
+    </extension>
+    
+    <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            category="org.overture.ide.ui.vdm"
+            class="org.overture.ide.plugins.uml2.preferences.WorkbenchPreferencePageMain"
+            id="org.overture.ide.plugins.uml2.pageMain"
+            name="UML Translation">
+      </page>
+    </extension>	
+
+</plugin>
