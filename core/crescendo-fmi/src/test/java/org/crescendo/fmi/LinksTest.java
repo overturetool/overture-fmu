@@ -20,5 +20,7 @@ public class LinksTest {
 				new File("src/test/resources/modelDescription.xml".replace('/', File.separatorChar)));
 
 		Assert.assertEquals(1, state.collectInputsFromCache().size());
+		
+		Assert.assertEquals("System.levelSensor.level", state.links.getBoundVariableInfo("3").getQualifiedNameString());
 	}
 }
