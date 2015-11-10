@@ -134,7 +134,7 @@ public class StateCache {
 
 			String name = null;
 
-			NodeList nameNodes = lookup(doc, xpath, "/fmiModelDescription/Overture/link[@valueReference='" + valRef + "']/@name");
+			NodeList nameNodes = lookup(doc, xpath, "/fmiModelDescription/VendorAnnotations/Tool[@name='Overture']/Overture/link[@valueReference='" + valRef + "']/@name");
 			if (nameNodes != null && nameNodes.getLength() > 0) {
 
 				name = nameNodes.item(0).getNodeValue();
