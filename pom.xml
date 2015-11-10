@@ -12,36 +12,44 @@
 	<artifactId>fmi</artifactId>
 	<packaging>pom</packaging>
 	<name>fmi</name>
-<version>2.0.7-SNAPSHOT</version>
+	<version>2.0.7-SNAPSHOT</version>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
+
 	<repositories>
 
-<repository>
-        <id>overture.au.dk</id>
-        <name>overture.au.dk-releases</name>
-        <url>http://overture.au.dk/artifactory/crescendo-development</url>
+    <!--repository>
+				<id>overture.au.dk</id>
+				<name>overture.au.dk-releases</name>
+				<url>http://overture.au.dk/artifactory/into-cps</url>
+				</repository-->
+
+		<repository>
+      <id>crescendo-development</id>
+      <name>crescendo-development</name>
+      <url>http://overture.au.dk/artifactory/crescendo-development</url>
     </repository>
 
 
 		<!-- repository> <id>mxtelecom</id> <name>mxtelecom.com</name> <url>http://opensource.mxtelecom.com/maven/repo</url> 
-			</repository -->
+				 </repository -->
 	</repositories>
 
 
 	<modules>
-		<module>native-fmi</module>
-		<module>java-fmi</module>
-	
+		<!--module>native-fmi</module-->
+		<!--module>java-fmi</module-->
+		<module>crescendo-fmi</module>
+		
 	</modules>
 
 
 	<build>
 
-	<!-- Configuration of plugins for inheriting pom.xml files should
+		<!-- Configuration of plugins for inheriting pom.xml files should
          be in the pluginManagement tag
     -->
 		<pluginManagement>
