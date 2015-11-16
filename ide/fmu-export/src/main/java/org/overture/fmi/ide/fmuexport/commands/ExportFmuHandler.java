@@ -182,11 +182,11 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 					copyFmuWrapper(thisFmu, project.getName(), project);
 
 					//TODOfmus.getLocation().toFile().getAbsolutePath()					+ File.separatorChar + project.getName() + ".7z";
-					final File fmuArchieveName =new File( outputContainer.getProject().getLocation().toFile().getAbsolutePath()
-							+ File.separatorChar + project.getName() + ".fmu");
+					//new File( outputContainer.getProject().getLocation().toFile().getAbsolutePath()
+					
+					final File fmuArchieveName =new File(fmus.getLocation().toFile().getAbsolutePath()+File.separatorChar+ File.separatorChar + project.getName() + ".fmu");
 					final File fmuFolderPath = thisFmu.getLocation().toFile();
 					
-					final IFolder fmuFolder = thisFmu;
 					final IResource outputFolder = outputContainer.getProject();;
 
 					Job job = new Job("Compressing FMU")
@@ -201,7 +201,7 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 								//new CompressNonGeneric7z().compress(fmuArchieveName, fmuFolderPath);
 								FmuCompressor.compress(fmuFolderPath, fmuArchieveName);
 //								fmuFolder.delete(true, null);
-//								outputFolder.refreshLocal(0, null);
+								outputFolder.refreshLocal(0, null);
 								monitor.done();
 							} catch (Exception e)
 							{
