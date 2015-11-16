@@ -20,6 +20,7 @@
               label="Overture FMU">
            <command
                  commandId="org.overture.fmi.ide.fmuexport.export"
+                 icon="icons/zip.png"
                  label="Export FMU"
                  style="push">
               <visibleWhen
