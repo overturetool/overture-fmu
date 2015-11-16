@@ -4,15 +4,11 @@
    <extension
          point="org.eclipse.ui.commands">
       <command
-            defaultHandler="org.overture.ide.plugins.uml2.commands.Vdm2UmlCommand"
-            id="org.overture.ide.plugins.uml2.vdm2uml"
-            name="VDM to UML">
+            defaultHandler="org.overture.fmi.ide.fmuexport.commands.ExportFmuHandler"
+            id="org.overture.fmi.ide.fmuexport.export"
+            name="Export FMU">
       </command>
-       <command
-            defaultHandler="org.overture.ide.plugins.uml2.commands.Uml2VdmCommand"
-            id="org.overture.ide.plugins.uml2.uml2vdm"
-            name="UML to VDM">
-      </command>
+      
    </extension>
    
     <extension
@@ -20,12 +16,11 @@
          <menuContribution
            locationURI="popup:org.overture.ide.ui.VdmExplorer">
         <menu
-              icon="icons/uml.png"
-              id="org.overture.ide.plugins.uml2"
-              label="UML Transformation">
+              id="org.overture.fmi.ide.fmuexport"
+              label="Overture FMU">
            <command
-                 commandId="org.overture.ide.plugins.uml2.vdm2uml"
-                 label="Convert to UML"
+                 commandId="org.overture.fmi.ide.fmuexport.export"
+                 label="Export FMU"
                  style="push">
               <visibleWhen
                     checkEnabled="false">
@@ -40,10 +35,6 @@
 	                               property="org.overture.ide.core.resources.dialect"
 	                               value="VDM_RT">
 	                        </test>
-	                        <test
-	                               property="org.overture.ide.core.resources.dialect"
-	                               value="VDM_PP">
-	                        </test>
                          </or>
                       </adapt>
                        
@@ -51,29 +42,20 @@
               </visibleWhen>
            </command>
            
-            <command
-                 commandId="org.overture.ide.plugins.uml2.uml2vdm"
-                 label="Convert to VDM"
-                 style="push">
-              <visibleWhen
-                    checkEnabled="false">
-                 <iterate
-                       ifEmpty="false">
-                     
-                            <adapt type="org.eclipse.core.resources.IResource">
-                               <test
-                                     property="org.eclipse.core.resources.extension"
-                                     value="uml">
-                               </test>
-                            </adapt>
-                       
-                 </iterate>
-              </visibleWhen>
-           </command>
+           
         </menu>
      </menuContribution>
    </extension>
     <extension
+          point="org.eclipse.ui.handlers">
+          
+           <handler
+            class="org.overture.fmi.ide.fmuexport.commands.ExportFmuHandler"
+            commandId="org.overture.fmi.ide.fmuexport.export">
+         
+      </handler>
+    </extension>
+    <!--extension
           point="org.eclipse.ui.bindings">
        <key
              commandId="org.overture.ide.plugins.uml2.vdm2uml"
@@ -98,6 +80,6 @@
             id="org.overture.ide.plugins.uml2.pageMain"
             name="UML Translation">
       </page>
-    </extension>	
+    </extension-->	
 
 </plugin>

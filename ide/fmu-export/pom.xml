@@ -1,5 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
@@ -10,7 +9,7 @@
 	</parent>
 
 	<packaging>eclipse-plugin</packaging>
-<groupId>org.overturetool.fmi.ide</groupId>
+	<groupId>org.overturetool.fmi.ide</groupId>
 
 	<artifactId>org.overture.fmi.ide.fmuexport</artifactId>
 	<name>FMU Export</name>
@@ -29,7 +28,7 @@
 					</includes>
 				</configuration>
 			</plugin>
-			<!--plugin>
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
 				<executions>
@@ -47,16 +46,85 @@
 							<stripVersion>true</stripVersion>
 							<artifactItems>
 								<artifactItem>
-									<groupId>org.overturetool.core.prettyprinting</groupId>
-									<artifactId>prettyprinter</artifactId>
+									<groupId>org.overturetool.fmi.core</groupId>
+									<artifactId>fmi-interpreter</artifactId>
+									<type>jar</type>
+									<classifier>jar-with-dependencies</classifier>
 									<version>${project.version}</version>
 								</artifactItem>
+
+								<artifactItem>
+									<groupId>org.overturetool.fmi.core</groupId>
+									<artifactId>fmi-interpreter</artifactId>
+									<type>jar</type>
+									<version>${project.version}</version>
+								</artifactItem>
+
+
+								<!-- Parser stuff -->
+
+								<artifactItem>
+									<groupId>org.overturetool.fmi.core</groupId>
+									<artifactId>annotation-parser</artifactId>
+									<type>jar</type>
+									<version>${project.version}</version>
+								</artifactItem>
+
+								<artifactItem>
+									<groupId>org.antlr</groupId>
+									<artifactId>antlr-runtime</artifactId>
+									<version>3.5.2</version>
+								</artifactItem>
+
+
+								<artifactItem>
+									<groupId>org.destecs.core</groupId>
+									<artifactId>parsers</artifactId>
+									<version>2.0.7-SNAPSHOT</version>
+								</artifactItem>
 								
+								
+								<!-- compression 7z -->
+<!-- artifactItem>
+    <groupId>net.sf.sevenzipjbinding</groupId>
+    <artifactId>sevenzipjbinding</artifactId>
+    <version>9.20-2.00beta</version>
+</artifactItem>
+<artifactItem>
+    <groupId>net.sf.sevenzipjbinding</groupId>
+    <artifactId>sevenzipjbinding-all-platforms</artifactId>
+    <version>9.20-2.00beta</version>
+</artifactItem-->
+
+  <artifactItem>
+	<groupId>org.apache.commons</groupId>
+	<artifactId>commons-compress</artifactId>
+	<version>1.8</version>
+</artifactItem>
+
+
+  <artifactItem>
+	<groupId>org.tukaani</groupId>
+	<artifactId>xz</artifactId>
+	<version>1.5</version>
+</artifactItem>
+
+
+
+
+
+<artifactItem>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+<version>2.4</version>
+		</artifactItem>
+
+
 							</artifactItems>
 						</configuration>
 					</execution>
 				</executions>
-			</plugin-->
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-clean-plugin</artifactId>

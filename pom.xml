@@ -30,11 +30,33 @@
 				<url>http://overture.au.dk/artifactory/into-cps</url>
 				</repository-->
 
+	<!--repository>
+      <id>into-cps.au.dk</id>
+      <name>overture.au.dk-releases</name>
+      <url>http://overture.au.dk/artifactory/into-cps</url>
+    </repository-->
+
+
 		<repository>
 			<id>crescendo-development</id>
 			<name>crescendo-development</name>
 			<url>http://overture.au.dk/artifactory/crescendo-development</url>
 		</repository>
+
+
+
+    <repository>
+      <id>intocps-development</id>
+      <name>intocps-development</name>
+      <url>http://overture.au.dk/artifactory/into-cps</url>
+    </repository>
+
+
+ <!--repository>
+      <id>overture.au.dk Eclipse P2 repo for overture crescendo development</id>
+      <url>http://overture.au.dk/p2/crescendo-overture-development/</url>
+      <layout>p2</layout>
+    </repository-->
 
 
 		<!-- repository> <id>mxtelecom</id> <name>mxtelecom.com</name> <url>http://opensource.mxtelecom.com/maven/repo</url> 

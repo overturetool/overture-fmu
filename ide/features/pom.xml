@@ -13,7 +13,7 @@
 
   <groupId>org.overturetool.fmi.ide</groupId>
   <artifactId>org.overture.fmi.ide.features</artifactId>
-  <name>Overture IDE Eclipse plugin features</name>
+  <name>Overture IDE Eclipse FMI features</name>
   
   <modules>
    <module>fmu-export</module>

@@ -3,18 +3,19 @@ Bundle-Vendor: Overture
 Bundle-ActivationPolicy: lazy
 Bundle-Version: 0.0.1.qualifier
 Eclipse-BuddyPolicy: registered
-Bundle-Name: UML2 Translator
+Bundle-Name: Overture FMU Exporter
 Bundle-ManifestVersion: 2
 Bundle-SymbolicName: org.overture.fmi.ide.fmuexport;singleton:=true
 Require-Bundle: org.eclipse.ui.console,
  org.overture.ide.ui,
  org.overture.ide.core,
- org.overture.ide.debug,
- org.eclipse.uml2.common;bundle-version="1.7.0",
- org.eclipse.uml2.uml;bundle-version="4.0.1",
  org.overture.ide.builders.vdmj;bundle-version="2.0.0"
-Bundle-Activator: org.overture.ide.plugins.uml2.Activator
+Bundle-Activator: org.overture.fmi.ide.fmuexport.FmuExportPlugin
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ClassPath: .,
- jars/prettyprinter.jar
+ jars/fmi-interpreter.jar,
+ jars/annotation-parser.jar,
+ jars/antlr-runtime.jar,
+ jars/parsers.jar,
+ jars/commons-io.jar
 

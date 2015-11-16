@@ -19,7 +19,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #~%
  */
-package org.overture.ide.plugins.uml2;
+package org.overture.fmi.ide.fmuexport;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -27,19 +27,19 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
-public class Activator extends AbstractUIPlugin
+public class FmuExportPlugin extends AbstractUIPlugin
 {
 
 	// The plug-in ID
-	//public static final String PLUGIN_ID = IUml2Constants.PLUGIN_ID;
+	public static final String PLUGIN_ID = IFmuExport.PLUGIN_ID;
 
 	// The shared instance
-	private static Activator plugin;
+	private static FmuExportPlugin plugin;
 
 	/**
 	 * The constructor
 	 */
-	public Activator()
+	public FmuExportPlugin()
 	{
 	}
 
@@ -70,19 +70,19 @@ public class Activator extends AbstractUIPlugin
 	 * 
 	 * @return the shared instance
 	 */
-	public static Activator getDefault()
+	public static FmuExportPlugin getDefault()
 	{
 		return plugin;
 	}
 
 	public static void log(Exception exception)
 	{
-	//	getDefault().getLog().log(new Status(IStatus.ERROR, IUml2Constants.PLUGIN_ID, "UMLPlugin", exception));
+		getDefault().getLog().log(new Status(IStatus.ERROR, IFmuExport.PLUGIN_ID, "FMUExportPlugin", exception));
 	}
 
 	public static void log(String message, Exception exception)
 	{
-		//getDefault().getLog().log(new Status(IStatus.ERROR, IUml2Constants.PLUGIN_ID, message, exception));
+		getDefault().getLog().log(new Status(IStatus.ERROR, IFmuExport.PLUGIN_ID, message, exception));
 	}
 
 	/**

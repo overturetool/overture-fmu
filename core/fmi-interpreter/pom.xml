@@ -1,0 +1,144 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.overturetool.fmi</groupId>
+		<artifactId>core</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
+
+	<groupId>org.overturetool.fmi.core</groupId>
+	<artifactId>fmi-interpreter</artifactId>
+	<name>Fmi interface for the Crescendo Interpreter</name>
+
+	<!--repositories> <repository> <id>intocps-development</id> <name>intocps-development</name> <url>http://overture.au.dk/artifactory/into-cps</url> </repository> </repositories -->
+
+	<dependencies>
+		<dependency>
+			<groupId>org.destecs.core</groupId>
+			<artifactId>vdm</artifactId>
+			<version>${crescendo.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.11</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.intocps.java.fmi</groupId>
+			<artifactId>fmi-shm-server</artifactId>
+			<version>${intocps.shm.version}</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+
+		<plugins>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>prepare</id>
+						<phase>validate</phase>
+						<configuration>
+							<tasks>
+							<taskdef resource="net/sf/antcontrib/antcontrib.properties" />
+							<if>
+                                <available file="src/main/resources/fmu-shm-api/linux64"/>
+                                <then>
+                                  <echo>The VDM FMU wrapper file exists</echo>
+                                </then>
+
+                                <else>
+                                  <echo message="Download pre-build VDM FMU wrapper, it is missing..." />
+								<get src="http://overture.au.dk/into-cps/vdm-tool-wrapper/development/latest/vdm-tool-wrapper.zip" dest="target" verbose="true" usetimestamp="true" />
+								<unzip src="target/vdm-tool-wrapper.zip" dest="src/main/resources/fmu-shm-api/">
+									<patternset>
+										<include name="**/binaries/*/*.so" />
+										<include name="**/binaries/*/*.dylib" />
+										<include name="**/binaries/*/*.dll" />
+									</patternset>
+									<cutdirsmapper dirs="2"/>
+								</unzip>
+                                </else>
+                            </if>
+                                
+								
+
+							</tasks>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+				
+				 <dependencies>
+                <dependency>
+                    <groupId>ant-contrib</groupId>
+                    <artifactId>ant-contrib</artifactId>
+                    <version>20020829</version>
+                </dependency>
+            </dependencies>
+			</plugin>
+
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<addClasspath>true</addClasspath>
+							<mainClass>org.crescendo.fmi.ShmServer</mainClass>
+						</manifest>
+					</archive>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-my-jar-with-dependencies</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+
+		<pluginManagement>
+			<plugins>
+				<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>org.apache.maven.plugins</groupId>
+										<artifactId>maven-antrun-plugin</artifactId>
+										<versionRange>[1.7,)</versionRange>
+										<goals>
+											<goal>run</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore></ignore>
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+</project>
