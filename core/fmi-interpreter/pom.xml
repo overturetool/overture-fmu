@@ -37,7 +37,7 @@
 
 		<plugins>
 
-			<plugin>
+			<!--plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-antrun-plugin</artifactId>
 				<executions>
@@ -46,27 +46,27 @@
 						<phase>validate</phase>
 						<configuration>
 							<tasks>
-							<taskdef resource="net/sf/antcontrib/antcontrib.properties" />
-							<if>
-                                <available file="src/main/resources/fmu-shm-api/linux64"/>
-                                <then>
-                                  <echo>The VDM FMU wrapper file exists</echo>
-                                </then>
+								<taskdef resource="net/sf/antcontrib/antcontrib.properties" />
+								<if>
+                  <available file="src/main/resources/fmu-shm-api/linux64"/>
+                  <then>
+                    <echo>The VDM FMU wrapper file exists</echo>
+                  </then>
 
-                                <else>
-                                  <echo message="Download pre-build VDM FMU wrapper, it is missing..." />
-								<get src="http://overture.au.dk/into-cps/vdm-tool-wrapper/development/latest/vdm-tool-wrapper.zip" dest="target" verbose="true" usetimestamp="true" />
-								<unzip src="target/vdm-tool-wrapper.zip" dest="src/main/resources/fmu-shm-api/">
-									<patternset>
-										<include name="**/binaries/*/*.so" />
-										<include name="**/binaries/*/*.dylib" />
-										<include name="**/binaries/*/*.dll" />
-									</patternset>
-									<cutdirsmapper dirs="2"/>
-								</unzip>
-                                </else>
-                            </if>
-                                
+                  <else>
+                    <echo message="Download pre-build VDM FMU wrapper, it is missing..." />
+										<get src="http://overture.au.dk/into-cps/vdm-tool-wrapper/development/latest/vdm-tool-wrapper.zip" dest="target" verbose="true" usetimestamp="true" />
+										<unzip src="target/vdm-tool-wrapper.zip" dest="src/main/resources/fmu-shm-api/">
+											<patternset>
+												<include name="**/binaries/*/*.so" />
+												<include name="**/binaries/*/*.dylib" />
+												<include name="**/binaries/*/*.dll" />
+											</patternset>
+											<cutdirsmapper dirs="2"/>
+										</unzip>
+                  </else>
+                </if>
+                
 								
 
 							</tasks>
@@ -77,14 +77,14 @@
 					</execution>
 				</executions>
 				
-				 <dependencies>
-                <dependency>
-                    <groupId>ant-contrib</groupId>
-                    <artifactId>ant-contrib</artifactId>
-                    <version>20020829</version>
-                </dependency>
-            </dependencies>
-			</plugin>
+				<dependencies>
+          <dependency>
+            <groupId>ant-contrib</groupId>
+            <artifactId>ant-contrib</artifactId>
+            <version>20020829</version>
+          </dependency>
+        </dependencies>
+			</plugin-->
 
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
