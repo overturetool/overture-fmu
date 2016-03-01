@@ -186,8 +186,6 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 							+ File.separatorChar + project.getName() + ".fmu");
 					final File fmuFolderPath = thisFmu.getLocation().toFile();
 					
-					final IFolder fmuFolder = thisFmu;
-					final IResource outputFolder = outputContainer.getProject();;
 
 					Job job = new Job("Compressing FMU")
 					{

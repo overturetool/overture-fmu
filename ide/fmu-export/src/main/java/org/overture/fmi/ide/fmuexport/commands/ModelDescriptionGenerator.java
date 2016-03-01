@@ -41,13 +41,11 @@ public class ModelDescriptionGenerator
 	
 	final static String linkTemplate = "\t\t\t\t<link valueReference=\"%d\" name=\"%s\" />\n";
 
-	private final ClassList ast;
 	private final ASystemClassDefinition system;
 
 	public ModelDescriptionGenerator(ClassList classList,
 			ASystemClassDefinition system)
 	{
-		this.ast = classList;
 		this.system = system;
 	}
 
