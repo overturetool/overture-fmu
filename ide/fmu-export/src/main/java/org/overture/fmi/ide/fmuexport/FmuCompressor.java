@@ -36,7 +36,7 @@ public class FmuCompressor
 			base = "";
 		} else
 		{
-			base += File.separatorChar;
+			base += "/";
 		}
 
 		for (File child : folder.listFiles())
