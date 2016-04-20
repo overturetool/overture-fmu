@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Vector;
 
+import org.apache.commons.io.FileUtils;
 import org.destecs.core.vdmlink.LinkInfo;
 import org.destecs.protocol.exceptions.RemoteSimulationException;
 import org.destecs.protocol.structs.StepStruct;
@@ -352,13 +353,7 @@ public class CrescendoFmu implements IServiceProtocol
 			File sourceRoot = new File(root, "sources");
 			System.out.println("Source root: " + sourceRoot);
 
-			for (File file : sourceRoot.listFiles())
-			{
-				if (file.getName().endsWith(".vdmrt"))
-				{
-					specfiles.add(file);
-				}
-			}
+			specfiles.addAll(FileUtils.listFiles(sourceRoot, new String[]{"vdmrt"},true));
 
 			File linkFile = new File(root, "modelDescription.xml".replace('/', File.separatorChar));
 			File baseDirFile = new File(".");
@@ -402,7 +397,8 @@ public class CrescendoFmu implements IServiceProtocol
 		for (int i = 0; i < request.getValueReferenceCount(); i++)
 		{
 			long id = request.getValueReference(i);
-			state.reals[new Long(id).intValue()] = request.getValues(i);
+			logger.trace("Setting real[{}] = {}",(int)id,request.getValues(i));
+			state.reals[(int)id] = request.getValues(i);
 		}
 		return ok;
 	}
