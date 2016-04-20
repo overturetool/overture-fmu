@@ -15,10 +15,15 @@ public class FmuAnnotation
 		this.name = name;
 
 	}
-	
-	
+
 	public CommonTree getTree()
 	{
 		return tree;
+	}
+
+	@Override
+	public String toString()
+	{
+		return "Anotation name: '" + name + "' type: '" + type + "'";
 	}
 }
