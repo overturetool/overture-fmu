@@ -83,7 +83,12 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 				IVdmProject project = (IVdmProject) a.getAdapter(IVdmProject.class);
 				if (project != null)
 				{
-					exportFmu(project, myConsole, HandlerUtil.getActiveShell(event));
+					try
+					{
+						exportFmu(project, myConsole, HandlerUtil.getActiveShell(event));
+					} catch (AbortException e)
+					{
+					}
 				}
 			}
 		}
@@ -105,7 +110,7 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 	}
 
 	private void exportFmu(IVdmProject project, MessageConsole myConsole,
-			Shell shell)
+			Shell shell) throws AbortException
 	{
 		MessageConsoleStream out = myConsole.newMessageStream();
 		MessageConsoleStream err = myConsole.newMessageStream();

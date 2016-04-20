@@ -2,6 +2,7 @@ package org.overture.fmi.ide.fmuexport.commands;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -38,8 +39,11 @@ public class ModelDescriptionGenerator
 	final static String scalarVariableStringTypeTemplate = "<String %s />";
 
 	final static String scalarVariableStartTemplate = "start=\"%s\"";
-	
+
 	final static String linkTemplate = "\t\t\t\t<link valueReference=\"%d\" name=\"%s\" />\n";
+
+	public final static String INTERFACE_CLASSNAME = "HardwareInterface";
+	public final static String INTERFACE_INSTANCE_NAME = "hwi";
 
 	private final ASystemClassDefinition system;
 
@@ -50,10 +54,29 @@ public class ModelDescriptionGenerator
 	}
 
 	public String generate(
-			Map<PDefinition, FmuAnnotation> definitionAnnotation,IVdmProject project,
-			MessageConsoleStream out, MessageConsoleStream err) throws IOException, CoreException
+			Map<PDefinition, FmuAnnotation> definitionAnnotation,
+			IVdmProject project, MessageConsoleStream out,
+			MessageConsoleStream err) throws AbortException, CoreException,
+			IOException
 	{
-		// ok we only implement system 0 level search now
+		boolean found = false;
+		for (PDefinition def : system.getDefinitions())
+		{
+			if (def instanceof AInstanceVariableDefinition
+					&& INTERFACE_INSTANCE_NAME.equals(def.getName().getName()))
+			{
+				found = true;
+			}
+		}
+
+		if (!found)
+		{
+			String message = "Unable to locate " + system.getName().getName()
+					+ "`" + INTERFACE_INSTANCE_NAME + " with type: '"
+					+ INTERFACE_CLASSNAME + "'";
+			err.println(message);
+			throw new AbortException(message);
+		}
 
 		List<String> scalarVariables = new Vector<String>();
 		Set<Integer> outputIndices = new HashSet<Integer>();
@@ -64,9 +87,19 @@ public class ModelDescriptionGenerator
 		{
 			for (Entry<PDefinition, FmuAnnotation> link : definitionAnnotation.entrySet())
 			{
-				// filter to system
+				// filter to system and HardwareInterface
+
+				if (Arrays.asList(new String[] { "output", "input" }).contains(link.getValue().type)
+						&& !INTERFACE_CLASSNAME.equals(link.getKey().getClassDefinition().getName().getName()))
+				{
+					err.println("WARNING: Skipping " + link.getValue().name
+							+ " of type " + link.getValue().type + " -- "
+							+ link.getKey().getName());
+					continue;
+				}
+
 				int vr = variableReference++;
-				String scalarVariable = createScalarVariable(vr, link.getKey(), link.getValue(),sbLinks);
+				String scalarVariable = createScalarVariable(vr, link.getKey(), link.getValue(), sbLinks);
 				scalarVariables.add(scalarVariable);
 				if (link.getValue().type.equals("output"))
 				{
@@ -82,83 +115,84 @@ public class ModelDescriptionGenerator
 		{
 			String sv = scalarVariables.get(i);
 
-			sbScalarVariables.append(String.format("\t\t<!-- Index %d -->\n", i+1));
+			sbScalarVariables.append(String.format("\t\t<!-- Index %d -->\n", i + 1));
 			sbScalarVariables.append("\t\t" + sv + "\n");
 		}
-		
-		
+
 		StringBuffer sbOutputs = new StringBuffer();
 
 		for (Integer integer : outputIndices)
 		{
-			sbOutputs.append(String.format("\t\t\t<Unknown index=\"%d\"  />",integer));
+			sbOutputs.append(String.format("\t\t\t<Unknown index=\"%d\"  />", integer));
 		}
-		
+
 		StringBuffer sbSourceFiles = new StringBuffer();
-		
+
 		for (IVdmSourceUnit source : project.getSpecFiles())
 		{
 			sbSourceFiles.append(String.format("\t\t\t\t<File name=\"%s\" />\n", source.getFile().getProjectRelativePath()));
 		}
-		
-		
+
 		final String modelDescriptionTemplate = PluginFolderInclude.readFile(IFmuExport.PLUGIN_ID, "includes/modelDescriptionTemplate.xml");
-		
+
 		String modelDescription = modelDescriptionTemplate.replace("<!-- {SCALARVARIABLES} -->", sbScalarVariables.toString());
 		modelDescription = modelDescription.replace("<!-- {OUTPUTS} -->", sbOutputs.toString());
 		modelDescription = modelDescription.replace("<!-- {LINKS} -->", sbLinks.toString());
 		modelDescription = modelDescription.replace("<!-- {SourceFiles} -->", sbSourceFiles.toString());
-		
+
 		modelDescription = modelDescription.replace("{modelName}", project.getName());
 		modelDescription = modelDescription.replace("{modelIdentifier}", project.getName());
 		modelDescription = modelDescription.replace("{description}", "");
 		modelDescription = modelDescription.replace("{author}", "");
-		modelDescription = modelDescription.replace("{guid}", "{"+java.util.UUID.randomUUID().toString()+"}");
-		
+		modelDescription = modelDescription.replace("{guid}", "{"
+				+ java.util.UUID.randomUUID().toString() + "}");
+
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 		String date = sdf.format(new Date());
-		out.println("Setting generation data to: "+date);
-//		Date d = sdf.parse(date);
-		
+		out.println("Setting generation data to: " + date);
+		// Date d = sdf.parse(date);
+
 		modelDescription = modelDescription.replace("{generationDateAndTime}", date);
-		
-		
 
 		return modelDescription;
 	}
 
 	private String createScalarVariable(int valueReference,
-			PDefinition definition, FmuAnnotation annotation, StringBuffer sbLinks)
+			PDefinition definition, FmuAnnotation annotation,
+			StringBuffer sbLinks)
 	{
-		
 
 		if (definition instanceof AValueDefinition)
 		{
-		
+
 			// parameter generation
 			AValueDefinition vDef = (AValueDefinition) definition;
-			
-			String name = (annotation.name != null ? annotation.name
-					: definition.getLocation().getModule() + "."
-							+ vDef.getPattern());
 
-			sbLinks.append(String.format(linkTemplate,valueReference,definition.getLocation().getModule() + "."
-					+ vDef.getPattern()));
-			
+			String name = annotation.name != null ? annotation.name
+					: definition.getLocation().getModule() + "."
+							+ vDef.getPattern();
+
+			sbLinks.append(String.format(linkTemplate, valueReference, definition.getLocation().getModule()
+					+ "." + vDef.getPattern()));
+
 			String type = getType(vDef.getType(), "" + vDef.getExpression());
 			return String.format(scalarVariableTemplate, name, valueReference, "parameter", "fixed", "exact", type);
 		} else if (definition instanceof AInstanceVariableDefinition)
 		{
-			String name = (annotation.name != null ? annotation.name
+			String name = annotation.name != null ? annotation.name
 					: definition.getLocation().getModule() + "."
-							+ definition.getName().getFullName());
-			
-			sbLinks.append(String.format(linkTemplate,valueReference,system.getName().getName()+"."+definition.getName().getName()));
+							+ definition.getName().getFullName();
+
+			sbLinks.append(String.format(linkTemplate, valueReference, system.getName().getName()
+					+ "."
+					+ INTERFACE_INSTANCE_NAME
+					+ "."
+					+ definition.getName().getName()));
 			if (annotation.type.equals("output"))
 			{
 				AInstanceVariableDefinition vDef = (AInstanceVariableDefinition) definition;
 				String type = getType(vDef.getType(), null);
-				return String.format(scalarVariableTemplate, name, valueReference, "output", "discrete", "calculated",type);
+				return String.format(scalarVariableTemplate, name, valueReference, "output", "discrete", "calculated", type);
 
 			} else if (annotation.type.equals("input"))
 			{
@@ -182,7 +216,9 @@ public class ModelDescriptionGenerator
 		{
 			typeTemplate = scalarVariableRealTypeTemplate;
 			if (initial != null && !initial.contains("."))
+			{
 				initial += ".0";
+			}
 		} else if (type instanceof ABooleanBasicType)
 		{
 			typeTemplate = scalarVariableBooleanTypeTemplate;
@@ -195,8 +231,8 @@ public class ModelDescriptionGenerator
 
 		// TODO add string
 
-		String start = (initial != null ? String.format(scalarVariableStartTemplate, initial)
-				: "");
+		String start = initial != null ? String.format(scalarVariableStartTemplate, initial)
+				: "";
 		return String.format(typeTemplate, start);
 	}
 
