@@ -12,10 +12,12 @@ import java.util.Map.Entry;
 
 import org.destecs.core.parsers.IError;
 import org.eclipse.core.commands.ExecutionEvent;
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceVisitor;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -181,11 +183,9 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 
 					copyFmuWrapper(thisFmu, project.getName(), project);
 
-					//TODOfmus.getLocation().toFile().getAbsolutePath()					+ File.separatorChar + project.getName() + ".7z";
-					final File fmuArchieveName =new File( outputContainer.getProject().getLocation().toFile().getAbsolutePath()
+					final File fmuArchieveName = new File(outputContainer.getProject().getLocation().toFile().getAbsolutePath()
 							+ File.separatorChar + project.getName() + ".fmu");
 					final File fmuFolderPath = thisFmu.getLocation().toFile();
-					
 
 					Job job = new Job("Compressing FMU")
 					{
@@ -196,19 +196,16 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 							try
 							{
 								monitor.beginTask("Compressing", IProgressMonitor.UNKNOWN);
-								//new CompressNonGeneric7z().compress(fmuArchieveName, fmuFolderPath);
 								FmuCompressor.compress(fmuFolderPath, fmuArchieveName);
-//								fmuFolder.delete(true, null);
-//								outputFolder.refreshLocal(0, null);
 								monitor.done();
 							} catch (Exception e)
 							{
-								return new Status(Status.ERROR,IFmuExport.PLUGIN_ID,"Error compressing fmu",e);
+								return new Status(Status.ERROR, IFmuExport.PLUGIN_ID, "Error compressing fmu", e);
 							}
 							return Status.OK_STATUS;
 						}
 					};
-					
+
 					job.schedule(0);
 
 					// PluginFolderInclude.writeFile(libFolder, newName, io);
@@ -234,7 +231,7 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 	private void copyFmuWrapper(IFolder thisFmu, String name,
 			IVdmProject project) throws CoreException, IOException
 	{
-		IFolder resourcesFolder = thisFmu.getFolder("resources");
+		final IFolder resourcesFolder = thisFmu.getFolder("resources");
 		if (!resourcesFolder.exists())
 		{
 			resourcesFolder.create(IResource.NONE, true, null);
@@ -255,18 +252,20 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 		}
 
 		IFile config = resourcesFolder.getFile("config.txt");
-		if (!config.exists())
+		if (config.exists())
 		{
-			StringBuffer sb = new StringBuffer();
-			sb.append("false\n");
-			sb.append("java\n");
-			sb.append("-jar\n");
-			sb.append(interpreterJarName + "\n");
-			sb.append("-p");
-			byte[] bytes = sb.toString().getBytes("UTF-8");
-			InputStream source = new ByteArrayInputStream(bytes);
-			config.create(source, IResource.NONE, null);
+			config.delete(true, null);
 		}
+		StringBuffer sb = new StringBuffer();
+		sb.append("false\n");
+		sb.append("java\n");
+		sb.append("-cp\n");
+		sb.append("*\n");
+		sb.append("org.crescendo.fmi.ShmServer\n");
+		sb.append("-p");
+		byte[] bytes = sb.toString().getBytes("UTF-8");
+		InputStream source = new ByteArrayInputStream(bytes);
+		config.create(source, IResource.NONE, null);
 
 		// specification
 		IFolder sources = thisFmu.getFolder("sources");
@@ -275,12 +274,37 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 			sources.create(IResource.NONE, true, null);
 		}
 
+		IContainer lib = project.getModelBuildPath().getLibrary();
+
+		if (lib.exists())
+		{
+			lib.accept(new IResourceVisitor()
+			{
+				@Override
+				public boolean visit(IResource resource) throws CoreException
+				{
+					if (resource.getType() == IResource.FOLDER)
+					{
+						return true;
+					} else if (resource.getType() == IResource.FILE
+							&& "jar".equalsIgnoreCase(resource.getFileExtension()))
+					{
+						IFile target = resourcesFolder.getFile(resource.getName());
+						resource.copy(target.getFullPath(), true, null);
+					}
+					return false;
+				}
+			});
+		}
+
 		for (IVdmSourceUnit unit : project.getSpecFiles())
 		{
 			IFile f = sources.getFile(unit.getFile().getProjectRelativePath());
 			IFolder parent = (IFolder) f.getParent();
 			if (!parent.exists())
+			{
 				parent.create(IResource.NONE, true, null);
+			}
 			if (!f.exists())
 			{
 				f.create(unit.getFile().getContents(), true, null);
@@ -364,7 +388,9 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 						{
 							if (annotation.tree.token.getLine() == mDef.getLocation().getStartLine() - 1)
 							{
-								String name = mDef instanceof AValueDefinition? ((AValueDefinition)mDef).getPattern()+"": mDef.getName().getFullName();
+								String name = mDef instanceof AValueDefinition ? ((AValueDefinition) mDef).getPattern()
+										+ ""
+										: mDef.getName().getFullName();
 								out.println(String.format("Found annotated definition '%s' with type '%s' and name '%s'", mDef.getLocation().getModule()
 										+ "." + name, annotation.type, annotation.name));
 
@@ -376,8 +402,7 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 								} else
 								{
 									err.println(String.format("Found annotated definition '%s' with type '%s' and name '%s'", mDef.getLocation().getModule()
-											+ "."
-											+ name, annotation.type, annotation.name)
+											+ "." + name, annotation.type, annotation.name)
 											+ " type not valid: "
 											+ mDef.getType());
 								}
@@ -417,7 +442,7 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 	public Map<IVdmSourceUnit, List<FmuAnnotation>> getSourceUnitAnnotations(
 			IVdmProject project)
 	{
-		
+
 		Map<IVdmSourceUnit, List<FmuAnnotation>> annotations = new HashMap<IVdmSourceUnit, List<FmuAnnotation>>();
 		try
 		{
