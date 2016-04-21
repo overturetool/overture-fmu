@@ -5,17 +5,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
-import org.destecs.core.parsers.IError;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
-import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceVisitor;
 import org.eclipse.core.runtime.CoreException;
@@ -30,25 +25,16 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.console.ConsolePlugin;
-import org.eclipse.ui.console.IConsole;
 import org.eclipse.ui.console.IConsoleConstants;
-import org.eclipse.ui.console.IConsoleManager;
 import org.eclipse.ui.console.IConsoleView;
 import org.eclipse.ui.console.MessageConsole;
 import org.eclipse.ui.console.MessageConsoleStream;
 import org.eclipse.ui.handlers.HandlerUtil;
-import org.overture.ast.definitions.AInstanceVariableDefinition;
 import org.overture.ast.definitions.ASystemClassDefinition;
-import org.overture.ast.definitions.AValueDefinition;
 import org.overture.ast.definitions.PDefinition;
 import org.overture.ast.definitions.SClassDefinition;
 import org.overture.ast.lex.Dialect;
-import org.overture.ast.types.ABooleanBasicType;
-import org.overture.ast.types.SNumericBasicType;
-import org.overture.fmi.annotation.AnnotationParserWrapper;
 import org.overture.fmi.annotation.FmuAnnotation;
-import org.overture.fmi.annotation.RetainVdmCommentsFilter;
 import org.overture.fmi.ide.fmuexport.FmuCompressor;
 import org.overture.fmi.ide.fmuexport.FmuExportPlugin;
 import org.overture.fmi.ide.fmuexport.IFmuExport;
@@ -56,21 +42,18 @@ import org.overture.ide.core.IVdmModel;
 import org.overture.ide.core.ast.NotAllowedException;
 import org.overture.ide.core.resources.IVdmProject;
 import org.overture.ide.core.resources.IVdmSourceUnit;
-import org.overture.ide.core.utility.FileUtility;
 import org.overture.ide.ui.utility.PluginFolderInclude;
 import org.overture.ide.ui.utility.VdmTypeCheckerUi;
 
 public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 {
 
-	private static final String CONSOLE_NAME = "ExportFmuConsole";
-
 	@Override
 	public Object execute(ExecutionEvent event)
 			throws org.eclipse.core.commands.ExecutionException
 	{
 		ISelection selections = HandlerUtil.getCurrentSelection(event);
-		MessageConsole myConsole = findConsole(CONSOLE_NAME);
+		MessageConsole myConsole = ConsoleUtil.findConsole(IFmuExport.CONSOLE_NAME);
 
 		if (selections instanceof IStructuredSelection)
 		{
@@ -134,7 +117,7 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 
 				try
 				{
-					Map<PDefinition, FmuAnnotation> definitionAnnotation = collectAnnotatedDefinitions(project, out, err);
+					Map<PDefinition, FmuAnnotation> definitionAnnotation = new VdmAnnotationProcesser().collectAnnotatedDefinitions(project, out, err);
 
 					ASystemClassDefinition system = null;
 					for (SClassDefinition cDef : model.getClassList())
@@ -354,144 +337,6 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 
 		}
 
-	}
-
-	public Map<PDefinition, FmuAnnotation> collectAnnotatedDefinitions(
-			IVdmProject project, MessageConsoleStream out,
-			MessageConsoleStream err) throws NotAllowedException
-	{
-		Map<IVdmSourceUnit, List<FmuAnnotation>> annotations = getSourceUnitAnnotations(project);
-
-		Map<File, List<FmuAnnotation>> annotationsLexLinked = new HashMap<File, List<FmuAnnotation>>();
-
-		for (Entry<IVdmSourceUnit, List<FmuAnnotation>> entry : annotations.entrySet())
-		{
-			annotationsLexLinked.put(entry.getKey().getSystemFile(), entry.getValue());
-		}
-
-		Map<PDefinition, FmuAnnotation> definitionAnnotation = new HashMap<PDefinition, FmuAnnotation>();
-
-		for (SClassDefinition cDef : project.getModel().getClassList())
-		{
-			File file = cDef.getName().getLocation().getFile();
-			if (annotationsLexLinked.containsKey(file))
-			{
-				// class contains a def thats annotated, now find it
-				for (PDefinition mDef : cDef.getDefinitions())
-				{
-					if (mDef instanceof AValueDefinition
-							|| mDef instanceof AInstanceVariableDefinition)
-					{
-
-						for (FmuAnnotation annotation : annotationsLexLinked.get(file))
-						{
-							if (annotation.tree.token.getLine() == mDef.getLocation().getStartLine() - 1)
-							{
-								String name = mDef instanceof AValueDefinition ? ((AValueDefinition) mDef).getPattern()
-										+ ""
-										: mDef.getName().getFullName();
-								out.println(String.format("Found annotated definition '%s' with type '%s' and name '%s'", mDef.getLocation().getModule()
-										+ "." + name, annotation.type, annotation.name));
-
-								// FIXME: type chekc insuficient
-								if (mDef.getType() instanceof SNumericBasicType
-										|| mDef.getType() instanceof ABooleanBasicType)
-								{
-									definitionAnnotation.put(mDef, annotation);
-								} else
-								{
-									err.println(String.format("Found annotated definition '%s' with type '%s' and name '%s'", mDef.getLocation().getModule()
-											+ "." + name, annotation.type, annotation.name)
-											+ " type not valid: "
-											+ mDef.getType());
-								}
-								break;
-							}
-						}
-					}
-
-				}
-
-			}
-		}
-
-		// Error reporting for unlinked definitions
-		for (List<FmuAnnotation> annotationList : annotations.values())
-		{
-			for (FmuAnnotation commonTree : annotationList)
-			{
-				if (!definitionAnnotation.values().contains(commonTree))
-				{
-
-					for (Entry<IVdmSourceUnit, List<FmuAnnotation>> entry : annotations.entrySet())
-					{
-						if (entry.getValue().contains(commonTree))
-						{
-							IVdmSourceUnit unit = entry.getKey();
-							FileUtility.addMarker(unit.getFile(), "Interface not linked to definition. The instanve-variable- or value- definition must be on the line below the annotation.", commonTree.tree.token.getLine() + 1, IMarker.SEVERITY_WARNING, IFmuExport.PLUGIN_ID);
-							err.println(String.format("Unlinked interface annotation: file %s:line %d ", unit.getFile().getName(), commonTree.tree.getLine()));
-						}
-					}
-				}
-			}
-		}
-		return definitionAnnotation;
-	}
-
-	public Map<IVdmSourceUnit, List<FmuAnnotation>> getSourceUnitAnnotations(
-			IVdmProject project)
-	{
-
-		Map<IVdmSourceUnit, List<FmuAnnotation>> annotations = new HashMap<IVdmSourceUnit, List<FmuAnnotation>>();
-		try
-		{
-			for (IVdmSourceUnit unit : project.getSpecFiles())
-			{
-				FileUtility.deleteMarker(unit.getFile(), IMarker.PROBLEM, IFmuExport.PLUGIN_ID);
-				AnnotationParserWrapper parser = new AnnotationParserWrapper();
-				List<FmuAnnotation> result = parser.parse(unit.getSystemFile(), new RetainVdmCommentsFilter(unit.getFile().getContents(), "--@"));
-
-				if (parser.hasErrors())
-				{
-					for (IError error : parser.getErrors())
-					{
-						FileUtility.addMarker(unit.getFile(), error.getMessage(), error.getLine() + 1, IMarker.SEVERITY_ERROR, IFmuExport.PLUGIN_ID);
-					}
-				}
-
-				if (result != null && !result.isEmpty())
-				{
-					annotations.put(unit, result);
-				}
-
-			}
-		} catch (CoreException e)
-		{
-			FmuExportPlugin.log("Error in annotation parsing", e);
-		} catch (IOException e)
-		{
-			FmuExportPlugin.log("Error in annotation parsing", e);
-		}
-
-		return annotations;
-	}
-
-	private MessageConsole findConsole(String name)
-	{
-		ConsolePlugin plugin = ConsolePlugin.getDefault();
-		IConsoleManager conMan = plugin.getConsoleManager();
-		IConsole[] existing = conMan.getConsoles();
-		for (int i = 0; i < existing.length; i++)
-		{
-			if (name.equals(existing[i].getName()))
-			{
-				return (MessageConsole) existing[i];
-			}
-		}
-		// no console found, so create a new one
-		MessageConsole myConsole = new MessageConsole(name, null);
-		conMan.addConsoles(new IConsole[] { myConsole });
-		return myConsole;
 	}
 
 }
