@@ -102,8 +102,6 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 			view.display(myConsole);
 		} catch (PartInitException e)
 		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 
 		return null;
@@ -139,7 +137,6 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 					Map<PDefinition, FmuAnnotation> definitionAnnotation = collectAnnotatedDefinitions(project, out, err);
 
 					ASystemClassDefinition system = null;
-					// List<SClassDefinition> classesWithExports = new Vector<SClassDefinition>();
 					for (SClassDefinition cDef : model.getClassList())
 					{
 						if (cDef instanceof ASystemClassDefinition)
@@ -217,16 +214,13 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 
 				} catch (NotAllowedException e)
 				{
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					FmuExportPlugin.log(e);
 				} catch (IOException e)
 				{
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					FmuExportPlugin.log(e);
 				} catch (CoreException e)
 				{
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					FmuExportPlugin.log(e);
 				}
 			}
 		}

@@ -17,5 +17,6 @@ Bundle-ClassPath: .,
  jars/annotation-parser.jar,
  jars/antlr-runtime.jar,
  jars/parsers.jar,
- jars/commons-io.jar
+ jars/commons-io.jar,
+ jars/vdm-reflect-library.jar
 

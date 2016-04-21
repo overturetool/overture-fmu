@@ -4,9 +4,16 @@
    <extension
          point="org.eclipse.ui.commands">
       <command
-            defaultHandler="org.overture.fmi.ide.fmuexport.commands.ExportFmuHandler"
             id="org.overture.fmi.ide.fmuexport.export"
             name="Export FMU">
+      </command>
+      <command
+            id="org.overture.fmi.ide.fmuexport.addVdmReflectLibrary"
+            name="Add VDM Reflect Library">
+      </command>
+      <command
+            id="org.overture.fmi.ide.fmuexport.importModelDescription"
+            name="Import Model Description">
       </command>
       
    </extension>
@@ -43,7 +50,55 @@
               </visibleWhen>
            </command>
            
+            <command
+                 commandId="org.overture.fmi.ide.fmuexport.addVdmReflectLibrary"
+                 icon="icons/vdm_library_obj.gif"
+                 label="Add VDM Reflect Library"
+                 style="push">
+              <visibleWhen
+                    checkEnabled="false">
+                 <iterate
+                       ifEmpty="false">
+                     
+                            <adapt
+                            type="org.overture.ide.core.resources.IVdmProject">
+                         
+                         <or>
+                         	<test
+	                               property="org.overture.ide.core.resources.dialect"
+	                               value="VDM_RT">
+	                        </test>
+                         </or>
+                      </adapt>
+                       
+                 </iterate>
+              </visibleWhen>
+           </command>
            
+            <command
+                 commandId="org.overture.fmi.ide.fmuexport.importModelDescription"
+                 icon="icons/internalize.gif"
+                 label="Import Model Description"
+                 style="push">
+              <visibleWhen
+                    checkEnabled="false">
+                 <iterate
+                       ifEmpty="false">
+                     
+                            <adapt
+                            type="org.overture.ide.core.resources.IVdmProject">
+                         
+                         <or>
+                         	<test
+	                               property="org.overture.ide.core.resources.dialect"
+	                               value="VDM_RT">
+	                        </test>
+                         </or>
+                      </adapt>
+                       
+                 </iterate>
+              </visibleWhen>
+           </command>
         </menu>
      </menuContribution>
    </extension>
@@ -55,6 +110,14 @@
             commandId="org.overture.fmi.ide.fmuexport.export">
          
       </handler>
+           <handler
+                 class="org.overture.fmi.ide.fmuexport.commands.AddVdmReflectLibraryHandler"
+                 commandId="org.overture.fmi.ide.fmuexport.addVdmReflectLibrary">
+           </handler>
+           <handler
+                 class="org.overture.fmi.ide.fmuexport.commands.ImportModelDescriptionHandler"
+                 commandId="org.overture.fmi.ide.fmuexport.importModelDescription">
+           </handler>
     </extension>
     <!--extension
           point="org.eclipse.ui.bindings">
