@@ -277,7 +277,9 @@ public class ImportModelDescriptionProcesser
 						checkAndCreateStructure(project, model);
 						out.println("Importing...");
 						out.println("");
-						updateHardwareInterface(project, model, filter(annotations, vars, out, err), out);
+						List<ScalarVariable> filter = filter(annotations, vars, out, err);
+						VdmTypeCheckerUi.typeCheck(shell, project);
+						updateHardwareInterface(project, model, filter, out);
 						out.println("");
 						out.println("Import comepleted.");
 					} else
