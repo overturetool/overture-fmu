@@ -324,7 +324,7 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 			}
 
 			is = this.getClass().getResourceAsStream("/fmu-shm-api/"
-					+ folderName + "/libshmfmu" + extension);
+					+ folderName + "/vdm-tool-wrapper" + extension);
 
 			if (is != null)
 			{
