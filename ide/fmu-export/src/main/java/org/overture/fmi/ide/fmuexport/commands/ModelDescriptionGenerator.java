@@ -198,8 +198,10 @@ public class ModelDescriptionGenerator
 			{
 
 				AInstanceVariableDefinition vDef = (AInstanceVariableDefinition) definition;
-				String type = getType(vDef.getType(), "" + vDef.getExpression());
-				return String.format(scalarVariableTemplateInput, name, valueReference, "input", "continuous", type);
+				PType rawType = vDef.getType();
+				String type = getType(rawType, "" + vDef.getExpression());
+				return String.format(scalarVariableTemplateInput, name, valueReference, "input", (rawType instanceof ARealNumericBasicType ? "continuous"
+						: "discrete"), type);
 
 			}
 		}
