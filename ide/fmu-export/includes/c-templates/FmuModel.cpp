@@ -6,10 +6,13 @@
  */
 #include "Fmu.h"
 
+//#GENERATED_DEFINES
+
 extern "C"
 {
 #include "Fmu.h"
 #include "Vdm.h"
+#ifndef PERIODIC_GENERATED
 #include "LevelSensor.h"
 #include "ValveActuator.h"
 #include "Controller.h"
@@ -18,14 +21,19 @@ extern "C"
 #include "System.h"
 #include "World.h"
 #include <pthread.h>
+#endif
+
+//#GENERATED_MODEL_INCLUDE
 }
 
+#ifndef PERIODIC_GENERATED
 // FMI variable reference mapping
 #define MIN_LEVEL_ID 1
 #define MAX_LEVEL_ID 0
 
 #define VALVE_ID 4
 #define LEVEL_ID 3
+#endif
 
 TVP sys = NULL;
 
@@ -56,7 +64,7 @@ void syncOutputsToBuffers()
 	fmiBuffer.booleanBuffer[VALVE_ID]=GET_FIELD(HardwareInterface,HardwareInterface,g_System_hwi,valveState)->value.boolVal; // == 0 ? false : true;
 }
 
-#endif
+
 
 void systemInit()
 {
@@ -76,6 +84,11 @@ void systemDeInit()
 
 	vdmFree(sys);
 }
+#endif
+
+//#GENERATED_SYSTEM_INIT
+
+//#GENERATED_SYSTEM_SHUTDOWN
 
 
 
@@ -109,7 +122,6 @@ struct PeriodicThreadStatus threads[] =
 // 0+1.0E7 <=  currentCommunicationPoint+communicationStepSize+1.0E7 => execute and set executed Time
 };
 
-#endif
 
 int main()
 {
@@ -126,3 +138,4 @@ int main()
 	}
 }
 
+#endif

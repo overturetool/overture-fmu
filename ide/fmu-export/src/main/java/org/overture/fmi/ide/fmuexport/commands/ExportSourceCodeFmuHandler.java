@@ -16,6 +16,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.overture.ast.analysis.AnalysisException;
 import org.overture.ast.analysis.DepthFirstAnalysisAdaptor;
 import org.overture.ast.definitions.AInstanceVariableDefinition;
+import org.overture.ast.definitions.ASystemClassDefinition;
 import org.overture.ast.definitions.AThreadDefinition;
 import org.overture.ast.definitions.AValueDefinition;
 import org.overture.ast.definitions.PDefinition;
@@ -40,7 +41,7 @@ import org.overture.ide.ui.utility.PluginFolderInclude;
 public class ExportSourceCodeFmuHandler extends ExportFmuHandler
 {
 
-	private static final String SET_FIELD = "SET_FIELD(HardwareInterface, HardwareInterface, g_System_hwi, %s, %s(fmiBuffer.%s[%s]));";
+	private static final String SET_FIELD = "SET_FIELD(HardwareInterface, HardwareInterface, g_%s_hwi, %s, %s(fmiBuffer.%s[%s]));";
 	private static final String SYNC_INPUT_TO_MODEL = "void syncInputsToModel(){\n\t%s\n}";
 	private static final String SYNC_OUTPUT_TO_BUFFER = "void syncOutputsToBuffers(){\n\t%s\n}";
 
@@ -52,9 +53,12 @@ public class ExportSourceCodeFmuHandler extends ExportFmuHandler
 
 	@Override
 	protected void copyFmuResources(GeneratorInfo info, IFolder thisFmu,
-			String name, IVdmProject project) throws CoreException,
-			IOException, AnalysisException, NotAllowedException
+			String name, IVdmProject project, ASystemClassDefinition system)
+			throws CoreException, IOException, AnalysisException,
+			NotAllowedException
 	{
+		final String systemName = system.getName().getName();
+
 		final IFolder sourcesFolder = thisFmu.getFolder("sources");
 
 		if (!sourcesFolder.exists())
@@ -69,16 +73,154 @@ public class ExportSourceCodeFmuHandler extends ExportFmuHandler
 
 		final List<String> periodicDefs = extractPeriodicDefs(project);
 
-		// patch template
-		/*
-		 * struct PeriodicThreadStatus threads[] = { ... };
-		 */
-
 		String periodicDefinition = createPeriodicDefinitionString(periodicDefs);
-		// byte[] bytes = sb.toString().getBytes("UTF-8");
-		// InputStream source = new ByteArrayInputStream(bytes);
-		// periodicThreadsSource.create(source, IResource.NONE, null);
 
+		StringBuffer sb = generateIOCacheSyncMethods(info, periodicDefinition, systemName);
+
+		// copy FMU files
+		copy(sourcesFolder, "Fmu.cpp", "includes/c-templates/Fmu.cpp");
+		copy(sourcesFolder, "Fmu.h", "includes/c-templates/Fmu.h");
+		copy(sourcesFolder, "FmuIO.c", "includes/c-templates/FmuIO.c");
+
+		// copy FMI headers to support CMakeLists
+		final IFolder fmiFolder = sourcesFolder.getFolder("fmi");
+
+		if (!fmiFolder.exists())
+		{
+			fmiFolder.create(IResource.NONE, true, null);
+		}
+		copy(fmiFolder, "fmi2Functions.h", "includes/c-templates/fmi/fmi2Functions.h");
+		copy(fmiFolder, "fmi2FunctionTypes.h", "includes/c-templates/fmi/fmi2FunctionTypes.h");
+		copy(fmiFolder, "fmi2TypesPlatform.h", "includes/c-templates/fmi/fmi2TypesPlatform.h");
+
+		// copy FmuModel.cpp
+		IFile file = createNewEmptyFile(sourcesFolder, "FmuModel.cpp");
+		String content = PluginFolderInclude.readFile(IFmuExport.PLUGIN_ID, "includes/c-templates/FmuModel.cpp");
+
+		content = content.replace("//#GENERATED_DEFINES", "#define PERIODIC_GENERATED\n");
+		content = content.replace("//#GENERATED_INSERT", sb.toString());
+		content = content.replace("//#GENERATED_MODEL_INCLUDE", getJoinClassNames(project, new INameFormater()
+		{
+
+			@Override
+			public String format(String className)
+			{
+				return "#include \"" + className + ".h\"";
+			}
+		}));
+
+		content = content.replace("//#GENERATED_SYSTEM_INIT", getSystemInitFunction(project, systemName));
+		content = content.replace("//#GENERATED_SYSTEM_SHUTDOWN", getSystemShutdownFunction(project, systemName));
+
+		byte[] bytes = content.getBytes("UTF-8");
+		ByteArrayInputStream source = new ByteArrayInputStream(bytes);
+		file.create(source, IResource.NONE, null);
+
+		// copy CMakeLists
+		file = createNewEmptyFile(sourcesFolder, "CMakeLists.txt");
+		content = PluginFolderInclude.readFile(IFmuExport.PLUGIN_ID, "includes/c-templates/CMakeLists.txt");
+
+		content = content.replace("##PROJECT_NAME##", project.getName());
+
+		bytes = content.getBytes("UTF-8");
+		source = new ByteArrayInputStream(bytes);
+		file.create(source, IResource.NONE, null);
+
+	}
+
+	private CharSequence getSystemInitFunction(IVdmProject project,
+			String systemName) throws NotAllowedException
+	{
+		StringBuilder sb = new StringBuilder();
+
+		sb.append(getJoinClassNames(project, new INameFormater()
+		{
+
+			@Override
+			public String format(String className)
+			{
+				return "\t" + className + "_const_init();";
+			}
+		}));
+
+		sb.append("\n");
+		sb.append("\n");
+
+		sb.append(getJoinClassNames(project, new INameFormater()
+		{
+
+			@Override
+			public String format(String className)
+			{
+				return "\t" + className + "_static_init();";
+			}
+		}));
+
+		sb.append("\n");
+		sb.append("\n");
+
+		sb.append("\tsys = "
+				+ String.format("_Z%d%sEV(NULL);\n", systemName.length(), systemName));
+
+		return String.format("void systemInit()\n{\n%s\n}\n", sb.toString());
+	}
+
+	private CharSequence getSystemShutdownFunction(IVdmProject project,
+			String systemName) throws NotAllowedException
+	{
+		StringBuilder sb = new StringBuilder();
+
+		sb.append(getJoinClassNames(project, new INameFormater()
+		{
+
+			@Override
+			public String format(String className)
+			{
+				return "\t" + className + "_static_shutdown();";
+			}
+		}));
+
+		sb.append("\n");
+		sb.append("\n");
+
+		sb.append(getJoinClassNames(project, new INameFormater()
+		{
+
+			@Override
+			public String format(String className)
+			{
+				return "\t" + className + "_const_shutdown();";
+			}
+		}));
+
+		sb.append("\n");
+		sb.append("\n");
+
+		sb.append("\tvdmFree(sys);\n");
+
+		return String.format("void systemDeInit()\n{\n%s\n}\n", sb.toString());
+	}
+
+	static interface INameFormater
+	{
+		String format(String className);
+	}
+
+	private String getJoinClassNames(IVdmProject project, INameFormater formater)
+			throws NotAllowedException
+	{
+		List<String> includes = new Vector<>();
+		for (SClassDefinition def : project.getModel().getClassList())
+		{
+			includes.add(formater.format(def.getName().getName()));
+		}
+
+		return StringUtils.join(includes, "\n");
+	}
+
+	public StringBuffer generateIOCacheSyncMethods(GeneratorInfo info,
+			String periodicDefinition, Object systemName)
+	{
 		List<String> inputCommands = new Vector<>();
 		List<String> outputCommands = new Vector<>();
 
@@ -125,14 +267,14 @@ public class ExportSourceCodeFmuHandler extends ExportFmuHandler
 
 			if ("input".equals(svType))
 			{
-				command = String.format(SET_FIELD, variableName, newValueName, bufferName, entry.getValue().index);
+				command = String.format(SET_FIELD, systemName, variableName, newValueName, bufferName, entry.getValue().index);
 				inputCommands.add(command);
 
 			} else if ("output".equals(svType))
 			{
 				// fmiBuffer.booleanBuffer[VALVE_ID]=GET_FIELD(HardwareInterface,HardwareInterface,g_System_hwi,valveState)->value.boolVal;
-				final String GET_FIELD = "fmiBuffer.%s[%s]=GET_FIELD(HardwareInterface,HardwareInterface,g_System_hwi,%s)->value.%s;";
-				command = String.format(GET_FIELD, bufferName, entry.getValue().index, variableName, valueId);
+				final String GET_FIELD = "fmiBuffer.%s[%s]=GET_FIELD(HardwareInterface,HardwareInterface,g_%s_hwi,%s)->value.%s;";
+				command = String.format(GET_FIELD, bufferName, entry.getValue().index, systemName, variableName, valueId);
 				outputCommands.add(command);
 
 			} else if ("parameter".equals(svType))
@@ -152,44 +294,7 @@ public class ExportSourceCodeFmuHandler extends ExportFmuHandler
 		sb.append("\n");
 		sb.append(periodicDefinition);
 		sb.append("\n");
-
-		//copy FMU files
-		copy(sourcesFolder, "Fmu.cpp", "includes/c-templates/Fmu.cpp");
-		copy(sourcesFolder, "Fmu.h", "includes/c-templates/Fmu.h");
-		copy(sourcesFolder, "FmuIO.c", "includes/c-templates/FmuIO.c");
-
-		//copy FMI headers to support CMakeLists
-		final IFolder fmiFolder = sourcesFolder.getFolder("fmi");
-
-		if (!fmiFolder.exists())
-		{
-			fmiFolder.create(IResource.NONE, true, null);
-		}
-		copy(fmiFolder, "fmi2Functions.h", "includes/c-templates/fmi/fmi2Functions.h");
-		copy(fmiFolder, "fmi2FunctionTypes.h", "includes/c-templates/fmi/fmi2FunctionTypes.h");
-		copy(fmiFolder, "fmi2TypesPlatform.h", "includes/c-templates/fmi/fmi2TypesPlatform.h");
-		
-		
-		//copy FmuModel.cpp
-		IFile file = createNewEmptyFile(sourcesFolder, "FmuModel.cpp");
-		String content = PluginFolderInclude.readFile(IFmuExport.PLUGIN_ID, "includes/c-templates/FmuModel.cpp");
-
-		content = content.replace("//#GENERATED_INSERT", sb.toString());
-
-		byte[] bytes = content.getBytes("UTF-8");
-		ByteArrayInputStream source = new ByteArrayInputStream(bytes);
-		file.create(source, IResource.NONE, null);
-
-		//copy CMakeLists
-		file = createNewEmptyFile(sourcesFolder, "CMakeLists.txt");
-		content = PluginFolderInclude.readFile(IFmuExport.PLUGIN_ID, "includes/c-templates/CMakeLists.txt");
-
-		content = content.replace("##PROJECT_NAME##", project.getName());
-
-		bytes = content.getBytes("UTF-8");
-		source = new ByteArrayInputStream(bytes);
-		file.create(source, IResource.NONE, null);
-
+		return sb;
 	}
 
 	private String createPeriodicDefinitionString(List<String> periodicDefs)
@@ -208,7 +313,6 @@ public class ExportSourceCodeFmuHandler extends ExportFmuHandler
 		}
 
 		StringBuffer sb = new StringBuffer();
-		sb.append("#define PERIODIC_GENERATED\n");
 		sb.append("#define PERIODIC_GENERATED_COUNT ");
 		sb.append(periodicDefs.size());
 		sb.append("\n");

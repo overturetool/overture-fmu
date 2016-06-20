@@ -173,7 +173,7 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 						thisModelDescription.create(source, IResource.NONE, null);
 					}
 
-					copyFmuResources(info,thisFmu, project.getName(), project);
+					copyFmuResources(info,thisFmu, project.getName(), project,system);
 
 					final File fmuArchieveName = new File(outputContainer.getProject().getLocation().toFile().getAbsolutePath()
 							+ File.separatorChar + project.getName() + ".fmu");
@@ -221,7 +221,7 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 	}
 
 	protected void copyFmuResources(GeneratorInfo info, IFolder thisFmu, String name,
-			IVdmProject project) throws CoreException, IOException, AnalysisException, NotAllowedException
+			IVdmProject project, ASystemClassDefinition system) throws CoreException, IOException, AnalysisException, NotAllowedException
 	{
 		final IFolder resourcesFolder = thisFmu.getFolder("resources");
 		if (!resourcesFolder.exists())
