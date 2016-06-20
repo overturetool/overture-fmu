@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +47,29 @@ public class ModelDescriptionGenerator
 	public final static String INTERFACE_INSTANCE_NAME = "hwi";
 
 	private final ASystemClassDefinition system;
+	
+	public static class ScalarInfo
+	{
+		public final PDefinition def;
+		public final int index;
+		public final FmuAnnotation annotation;
+		
+		public ScalarInfo(PDefinition def, int index, FmuAnnotation annotation)
+		{
+			this.def = def;
+			this.index = index;
+			this.annotation = annotation;
+		}
+	}
+	
+	
+	public static class GeneratorInfo
+	{
+		public  String modelDescription;
+		public final Map<PDefinition,ScalarInfo> context = new HashMap<>();
+		
+		
+	}
 
 	public ModelDescriptionGenerator(ClassList classList,
 			ASystemClassDefinition system)
@@ -53,12 +77,13 @@ public class ModelDescriptionGenerator
 		this.system = system;
 	}
 
-	public String generate(
+	public GeneratorInfo generate(
 			Map<PDefinition, FmuAnnotation> definitionAnnotation,
 			IVdmProject project, MessageConsoleStream out,
 			MessageConsoleStream err) throws AbortException, CoreException,
 			IOException
 	{
+		GeneratorInfo info = new GeneratorInfo();
 		boolean found = false;
 		for (PDefinition def : system.getDefinitions())
 		{
@@ -99,6 +124,8 @@ public class ModelDescriptionGenerator
 				}
 
 				int vr = variableReference++;
+				
+				info.context.put(link.getKey(), new ScalarInfo(link.getKey(), vr, link.getValue()));
 				String scalarVariable = createScalarVariable(vr, link.getKey(), link.getValue(), sbLinks);
 				scalarVariables.add(scalarVariable);
 				if (link.getValue().type.equals("output"))
@@ -154,7 +181,8 @@ public class ModelDescriptionGenerator
 
 		modelDescription = modelDescription.replace("{generationDateAndTime}", date);
 
-		return modelDescription;
+		info.modelDescription= modelDescription;
+		return info;
 	}
 
 	private String createScalarVariable(int valueReference,

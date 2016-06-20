@@ -30,6 +30,7 @@ import org.eclipse.ui.console.IConsoleView;
 import org.eclipse.ui.console.MessageConsole;
 import org.eclipse.ui.console.MessageConsoleStream;
 import org.eclipse.ui.handlers.HandlerUtil;
+import org.overture.ast.analysis.AnalysisException;
 import org.overture.ast.definitions.ASystemClassDefinition;
 import org.overture.ast.definitions.PDefinition;
 import org.overture.ast.definitions.SClassDefinition;
@@ -38,6 +39,7 @@ import org.overture.fmi.annotation.FmuAnnotation;
 import org.overture.fmi.ide.fmuexport.FmuCompressor;
 import org.overture.fmi.ide.fmuexport.FmuExportPlugin;
 import org.overture.fmi.ide.fmuexport.IFmuExport;
+import org.overture.fmi.ide.fmuexport.commands.ModelDescriptionGenerator.GeneratorInfo;
 import org.overture.ide.core.IVdmModel;
 import org.overture.ide.core.ast.NotAllowedException;
 import org.overture.ide.core.resources.IVdmProject;
@@ -90,6 +92,11 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 		return null;
 	}
 
+	protected String getTitle()
+	{
+		return "FMU Export";
+	}
+
 	private void exportFmu(IVdmProject project, MessageConsole myConsole,
 			Shell shell) throws AbortException
 	{
@@ -98,7 +105,7 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 
 		err.setColor(new Color(shell.getDisplay(), 255, 0, 0));
 		out.println("\n---------------------------------------");
-		out.println("|             FMU Export              |");
+		out.println("|             " + getTitle() + "             |");
 		out.println("---------------------------------------");
 		out.println("Starting FMU export for project: '" + project.getName()
 				+ "'");
@@ -132,10 +139,10 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 
 					ModelDescriptionGenerator generator = new ModelDescriptionGenerator(model.getClassList(), system);
 
-					String modelDescription = generator.generate(definitionAnnotation, project, out, err);
+					GeneratorInfo info = generator.generate(definitionAnnotation, project, out, err);
 
 					out.println("\n########################\n Model Description: \n");
-					out.println(modelDescription);
+					out.println(info.modelDescription);
 
 					IFolder outputContainer = (IFolder) project.getModelBuildPath().getOutput();
 
@@ -161,12 +168,12 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 					IFile thisModelDescription = thisFmu.getFile("modelDescription.xml");
 					if (!thisModelDescription.exists())
 					{
-						byte[] bytes = modelDescription.getBytes("UTF-8");
+						byte[] bytes = info.modelDescription.getBytes("UTF-8");
 						InputStream source = new ByteArrayInputStream(bytes);
 						thisModelDescription.create(source, IResource.NONE, null);
 					}
 
-					copyFmuWrapper(thisFmu, project.getName(), project);
+					copyFmuResources(info,thisFmu, project.getName(), project);
 
 					final File fmuArchieveName = new File(outputContainer.getProject().getLocation().toFile().getAbsolutePath()
 							+ File.separatorChar + project.getName() + ".fmu");
@@ -204,14 +211,17 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 				} catch (CoreException e)
 				{
 					FmuExportPlugin.log(e);
+				} catch (AnalysisException e1)
+				{
+					FmuExportPlugin.log(e1);
 				}
 			}
 		}
 
 	}
 
-	private void copyFmuWrapper(IFolder thisFmu, String name,
-			IVdmProject project) throws CoreException, IOException
+	protected void copyFmuResources(GeneratorInfo info, IFolder thisFmu, String name,
+			IVdmProject project) throws CoreException, IOException, AnalysisException, NotAllowedException
 	{
 		final IFolder resourcesFolder = thisFmu.getFolder("resources");
 		if (!resourcesFolder.exists())
