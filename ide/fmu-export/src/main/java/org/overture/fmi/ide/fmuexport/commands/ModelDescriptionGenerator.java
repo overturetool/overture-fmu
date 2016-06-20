@@ -47,13 +47,13 @@ public class ModelDescriptionGenerator
 	public final static String INTERFACE_INSTANCE_NAME = "hwi";
 
 	private final ASystemClassDefinition system;
-	
+
 	public static class ScalarInfo
 	{
 		public final PDefinition def;
 		public final int index;
 		public final FmuAnnotation annotation;
-		
+
 		public ScalarInfo(PDefinition def, int index, FmuAnnotation annotation)
 		{
 			this.def = def;
@@ -61,14 +61,12 @@ public class ModelDescriptionGenerator
 			this.annotation = annotation;
 		}
 	}
-	
-	
+
 	public static class GeneratorInfo
 	{
-		public  String modelDescription;
-		public final Map<PDefinition,ScalarInfo> context = new HashMap<>();
-		
-		
+		public String modelDescription;
+		public final Map<PDefinition, ScalarInfo> context = new HashMap<>();
+
 	}
 
 	public ModelDescriptionGenerator(ClassList classList,
@@ -124,7 +122,7 @@ public class ModelDescriptionGenerator
 				}
 
 				int vr = variableReference++;
-				
+
 				info.context.put(link.getKey(), new ScalarInfo(link.getKey(), vr, link.getValue()));
 				String scalarVariable = createScalarVariable(vr, link.getKey(), link.getValue(), sbLinks);
 				scalarVariables.add(scalarVariable);
@@ -148,9 +146,14 @@ public class ModelDescriptionGenerator
 
 		StringBuffer sbOutputs = new StringBuffer();
 
-		for (Integer integer : outputIndices)
+		if (outputIndices.size() > 0)
 		{
-			sbOutputs.append(String.format("\t\t\t<Unknown index=\"%d\"  />", integer));
+			sbOutputs.append("\t<Outputs>\n");
+			for (Integer integer : outputIndices)
+			{
+				sbOutputs.append(String.format("\t\t\t<Unknown index=\"%d\"  />", integer));
+			}
+			sbOutputs.append("\n\t</Outputs>\n");
 		}
 
 		StringBuffer sbSourceFiles = new StringBuffer();
@@ -181,7 +184,7 @@ public class ModelDescriptionGenerator
 
 		modelDescription = modelDescription.replace("{generationDateAndTime}", date);
 
-		info.modelDescription= modelDescription;
+		info.modelDescription = modelDescription;
 		return info;
 	}
 
