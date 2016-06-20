@@ -39,6 +39,7 @@ public class StateCache
 	public final double[] reals;
 	public final int[] integers;
 	public final boolean[] booleans;
+	public final String[] strings;
 
 	public final Links links;
 
@@ -54,6 +55,7 @@ public class StateCache
 		reals = new double[getMaxInt(doc, "//ScalarVariable[Real]/@valueReference") + 1];
 		integers = new int[getMaxInt(doc, "//ScalarVariable[Integer]/@valueReference") + 1];
 		booleans = new boolean[getMaxInt(doc, "//ScalarVariable[Boolean]/@valueReference") + 1];
+		strings = new String[getMaxInt(doc, "//ScalarVariable[String]/@valueReference") + 1];
 	}
 
 	public List<StepinputsStructParam> collectInputsFromCache()
@@ -64,19 +66,22 @@ public class StateCache
 		{
 
 			Double value = 0.0;
+			
+			int index = Integer.valueOf(entry.getKey());
 			switch (((ExtendedLinkInfo) entry.getValue()).type)
 			{
 				case Boolean:
-					value = booleans[Integer.valueOf(entry.getKey())] ? 1.0
+					value = booleans[index] ? 1.0
 							: 0.0;
 					break;
 				case Integer:
-					value = new Double(integers[Integer.valueOf(entry.getKey())]);
+					value = new Double(integers[index]);
 					break;
 				case Real:
-					value = reals[Integer.valueOf(entry.getKey())];
+					value = reals[index];
 					break;
 				case String:
+					value = strings[index];
 					break;
 				default:
 					break;
