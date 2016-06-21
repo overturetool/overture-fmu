@@ -156,12 +156,7 @@ public class ModelDescriptionGenerator
 			sbOutputs.append("\n\t</Outputs>\n");
 		}
 
-		StringBuffer sbSourceFiles = new StringBuffer();
-
-		for (IVdmSourceUnit source : project.getSpecFiles())
-		{
-			sbSourceFiles.append(String.format("\t\t\t\t<File name=\"%s\" />\n", source.getFile().getProjectRelativePath()));
-		}
+		StringBuffer sbSourceFiles = createSourceFileElements(project);
 
 		final String modelDescriptionTemplate = PluginFolderInclude.readFile(IFmuExport.PLUGIN_ID, "includes/modelDescriptionTemplate.xml");
 
@@ -186,6 +181,18 @@ public class ModelDescriptionGenerator
 
 		info.modelDescription = modelDescription;
 		return info;
+	}
+
+	protected StringBuffer createSourceFileElements(IVdmProject project)
+			throws CoreException
+	{
+		StringBuffer sbSourceFiles = new StringBuffer();
+
+		for (IVdmSourceUnit source : project.getSpecFiles())
+		{
+			sbSourceFiles.append(String.format("\t\t\t\t<File name=\"%s\" />\n", source.getFile().getProjectRelativePath()));
+		}
+		return sbSourceFiles;
 	}
 
 	private String createScalarVariable(int valueReference,
