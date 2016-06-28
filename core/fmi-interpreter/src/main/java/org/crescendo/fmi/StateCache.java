@@ -20,8 +20,11 @@ import javax.xml.xpath.XPathFactory;
 import org.crescendo.fmi.xml.NodeIterator;
 import org.destecs.core.vdmlink.LinkInfo;
 import org.destecs.core.vdmlink.Links;
-import org.destecs.protocol.structs.StepStructoutputsStruct;
-import org.destecs.protocol.structs.StepinputsStructParam;
+import org.overture.interpreter.runtime.ValueException;
+import org.overture.interpreter.values.BooleanValue;
+import org.overture.interpreter.values.NumericValue;
+import org.overture.interpreter.values.SeqValue;
+import org.overture.interpreter.values.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.DOMException;
@@ -58,49 +61,46 @@ public class StateCache
 		strings = new String[getMaxInt(doc, "//ScalarVariable[String]/@valueReference") + 1];
 	}
 
-	public List<StepinputsStructParam> collectInputsFromCache()
+	public List<NamedValue> collectInputsFromCache() throws ValueException
 	{
-		List<StepinputsStructParam> inputs = new Vector<StepinputsStructParam>();
+		List<NamedValue> inputs = new Vector<NamedValue>();
 
 		for (Entry<String, LinkInfo> entry : links.getInputs().entrySet())
 		{
 
-			Double value = 0.0;
+			Value value = null;
 			
 			int index = Integer.valueOf(entry.getKey());
 			switch (((ExtendedLinkInfo) entry.getValue()).type)
 			{
 				case Boolean:
-					value = booleans[index] ? 1.0
-							: 0.0;
+					value =new BooleanValue( booleans[index] );
 					break;
 				case Integer:
-					value = new Double(integers[index]);
+					value = NumericValue.valueOf(integers[index],null);
 					break;
 				case Real:
-					value = reals[index];
+					value = NumericValue.valueOf(reals[index],null);
 					break;
 				case String:
-					value = strings[index];
+					value =new SeqValue( strings[index]==null?"":strings[index]);
 					break;
 				default:
 					break;
 
 			}
 
-			inputs.add(new StepinputsStructParam(entry.getKey(), Arrays.asList(new Double[] { value }), Arrays.asList(new Integer[] { 1 })));
+			inputs.add(new NamedValue(entry.getKey(),  value,-1));
 			logger.debug("Collecting inputs from cache name: '{}' value: '{}' size: '{}' valueref: '{}'", links.getBoundVariableInfo(entry.getKey()).getQualifiedNameString(), value, 1, entry.getKey());
 		}
 
 		return inputs;
 	}
 
-	public void syncOutputsToCache(List<StepStructoutputsStruct> outputs)
+	public void syncOutputsToCache(List<NamedValue> outputs) throws ValueException
 	{
-		for (StepStructoutputsStruct output : outputs)
+		for (NamedValue output : outputs)
 		{
-			// System.out.println(String.format("\tOutput %s = %s", output.name,
-			// output.value.get(0)));
 			ExtendedLinkInfo link = (ExtendedLinkInfo) links.getLinks().get(output.name);
 
 			Object vdmName = link.getQualifiedNameString();
@@ -109,20 +109,20 @@ public class StateCache
 			switch (link.type)
 			{
 				case Boolean:
-					booleans[index] = output.value.get(0) > 0;
+					booleans[index] = output.value.boolValue(null);
 					logger.debug("Sync output to fmi struct name: '{}' value: '{}' valueref: '{}'", vdmName, booleans[index], index);
 					break;
 				case Integer:
-					integers[index] = output.value.get(0).intValue();
+					integers[index] = (int) output.value.intValue(null);
 					logger.debug("Sync output to fmi struct name: '{}' value: '{}' valueref: '{}'", vdmName, integers[index], index);
 					break;
 				case Real:
-					reals[index] = output.value.get(0);
+					reals[index] = output.value.realValue(null);
 					logger.debug("Sync output to fmi struct name: '{}' value: '{}' valueref: '{}'", vdmName, reals[index], index);
 					break;
 				case String:
-
-					// logger.debug("Sync output to fmi struct name: '{}' value: '{}' valueref: '{}'",vdmName,strings[index],index);
+					strings[index] =output.value.stringValue(null);
+					 logger.debug("Sync output to fmi struct name: '{}' value: '{}' valueref: '{}'",vdmName,strings[index],index);
 					break;
 				default:
 					break;
@@ -224,6 +224,12 @@ public class StateCache
 			Node n1 : new NodeIterator(lookup(n, xpath, "Integer")))
 			{
 				type = ExtendedLinkInfo.Type.Integer;
+			}
+			
+			for (@SuppressWarnings("unused")
+			Node n1 : new NodeIterator(lookup(n, xpath, "String")))
+			{
+				type = ExtendedLinkInfo.Type.String;
 			}
 
 			link.put(valRef, new ExtendedLinkInfo(valRef, qualifiedName, 0, type));

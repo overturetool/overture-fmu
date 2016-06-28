@@ -1,0 +1,28 @@
+-- Generated class
+class HardwareInterface
+instance variables
+	-- @ interface: type = input, name="i_in";
+	public i_in : int := 0;
+	-- @ interface: type = input, name="r_in";
+	public r_in : real := 0.0;
+	-- @ interface: type = input, name="b_in";
+	public b_in : bool := true;
+	-- @ interface: type = input, name="s_in";
+	public s_in : seq of char := "";
+
+
+instance variables
+	-- @ interface: type = output, name="i_out";
+	public i_out : int := 0;
+	-- @ interface: type = output, name="r_out";
+	public r_out : real := 0.0;
+	-- @ interface: type = output, name="b_out";
+	public b_out : bool := true;
+	-- @ interface: type = output, name="s_out";
+	public s_out : seq of char := "";
+
+
+  
+  
+end HardwareInterface
+

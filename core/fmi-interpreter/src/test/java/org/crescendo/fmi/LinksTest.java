@@ -7,10 +7,10 @@ import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 
-import org.destecs.protocol.structs.StepinputsStructParam;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.overture.interpreter.runtime.ValueException;
 import org.w3c.dom.DOMException;
 import org.xml.sax.SAXException;
 
@@ -28,7 +28,7 @@ public class LinksTest
 
 	@Test
 	public void testLinks() throws XPathExpressionException, DOMException,
-			SAXException, IOException, ParserConfigurationException
+			SAXException, IOException, ParserConfigurationException, ValueException
 	{
 
 		Assert.assertEquals(1, state.collectInputsFromCache().size());
@@ -37,12 +37,12 @@ public class LinksTest
 	}
 
 	@Test
-	public void testInputs()
+	public void testInputs() throws ValueException
 	{
 
-		List<StepinputsStructParam> inputs = state.collectInputsFromCache();
+		List<NamedValue> inputs = state.collectInputsFromCache();
 
-		for (StepinputsStructParam input : inputs)
+		for (NamedValue input : inputs)
 		{
 			List<String> qualiName = state.links.getQualifiedName(input.name);
 			System.out.println(qualiName+ " = (new) = "+input.value);
