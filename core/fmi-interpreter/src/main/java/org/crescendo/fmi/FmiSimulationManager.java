@@ -42,10 +42,10 @@ public class FmiSimulationManager extends SimulationManager
 	/**
 	 * FMI step method using basic named values
 	 * 
-	 * @param outputTime
-	 * @param inputs
+	 * @param outputTime the time to step until
+	 * @param inputs the inputs needed for the step
 	 * @return a list of outputs from the step
-	 * @throws RemoteSimulationException
+	 * @throws RemoteSimulationException thrown if an internal error occur
 	 */
 	public synchronized List<NamedValue> step(Double outputTime,
 			List<NamedValue> inputs) throws RemoteSimulationException
@@ -153,7 +153,7 @@ public class FmiSimulationManager extends SimulationManager
 	 * @param parameter
 	 *            A list of Maps containing (name,value) keys and {@code name->String}, {@code value->Double}
 	 * @return false if any error occur else true
-	 * @throws RemoteSimulationException
+	 * @throws RemoteSimulationException thrown if an internal error occur
 	 */
 	public Boolean setParameter(NamedValue parameter)
 			throws RemoteSimulationException

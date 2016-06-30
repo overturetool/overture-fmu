@@ -71,7 +71,7 @@ public class StateCache
 	
 	/**
 	 * mark a scalar variable as a pending parameter set if it is recorded as a parameter
-	 * @param idString
+	 * @param idString the id string indicatint the parameter
 	 */
 	public void markParameterPending(int idString)
 	{
