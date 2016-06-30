@@ -31,6 +31,12 @@
 			<artifactId>fmi-shm-server</artifactId>
 			<version>${intocps.shm.version}</version>
 		</dependency>
+		
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.3.2</version>
+		</dependency>
 	</dependencies>
 
 	<build>

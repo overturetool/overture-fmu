@@ -60,7 +60,11 @@
 				
 				<link valueReference="6" name="System.hwi.s_out" />
 				<link valueReference="7" name="System.hwi.s_in" />
-
+				
+				<link valueReference="8" name="HardwareInterface.p_s" />
+				<link valueReference="9" name="System.hwi.p_out" />
+				<link valueReference="10" name="System.hwi.p2_out" />
+				<link valueReference="11" name="HardwareInterface.p2_s" />
 			</Overture>
 		</Tool>
 	</VendorAnnotations>
@@ -82,16 +86,26 @@
 		<ScalarVariable name="r_in" valueReference="5" causality="input" variability="continuous"><Real start="0.0" /></ScalarVariable>
 
 	
-	<!-- Index 5 -->
+	<!-- Index 7 -->
 		<ScalarVariable name="s_out" valueReference="6" causality="output" variability="discrete" initial="calculated"><String  /></ScalarVariable>
-		<!-- Index 6 -->
+		<!-- Index 8 -->
 		<ScalarVariable name="s_in" valueReference="7" causality="input" variability="continuous"><String start="" /></ScalarVariable>
+	
+	<!-- Index 9 -->
+	<ScalarVariable name="p_i" valueReference="8" causality="parameter" variability="fixed" initial="exact"><String start="&quot;&quot;" /></ScalarVariable>
+	<!-- Index 10 -->
+	<ScalarVariable name="p_out" valueReference="9" causality="output" variability="discrete" initial="calculated"><String  /></ScalarVariable>
+		<!-- Index 11 -->
+	<ScalarVariable name="p2_out" valueReference="10" causality="output" variability="discrete" initial="calculated"><String  /></ScalarVariable>
+	
+	<!-- Index 12 -->
+	<ScalarVariable name="p2_s" valueReference="11" causality="parameter" variability="fixed" initial="exact"><String start="&quot;&quot;" /></ScalarVariable>
 	
 	</ModelVariables>
 
 	<ModelStructure>
 		<Outputs>
-			<Unknown index="3"  />			<Unknown index="4"  />			<Unknown index="5"  />
+			<Unknown index="3"  />			<Unknown index="4"  />			<Unknown index="5"  /> <Unknown index="10"  /><Unknown index="11"  />
 
 		</Outputs>
 

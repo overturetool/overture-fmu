@@ -44,6 +44,8 @@ public class StateCache
 	public final boolean[] booleans;
 	public final String[] strings;
 
+	final List<String> initialPendingSetParameterIdList = new Vector<String>();
+	
 	public final Links links;
 
 	public StateCache(File linkFile) throws XPathExpressionException,
@@ -59,6 +61,32 @@ public class StateCache
 		integers = new int[getMaxInt(doc, "//ScalarVariable[Integer]/@valueReference") + 1];
 		booleans = new boolean[getMaxInt(doc, "//ScalarVariable[Boolean]/@valueReference") + 1];
 		strings = new String[getMaxInt(doc, "//ScalarVariable[String]/@valueReference") + 1];
+		
+		//strings are objects, so we need to initialize them to avoid null-pointers else where (we use the same code for all types)
+		for (int i = 0; i < strings.length; i++)
+		{
+			strings[i]="";
+		}
+	}
+	
+	/**
+	 * mark a scalar variable as a pending parameter set if it is recorded as a parameter
+	 * @param idString
+	 */
+	public void markParameterPending(int idString)
+	{
+		String id = idString+"";
+		if(links.getSharedDesignParameters().keySet().contains(id))
+		{
+			initialPendingSetParameterIdList.add(id);
+		}
+	}
+	
+	public Map<String, LinkInfo> getPendingSetParameters()
+	{
+		Map<String, LinkInfo> map = links.getSharedDesignParameters();
+		map.keySet().retainAll(initialPendingSetParameterIdList);
+		return map;
 	}
 
 	public List<NamedValue> collectInputsFromCache() throws ValueException

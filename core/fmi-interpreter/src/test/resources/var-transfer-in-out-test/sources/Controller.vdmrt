@@ -12,7 +12,9 @@ atomic(
 System`hwi.i_out:= System`hwi.i_in;
 System`hwi.r_out:= System`hwi.r_in;
 System`hwi.b_out:= System`hwi.b_in;
-System`hwi.s_out:= System`hwi.s_in;   
+System`hwi.s_out:= System`hwi.s_in;  
+System`hwi.p_out:= System`hwi.p_s;  
+System`hwi.p2_out:= System`hwi.p2_s;   
 );
 			
     

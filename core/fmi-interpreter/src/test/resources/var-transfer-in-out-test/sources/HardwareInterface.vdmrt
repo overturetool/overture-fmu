@@ -1,5 +1,12 @@
 -- Generated class
 class HardwareInterface
+values
+	-- @ interface: type = parameter, name="p_s";
+	public p_s : seq of char = "";
+
+	-- @ interface: type = parameter, name="p2_s";
+	public p2_s : seq of char = "p2-default";
+
 instance variables
 	-- @ interface: type = input, name="i_in";
 	public i_in : int := 0;
@@ -20,7 +27,12 @@ instance variables
 	public b_out : bool := true;
 	-- @ interface: type = output, name="s_out";
 	public s_out : seq of char := "";
+	
+	-- @ interface: type = output, name="p_out";
+	public p_out : seq of char := "";
 
+	-- @ interface: type = output, name="p2_out";
+	public p2_out : seq of char := "";
 
   
   

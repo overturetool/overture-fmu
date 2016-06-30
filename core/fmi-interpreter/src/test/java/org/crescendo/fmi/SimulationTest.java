@@ -8,6 +8,7 @@ import org.junit.Test;
 import com.lausdahl.examples.Service.Fmi2DoStepRequest;
 import com.lausdahl.examples.Service.Fmi2Empty;
 import com.lausdahl.examples.Service.Fmi2InstantiateRequest;
+import com.lausdahl.examples.Service.Fmi2SetStringRequest;
 import com.lausdahl.examples.Service.Fmi2StatusReply;
 
 public class SimulationTest
@@ -24,9 +25,6 @@ public class SimulationTest
 		String resourcePath = "src/test/resources/var-transfer-in-out-test/resources".replace('/', File.separatorChar);
 		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.Instantiate(Fmi2InstantiateRequest.newBuilder().setFmuResourceLocation(resourcePath).build()).getStatus());
 
-		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.EnterInitializationMode(empty).getStatus());
-		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.ExitInitializationMode(empty).getStatus());
-
 		final int b_in = 1;
 		final int b_out = 2;
 
@@ -38,6 +36,8 @@ public class SimulationTest
 
 		final int s_in = 7;
 		final int s_out = 6;
+		
+		final int p_s = 8;
 
 		// do step 1.
 		fmu.state.booleans[b_in] = true;
@@ -45,6 +45,12 @@ public class SimulationTest
 		fmu.state.reals[r_in] = 9.9;
 		fmu.state.strings[s_in] = "my value";
 
+		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.SetString(Fmi2SetStringRequest.newBuilder().addValueReference( p_s).addValues( "parameter").build()).getStatus());
+		
+		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.EnterInitializationMode(empty).getStatus());
+		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.ExitInitializationMode(empty).getStatus());
+
+		
 		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.DoStep(Fmi2DoStepRequest.newBuilder().setCurrentCommunicationPoint(0).setCommunicationStepSize(4).build()).getStatus());
 
 		Assert.assertEquals(true, fmu.state.booleans[b_out]);

@@ -2,9 +2,7 @@ package org.crescendo.fmi;
 
 import java.io.File;
 import java.io.OutputStreamWriter;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Vector;
 
@@ -19,6 +17,11 @@ import org.overture.interpreter.messages.StderrRedirector;
 import org.overture.interpreter.messages.StdoutRedirector;
 import org.overture.interpreter.scheduler.SystemClock;
 import org.overture.interpreter.scheduler.SystemClock.TimeUnit;
+import org.overture.interpreter.values.BooleanValue;
+import org.overture.interpreter.values.IntegerValue;
+import org.overture.interpreter.values.RealValue;
+import org.overture.interpreter.values.SeqValue;
+import org.overture.interpreter.values.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +35,7 @@ import com.lausdahl.examples.Service.Fmi2GetIntegerReply;
 import com.lausdahl.examples.Service.Fmi2GetMaxStepSizeReply;
 import com.lausdahl.examples.Service.Fmi2GetRealReply;
 import com.lausdahl.examples.Service.Fmi2GetRequest;
+import com.lausdahl.examples.Service.Fmi2GetStringReply;
 import com.lausdahl.examples.Service.Fmi2InstantiateRequest;
 import com.lausdahl.examples.Service.Fmi2IntegerStatusReply;
 import com.lausdahl.examples.Service.Fmi2RealStatusReply;
@@ -209,44 +213,42 @@ public class CrescendoFmu implements IServiceProtocol
 		}
 		try
 		{
-			// set sdp
-			List<Map<String, Object>> parameters = new Vector<Map<String, Object>>();
 
-			for (Entry<String, LinkInfo> link : state.links.getSharedDesignParameters().entrySet())
+			for (Entry<String, LinkInfo> link : state.getPendingSetParameters().entrySet())
 			{
 				int index = Integer.valueOf(link.getKey());
 
 				ExtendedLinkInfo info = (ExtendedLinkInfo) link.getValue();
 
-				Double value = 0.0;
+				Value value = null;
 				switch (info.type)
 				{
 					case Boolean:
-						value = state.booleans[index] ? 1.0 : 0.0;
+						value = new BooleanValue(state.booleans[index]);
 						break;
 					case Integer:
-						value = new Double(state.integers[index]);
+						value = new IntegerValue(state.integers[index]);
 						break;
 					case Real:
-						value = state.reals[index];
+						try
+						{
+							value = new RealValue(state.reals[index]);
+						} catch (Exception e)
+						{
+							return fatal;
+						}
 						break;
 					case String:
-						// TODO:
+						value = new SeqValue(state.strings[index]);
 						break;
 					default:
 						break;
 
 				}
 
-				Map<String, Object> pMax = new HashMap<String, Object>();
-				pMax.put("name", link.getKey());
-				pMax.put("value", new Double[] { value });
-				pMax.put("size", new Integer[] { 1 });
-				parameters.add(pMax);
 				logger.debug("Added sdp with name: '{}' value: '{}' valueref: '{}'", state.links.getQualifiedName(link.getKey()), value, link.getKey());
+				FmiSimulationManager.getInstance().setParameter(new NamedValue(link.getKey(), value, -1));
 			}
-
-			FmiSimulationManager.getInstance().setDesignParameters(parameters);
 
 			logger.debug("Starting simulation manager with time: {}", time.longValue());
 			// start
@@ -308,9 +310,16 @@ public class CrescendoFmu implements IServiceProtocol
 	}
 
 	@Override
-	public GeneratedMessage GetString(Fmi2GetRequest parseFrom)
+	public GeneratedMessage GetString(Fmi2GetRequest request)
 	{
-		return discard;
+		Fmi2GetStringReply.Builder reply = Fmi2GetStringReply.newBuilder();
+
+		for (int i = 0; i < request.getValueReferenceCount(); i++)
+		{
+			long id = request.getValueReference(i);
+			reply.addValues(state.strings[new Long(id).intValue()]);
+		}
+		return reply.build();
 	}
 
 	/***
@@ -413,14 +422,41 @@ public class CrescendoFmu implements IServiceProtocol
 		return ok;
 	}
 
+//	interface GetFunction<T>
+//	{
+//		T get(int id);
+//	}
+//
+//	private <T> Fmi2StatusReply genericSet(T[] array, int size,
+//			GetFunction<Integer> getIdFun, GetFunction<T> getValueFun)
+//	{
+//		boolean notInitialized = checkStats(CrescendoStateType.None, CrescendoStateType.Instantiated);
+//
+//		for (int i = 0; i < size; i++)
+//		{
+//			int id = getIdFun.get(i);
+//			if (notInitialized)
+//				state.markParameterPending(id);
+//			T value = getValueFun.get(i);
+//			logger.trace("Setting real[{}] = {}", id, value);
+//			array[(int) id] = value;
+//		}
+//		return ok;
+//	}
+
 	@Override
-	public Fmi2StatusReply SetReal(Fmi2SetRealRequest request)
+	public Fmi2StatusReply SetReal(final Fmi2SetRealRequest request)
 	{
+				
+		boolean notInitialized = checkStats(CrescendoStateType.None, CrescendoStateType.Instantiated);
+
 		for (int i = 0; i < request.getValueReferenceCount(); i++)
 		{
-			long id = request.getValueReference(i);
-			logger.trace("Setting real[{}] = {}", (int) id, request.getValues(i));
-			state.reals[(int) id] = request.getValues(i);
+			int id = request.getValueReference(i);
+			if (notInitialized)
+				state.markParameterPending(id);
+			logger.trace("Setting real[{}] = {}", id, request.getValues(i));
+			state.reals[id] = request.getValues(i);
 		}
 		return ok;
 	}
@@ -428,31 +464,41 @@ public class CrescendoFmu implements IServiceProtocol
 	@Override
 	public Fmi2StatusReply SetInteger(Fmi2SetIntegerRequest request)
 	{
+		boolean notInitialized = checkStats(CrescendoStateType.None, CrescendoStateType.Instantiated);
 		for (int i = 0; i < request.getValueReferenceCount(); i++)
 		{
-			long id = request.getValueReference(i);
-			state.integers[new Long(id).intValue()] = request.getValues(i);
+			int id = request.getValueReference(i);
+			if (notInitialized)
+				state.markParameterPending(id);
+			state.integers[id] = request.getValues(i);
 		}
 		return ok;
 	}
 
 	@Override
 	public Fmi2StatusReply SetBoolean(Fmi2SetBooleanRequest request)
-	{
+	{boolean notInitialized = checkStats(CrescendoStateType.None, CrescendoStateType.Instantiated);
 		for (int i = 0; i < request.getValueReferenceCount(); i++)
 		{
-			long id = request.getValueReference(i);
-			state.booleans[new Long(id).intValue()] = request.getValues(i);
+			int id = request.getValueReference(i);
+			if (notInitialized)
+				state.markParameterPending(id);
+			state.booleans[id] = request.getValues(i);
 		}
 		return ok;
 	}
 
 	@Override
-	public Fmi2StatusReply SetString(Fmi2SetStringRequest parseFrom)
-	{
-		// TODO Auto-generated method stub
-		fmiLog(FmiLogCategory.Protocol, "SetString not supported");
-		return discard;
+	public Fmi2StatusReply SetString(Fmi2SetStringRequest request)
+	{boolean notInitialized = checkStats(CrescendoStateType.None, CrescendoStateType.Instantiated);
+		for (int i = 0; i < request.getValueReferenceCount(); i++)
+		{
+			int id = request.getValueReference(i);
+			if (notInitialized)
+				state.markParameterPending(id);
+			state.strings[id] = request.getValues(i);
+		}
+		return ok;
 	}
 
 	@Override

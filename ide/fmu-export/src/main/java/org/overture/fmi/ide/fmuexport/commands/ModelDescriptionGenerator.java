@@ -229,11 +229,13 @@ public class ModelDescriptionGenerator
 		{
 			typeTemplate = scalarVariableIntegerTypeTemplate;
 
+		}else if(VdmAnnotationProcesser.isStringType(type))
+		{
+			typeTemplate = scalarVariableStringTypeTemplate;
 		}
 
-		// TODO add string
 
-		String start = initial != null ? String.format(scalarVariableStartTemplate, initial)
+		String start = initial != null ? String.format(scalarVariableStartTemplate, initial.replaceAll("\"","&quot;").replaceAll("\'","&apos;"))
 				: "";
 		return String.format(typeTemplate, start);
 	}
