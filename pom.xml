@@ -349,4 +349,20 @@ http://mojo.codehaus.org/versions-maven-plugin/
 	</organization>
 
 	<inceptionYear>2015</inceptionYear>
+
+
+
+  <distributionManagement>
+    <repository>
+      <id>overture.au.dk</id>
+      <name>overture.au.dk-releases</name>
+      <url>http://overture.au.dk/artifactory/overture-fmu</url>
+    </repository>
+    <snapshotRepository>
+      <id>overture.au.dk</id>
+      <name>overture.au.dk-snapshots</name>
+      <url>http://overture.au.dk/artifactory/overture-fmu</url>
+    </snapshotRepository>
+  </distributionManagement>
+
 </project>
