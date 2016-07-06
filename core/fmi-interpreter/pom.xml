@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.overturetool.fmi</groupId>
 		<artifactId>core</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
+		<version>0.0.2</version>
 	</parent>
 
 	<groupId>org.overturetool.fmi.core</groupId>
@@ -87,7 +87,7 @@
 										</goals>
 									</pluginExecutionFilter>
 									<action>
-										<ignore></ignore>
+										<ignore />
 									</action>
 								</pluginExecution>
 							</pluginExecutions>
@@ -110,9 +110,9 @@
                 <phase>process-resources</phase>
                 <configuration>
                   <tasks>
-										<property name="root" value="${env.fmutoolwrapperbinaries}"/>
+										<property name="root" value="${env.fmutoolwrapperbinaries}" />
 
-										<delete dir="src/main/resources/fmu-shm-api"/>
+										<delete dir="src/main/resources/fmu-shm-api" />
 										<mkdir dir="src/main/resources/fmu-shm-api" />
 										<copy todir="src/main/resources/fmu-shm-api" overwrite="true">
 											<fileset dir="${root}/" />
