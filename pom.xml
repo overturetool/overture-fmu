@@ -259,6 +259,7 @@ http://mojo.codehaus.org/versions-maven-plugin/
 					<artifactId>maven-release-plugin</artifactId>
 					<version>2.5</version>
 					<configuration>
+						<releaseProfiles>build-server,With-IDE,all-platforms</releaseProfiles>
 						<tagNameFormat>Release/@{project.version}</tagNameFormat>
 					</configuration>
 				</plugin>
