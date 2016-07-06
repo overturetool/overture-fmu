@@ -101,3 +101,7 @@ orchestration/coe/interpreter.log*
 ##vagrant
 
 **/.vagrant
+
+
+
+core/fmi-interpreter/src/main/resources/fmu-shm-api/

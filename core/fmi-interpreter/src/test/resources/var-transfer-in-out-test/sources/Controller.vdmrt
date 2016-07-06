@@ -1,0 +1,26 @@
+class Controller
+
+
+operations
+
+public loop : () ==>()
+loop()==
+	cycles(2)
+   (-- retrieve the first value from Co-SIM
+   
+atomic(
+System`hwi.i_out:= System`hwi.i_in;
+System`hwi.r_out:= System`hwi.r_in;
+System`hwi.b_out:= System`hwi.b_in;
+System`hwi.s_out:= System`hwi.s_in;  
+System`hwi.p_out:= System`hwi.p_s;  
+System`hwi.p2_out:= System`hwi.p2_s;   
+);
+			
+    
+   );
+
+thread
+periodic(10E6,0,0,0)(loop);	 
+		 
+end Controller

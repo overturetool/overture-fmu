@@ -1,0 +1,23 @@
+Manifest-Version: 1.0
+Bundle-Vendor: Overture
+Bundle-ActivationPolicy: lazy
+Bundle-Version: 0.0.1.qualifier
+Eclipse-BuddyPolicy: registered
+Bundle-Name: Overture FMU Exporter
+Bundle-ManifestVersion: 2
+Bundle-SymbolicName: org.overture.fmi.ide.fmuexport;singleton:=true
+Require-Bundle: org.eclipse.ui.console,
+ org.overture.ide.ui,
+ org.overture.ide.core,
+ org.overture.ide.builders.vdmj;bundle-version="2.0.0"
+Bundle-Activator: org.overture.fmi.ide.fmuexport.FmuExportPlugin
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-ClassPath: .,
+ jars/fmi-interpreter.jar,
+ jars/annotation-parser.jar,
+ jars/antlr-runtime.jar,
+ jars/parsers.jar,
+ jars/commons-io.jar,
+ jars/vdm-reflect-library.jar,
+ jars/commons-lang3.jar
+

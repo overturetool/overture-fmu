@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <feature id="org.overture.fmi.ide.features.fmuexport">
+      <category name="org.overture.fmi.ide.id"/>
+   </feature>
+   <category-def name="org.overture.fmi.ide.id" label="Overture FMI Integration">
+      <description>
+         This feature adds FMI tool wrapper support to the Overture IDE
+      </description>
+   </category-def>
+</site>

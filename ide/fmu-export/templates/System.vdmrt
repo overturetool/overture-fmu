@@ -1,0 +1,17 @@
+system System
+
+instance variables
+
+-- Hardware interface variable required by FMU Import/Export
+public static hwi: HardwareInterface := new HardwareInterface();
+    
+
+operations
+
+public System : () ==> System
+System () == 
+(
+	skip;
+);
+
+end System
