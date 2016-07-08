@@ -46,6 +46,6 @@ void systemDeInit();
 void systemMain();
 
 
-void vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationStepSize);
+fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationStepSize);
 
 #endif /* FMU_H_ */

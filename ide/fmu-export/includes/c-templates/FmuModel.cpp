@@ -92,9 +92,40 @@ void systemDeInit()
 
 
 
-void vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationStepSize)
+fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationStepSize)
 {
+	int numThreads = (sizeof threads) / (sizeof (struct PeriodicThreadStatus));
+	int i, j;
+	int threadRunCount;
 
+	double currentCommunicationPoint = 0;
+	double communicationStepSize = 1E8;
+
+	//In this implementation we need the step size to be an integer multiple of the period of each thread.
+	for(i = 0;  i < numThreads; i++)
+	{
+		if(((long int) communicationStepSize) % ((long int)threads[i].period) != 0)
+		{
+			return fmi2Discard;
+		}
+	}
+
+	//Call each thread the appropriate number of times.
+	for(i = 0;  i < numThreads; i++)
+	{
+		threadRunCount = ((long int) communicationStepSize) / ((long int)threads[i].period);
+
+		//Execute each thread the number of times that its period fits in the step size.
+		for(j = 0; j < threadRunCount; j++)
+		{
+//			CALL_FUNC(---OBJECT_TYPE---, ---OBJECT_TYPE---, threads[i].objectName, threads[i].callName);
+		}
+
+		//Update the thread's last execution time.
+		threads[i].lastExecuted = currentCommunicationPoint + communicationStepSize;
+	}
+
+	return fmi2OK;
 }
 
 void systemMain()
