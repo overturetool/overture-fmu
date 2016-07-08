@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<fmiModelDescription 	fmiVersion="2.0" 
+						modelName="inouttransfermodel" 
+						guid="{7f40f42b-a2a2-4e74-a992-fd87f51e91fe}" 
+						description="" 
+						author="" 
+						version="Version 1" 
+						copyright="Copyright Overture tool (Aarhus University)" 
+						license="Some Overture FMI License" 
+						generationTool="Overture Tool FMI Exporter"
+						generationDateAndTime="2016-06-28T11:03:33" 
+						variableNamingConvention="flat" 
+						numberOfEventIndicators="0">
+
+	<CoSimulation 	modelIdentifier="inouttransfermodel" 
+					needsExecutionTool="true" 
+					canHandleVariableCommunicationStepSize="true" 
+					canInterpolateInputs="false" 
+					maxOutputDerivativeOrder="0" 
+					canRunAsynchronuously="false" 
+					canBeInstantiatedOnlyOncePerProcess="true"
+					canNotUseMemoryManagementFunctions="true" 
+					canGetAndSetFMUstate="false" 
+					canSerializeFMUstate="false" 
+					providesDirectionalDerivative="false">
+		
+		
+			<SourceFiles>
+				<File name="Controller.vdmrt" />
+				<File name="HardwareInterface.vdmrt" />
+				<File name="System.vdmrt" />
+				<File name="World.vdmrt" />
+
+			</SourceFiles>
+		
+		</CoSimulation>
+
+
+
+	<LogCategories>
+		<Category name="logAll" />
+		<Category name="logError" />
+		<Category name="logFmiCall" />
+
+		<Category name="Protocol" />
+		<Category name="VdmOut" />
+		<Category name="VdmErr" />
+		<Category name="Error" />
+	</LogCategories>
+
+	<VendorAnnotations>
+		<Tool name="Overture">
+			<Overture>
+				<link valueReference="0" name="System.hwi.i_in" />
+				<link valueReference="1" name="System.hwi.b_in" />
+				<link valueReference="2" name="System.hwi.b_out" />
+				<link valueReference="3" name="System.hwi.i_out" />
+				<link valueReference="4" name="System.hwi.r_out" />
+				<link valueReference="5" name="System.hwi.r_in" />
+				
+				<link valueReference="6" name="System.hwi.s_out" />
+				<link valueReference="7" name="System.hwi.s_in" />
+				
+				<link valueReference="8" name="HardwareInterface.p_s" />
+				<link valueReference="9" name="System.hwi.p_out" />
+				<link valueReference="10" name="System.hwi.p2_out" />
+				<link valueReference="11" name="HardwareInterface.p2_s" />
+			</Overture>
+		</Tool>
+	</VendorAnnotations>
+
+
+	<ModelVariables>
+
+		<!-- Index 1 -->
+		<ScalarVariable name="i_in" valueReference="0" causality="input" variability="discrete"><Integer start="0" /></ScalarVariable>
+		<!-- Index 2 -->
+		<ScalarVariable name="b_in" valueReference="1" causality="input" variability="discrete"><Boolean start="true" /></ScalarVariable>
+		<!-- Index 3 -->
+		<ScalarVariable name="b_out" valueReference="2" causality="output" variability="discrete" initial="calculated"><Boolean  /></ScalarVariable>
+		<!-- Index 4 -->
+		<ScalarVariable name="i_out" valueReference="3" causality="output" variability="discrete" initial="calculated"><Integer  /></ScalarVariable>
+		<!-- Index 5 -->
+		<ScalarVariable name="r_out" valueReference="4" causality="output" variability="discrete" initial="calculated"><Real  /></ScalarVariable>
+		<!-- Index 6 -->
+		<ScalarVariable name="r_in" valueReference="5" causality="input" variability="continuous"><Real start="0.0" /></ScalarVariable>
+
+	
+	<!-- Index 7 -->
+		<ScalarVariable name="s_out" valueReference="6" causality="output" variability="discrete" initial="calculated"><String  /></ScalarVariable>
+		<!-- Index 8 -->
+		<ScalarVariable name="s_in" valueReference="7" causality="input" variability="continuous"><String start="" /></ScalarVariable>
+	
+	<!-- Index 9 -->
+	<ScalarVariable name="p_i" valueReference="8" causality="parameter" variability="fixed" initial="exact"><String start="&quot;&quot;" /></ScalarVariable>
+	<!-- Index 10 -->
+	<ScalarVariable name="p_out" valueReference="9" causality="output" variability="discrete" initial="calculated"><String  /></ScalarVariable>
+		<!-- Index 11 -->
+	<ScalarVariable name="p2_out" valueReference="10" causality="output" variability="discrete" initial="calculated"><String  /></ScalarVariable>
+	
+	<!-- Index 12 -->
+	<ScalarVariable name="p2_s" valueReference="11" causality="parameter" variability="fixed" initial="exact"><String start="&quot;&quot;" /></ScalarVariable>
+	
+	</ModelVariables>
+
+	<ModelStructure>
+		<Outputs>
+			<Unknown index="3"  />			<Unknown index="4"  />			<Unknown index="5"  /> <Unknown index="10"  /><Unknown index="11"  />
+
+		</Outputs>
+
+	</ModelStructure>
+
+</fmiModelDescription>

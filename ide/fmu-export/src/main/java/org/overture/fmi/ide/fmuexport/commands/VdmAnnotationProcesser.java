@@ -16,6 +16,10 @@ import org.overture.ast.definitions.AValueDefinition;
 import org.overture.ast.definitions.PDefinition;
 import org.overture.ast.definitions.SClassDefinition;
 import org.overture.ast.types.ABooleanBasicType;
+import org.overture.ast.types.ACharBasicType;
+import org.overture.ast.types.ASeq1SeqType;
+import org.overture.ast.types.ASeqSeqType;
+import org.overture.ast.types.PType;
 import org.overture.ast.types.SNumericBasicType;
 import org.overture.fmi.annotation.AnnotationParserWrapper;
 import org.overture.fmi.annotation.FmuAnnotation;
@@ -68,7 +72,8 @@ public class VdmAnnotationProcesser
 
 								// FIXME: type chekc insuficient
 								if (mDef.getType() instanceof SNumericBasicType
-										|| mDef.getType() instanceof ABooleanBasicType)
+										|| mDef.getType() instanceof ABooleanBasicType
+										|| isStringType(mDef.getType()))
 								{
 									definitionAnnotation.put(mDef, annotation);
 								} else
@@ -109,6 +114,12 @@ public class VdmAnnotationProcesser
 			}
 		}
 		return definitionAnnotation;
+	}
+
+	public static boolean isStringType(PType type)
+	{
+		return (type instanceof ASeqSeqType && ((ASeqSeqType) type).getSeqof() instanceof ACharBasicType)
+				|| (type instanceof ASeq1SeqType && ((ASeq1SeqType) type).getSeqof() instanceof ACharBasicType);
 	}
 
 	private Map<IVdmSourceUnit, List<FmuAnnotation>> getSourceUnitAnnotations(

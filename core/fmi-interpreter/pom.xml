@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.overturetool.fmi</groupId>
 		<artifactId>core</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
+		<version>0.0.3-SNAPSHOT</version>
 	</parent>
 
 	<groupId>org.overturetool.fmi.core</groupId>
@@ -31,61 +31,17 @@
 			<artifactId>fmi-shm-server</artifactId>
 			<version>${intocps.shm.version}</version>
 		</dependency>
+		
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.3.2</version>
+		</dependency>
 	</dependencies>
 
 	<build>
 
 		<plugins>
-
-			<!--plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-antrun-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>prepare</id>
-						<phase>validate</phase>
-						<configuration>
-							<tasks>
-								<taskdef resource="net/sf/antcontrib/antcontrib.properties" />
-								<if>
-                  <available file="src/main/resources/fmu-shm-api/linux64"/>
-                  <then>
-                    <echo>The VDM FMU wrapper file exists</echo>
-                  </then>
-
-                  <else>
-                    <echo message="Download pre-build VDM FMU wrapper, it is missing..." />
-										<get src="http://overture.au.dk/into-cps/vdm-tool-wrapper/development/latest/vdm-tool-wrapper.zip" dest="target" verbose="true" usetimestamp="true" />
-										<unzip src="target/vdm-tool-wrapper.zip" dest="src/main/resources/fmu-shm-api/">
-											<patternset>
-												<include name="**/binaries/*/*.so" />
-												<include name="**/binaries/*/*.dylib" />
-												<include name="**/binaries/*/*.dll" />
-											</patternset>
-											<cutdirsmapper dirs="2"/>
-										</unzip>
-                  </else>
-                </if>
-                
-								
-
-							</tasks>
-						</configuration>
-						<goals>
-							<goal>run</goal>
-						</goals>
-					</execution>
-				</executions>
-				
-				<dependencies>
-          <dependency>
-            <groupId>ant-contrib</groupId>
-            <artifactId>ant-contrib</artifactId>
-            <version>20020829</version>
-          </dependency>
-        </dependencies>
-			</plugin-->
-
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
 				<configuration>
@@ -131,7 +87,7 @@
 										</goals>
 									</pluginExecutionFilter>
 									<action>
-										<ignore></ignore>
+										<ignore />
 									</action>
 								</pluginExecution>
 							</pluginExecutions>
@@ -141,4 +97,37 @@
 			</plugins>
 		</pluginManagement>
 	</build>
+
+	<profiles>
+		<profile>
+			<id>build-server</id>
+			<build>
+				<plugins>
+					<plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+              <execution>
+                <phase>process-resources</phase>
+                <configuration>
+                  <tasks>
+										<property name="root" value="${env.fmutoolwrapperbinaries}" />
+
+										<delete dir="src/main/resources/fmu-shm-api" />
+										<mkdir dir="src/main/resources/fmu-shm-api" />
+										<copy todir="src/main/resources/fmu-shm-api" overwrite="true">
+											<fileset dir="${root}/" />
+										</copy>
+                  </tasks>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+				</plugins>
+			</build>
+			
+		</profile>
+	</profiles>
 </project>

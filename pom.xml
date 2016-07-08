@@ -12,13 +12,13 @@
 	<artifactId>root</artifactId>
 	<packaging>pom</packaging>
 	<name>Overture FMI Root Pom</name>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.3-SNAPSHOT</version>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<!--overture.version></overture.version-->
-		<crescendo.version>2.0.7-SNAPSHOT</crescendo.version>
-		<intocps.shm.version>0.0.1-SNAPSHOT</intocps.shm.version>
+		<crescendo.version>2.0.8</crescendo.version>
+		<intocps.shm.version>0.0.2</intocps.shm.version>
 	</properties>
 
 
@@ -259,6 +259,7 @@ http://mojo.codehaus.org/versions-maven-plugin/
 					<artifactId>maven-release-plugin</artifactId>
 					<version>2.5</version>
 					<configuration>
+						<releaseProfiles>build-server,With-IDE,all-platforms</releaseProfiles>
 						<tagNameFormat>Release/@{project.version}</tagNameFormat>
 					</configuration>
 				</plugin>
@@ -338,7 +339,7 @@ http://mojo.codehaus.org/versions-maven-plugin/
 	<licenses>
 		<license>
 			<name>Private</name>
-			<url></url>
+			<url />
 		</license>
 	</licenses>
 
@@ -348,4 +349,20 @@ http://mojo.codehaus.org/versions-maven-plugin/
 	</organization>
 
 	<inceptionYear>2015</inceptionYear>
+
+
+
+  <distributionManagement>
+    <repository>
+      <id>overture.au.dk</id>
+      <name>overture.au.dk-releases</name>
+      <url>http://overture.au.dk/artifactory/overture-fmu</url>
+    </repository>
+    <snapshotRepository>
+      <id>overture.au.dk</id>
+      <name>overture.au.dk-snapshots</name>
+      <url>http://overture.au.dk/artifactory/overture-fmu</url>
+    </snapshotRepository>
+  </distributionManagement>
+
 </project>
