@@ -71,7 +71,7 @@ public class ExportSourceCodeFmuHandler extends ExportFmuHandler
 		generator.generate(sourcesFolder.getLocation().toFile());
 		sourcesFolder.refreshLocal(IResource.DEPTH_INFINITE, null);
 
-		final List<String> periodicDefs = extractPeriodicDefs(project);
+		final List<PeriodicThreadDef> periodicDefs = extractPeriodicDefs(project);
 
 		String periodicDefinition = createPeriodicDefinitionString(periodicDefs);
 
@@ -297,17 +297,20 @@ public class ExportSourceCodeFmuHandler extends ExportFmuHandler
 		return sb;
 	}
 
-	private String createPeriodicDefinitionString(List<String> periodicDefs)
+	private String createPeriodicDefinitionString(List<PeriodicThreadDef> periodicDefs)
 	{
+		StringBuffer periodicTasks = new StringBuffer();
 		StringBuffer periodicStringDefs = new StringBuffer();
 
-		for (Iterator<String> itr = periodicDefs.iterator(); itr.hasNext();)
+		for (Iterator<PeriodicThreadDef> itr = periodicDefs.iterator(); itr.hasNext();)
 		{
-			String def = (String) itr.next();
-			periodicStringDefs.append(def);
+			PeriodicThreadDef def =itr.next();
+			periodicStringDefs.append(def.getInstance());
+			periodicTasks.append(def.getPeriodicTaskCallFunctionDefinition());
 			if (itr.hasNext())
 			{
 				periodicStringDefs.append(",\n");
+				periodicTasks.append("\n");
 			}
 
 		}
@@ -317,14 +320,69 @@ public class ExportSourceCodeFmuHandler extends ExportFmuHandler
 		sb.append(periodicDefs.size());
 		sb.append("\n");
 		sb.append("\n");
+		sb.append(periodicTasks.toString());
+		sb.append("\n");
+		sb.append("\n");
 		sb.append(String.format("struct PeriodicThreadStatus threads[] ={\n%s\n};", periodicStringDefs.toString()));
 		return sb.toString();
 	}
 
-	public List<String> extractPeriodicDefs(IVdmProject project)
+	static class PeriodicThreadDef
+	{
+		final static String PeriodicTaskName ="periodic_task%s_%s";
+		final static String PeriodicTaskFunctionTemplate = "void %s()\n{\n\tCALL_FUNC(%s, %s, %s, %s);\n}\n";
+		final static String PeriodicTaskCallTemplate = "&%s";
+		// String periodicTaskFunction;
+		// String perioducTaskCall;
+
+		String objectName;
+		String className;
+		String callName;
+		String period;
+		String objectTypeName;
+
+		String getGlobalObjectName()
+		{
+			return String.format("g_%s_%s", className, objectName);
+		}
+		
+		String getMangledCallName()
+		{
+			// _Z4loopEV
+					return String.format("_Z%d%sEV", callName.length(), callName);
+		}
+
+		String getCallName()
+		{
+			// CLASS_Controller__Z4loopEV
+			return String.format("CLASS_%s_%s", className, getMangledCallName());
+		}
+		
+		String getPeriodicTaskCallName()
+		{
+			return String.format(PeriodicTaskCallTemplate, getPeriodicTaskName());
+		}
+		
+		String getPeriodicTaskName()
+		{
+			return String.format(PeriodicTaskName, getGlobalObjectName(),getMangledCallName());
+		}
+
+		String getPeriodicTaskCallFunctionDefinition()
+		{
+			return String.format(PeriodicTaskFunctionTemplate,getPeriodicTaskName(),objectTypeName,objectTypeName,getGlobalObjectName(),getCallName());
+		}
+		
+		String getInstance()
+		{
+			return String.format("{ %s, %s, 0 }", period, getPeriodicTaskCallName());
+		}
+	}
+
+	public List<PeriodicThreadDef> extractPeriodicDefs(IVdmProject project)
 			throws NotAllowedException, AnalysisException
 	{
-		final List<String> periodicDefs = new Vector<>();
+		final List<PeriodicThreadDef> periodicDefs = new Vector<>();
 
 		for (SClassDefinition cdef : project.getModel().getClassList())
 		{
@@ -345,10 +403,16 @@ public class ExportSourceCodeFmuHandler extends ExportFmuHandler
 									AVariableExp varExp = (AVariableExp) node.getObj();
 									if (varExp.getVardef().getAccess().getStatic() != null)
 									{
+										PeriodicThreadDef ptDef = new PeriodicThreadDef();
+
 										// CALL_FUNC(World, World, world, CLASS_World__Z3runEV);
-										String className = varExp.getVardef().getClassDefinition().getName().getName();
+										ptDef.className = varExp.getVardef().getClassDefinition().getName().getName();
 										// g_System_hwi
-										String objectName = String.format("g_%s_%s", className, varExp.getName().getName());
+										// String objectName = String.format("g_%s_%s", className,
+										// varExp.getName().getName());
+										ptDef.objectName = varExp.getName().getName();
+										
+										
 
 										PType type = varExp.getType();
 										if (type instanceof AOptionalType)
@@ -359,6 +423,7 @@ public class ExportSourceCodeFmuHandler extends ExportFmuHandler
 										if (type instanceof AClassType)
 										{
 											AClassType cType = (AClassType) type;
+											ptDef.objectTypeName = cType.getName().getName();
 
 											for (PDefinition pDef : cType.getClassdef().getDefinitions())
 											{
@@ -370,17 +435,23 @@ public class ExportSourceCodeFmuHandler extends ExportFmuHandler
 													{
 														APeriodicStm periodicStm = (APeriodicStm) tDef.getStatement();
 
-														String period = ""
+														ptDef.period = ""
 																+ periodicStm.getArgs().get(0);
 
-														String name = periodicStm.getOpname().getName();
-														// _Z4loopEV
-														String mangledName = String.format("_Z%d%sEV", name.length(), name);
-														// CLASS_Controller__Z4loopEV
-														String callDef = String.format("CLASS_%s_%s", className, mangledName);
+														ptDef.callName = periodicStm.getOpname().getName();
+														// // _Z4loopEV
+														// String mangledName = String.format("_Z%d%sEV", name.length(),
+														// name);
+														// // CLASS_Controller__Z4loopEV
+														// String callDef = String.format("CLASS_%s_%s", className,
+														// mangledName);
 
-														String periodicDef = String.format("{ %s, \"%s\", \"%s\", 0 }", period, objectName, callDef);
-														periodicDefs.add(periodicDef);
+														// String periodicDef =
+														// String.format("{ %s, \"%s\", \"%s\", 0 }", period,
+														// objectName, callDef);
+														periodicDefs.add(ptDef);
+
+														// ptDef.objectName =
 													}
 												}
 											}
