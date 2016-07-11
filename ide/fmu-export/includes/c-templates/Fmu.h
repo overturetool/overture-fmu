@@ -27,9 +27,8 @@ struct FmiBuffer{
 
 struct PeriodicThreadStatus
 {
-	double period; //1.0E7
-	char objectName[100]; //g_System_controller
-	char callName[100]; //CLASS_System__Z4loopEV
+	double period;
+	void (*call)(void);
 	int lastExecuted;
 };
 

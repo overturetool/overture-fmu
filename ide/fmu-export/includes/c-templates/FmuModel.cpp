@@ -118,7 +118,7 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationSte
 		//Execute each thread the number of times that its period fits in the step size.
 		for(j = 0; j < threadRunCount; j++)
 		{
-//			CALL_FUNC(---OBJECT_TYPE---, ---OBJECT_TYPE---, threads[i].objectName, threads[i].callName);
+			threads[i].call();
 		}
 
 		//Update the thread's last execution time.
@@ -149,8 +149,7 @@ void *PrintHello(void *threadid)
 
 struct PeriodicThreadStatus threads[] =
 {
-{ 1.0E7, "g_System_controller", "CLASS_System__Z4loopEV", 0 }
-// 0+1.0E7 <=  currentCommunicationPoint+communicationStepSize+1.0E7 => execute and set executed Time
+{ 1.0E7, the_call_name, 0 }
 };
 
 
