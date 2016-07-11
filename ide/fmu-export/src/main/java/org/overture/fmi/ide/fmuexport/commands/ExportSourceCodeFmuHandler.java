@@ -297,14 +297,15 @@ public class ExportSourceCodeFmuHandler extends ExportFmuHandler
 		return sb;
 	}
 
-	private String createPeriodicDefinitionString(List<PeriodicThreadDef> periodicDefs)
+	private String createPeriodicDefinitionString(
+			List<PeriodicThreadDef> periodicDefs)
 	{
 		StringBuffer periodicTasks = new StringBuffer();
 		StringBuffer periodicStringDefs = new StringBuffer();
 
 		for (Iterator<PeriodicThreadDef> itr = periodicDefs.iterator(); itr.hasNext();)
 		{
-			PeriodicThreadDef def =itr.next();
+			PeriodicThreadDef def = itr.next();
 			periodicStringDefs.append(def.getInstance());
 			periodicTasks.append(def.getPeriodicTaskCallFunctionDefinition());
 			if (itr.hasNext())
@@ -329,8 +330,9 @@ public class ExportSourceCodeFmuHandler extends ExportFmuHandler
 
 	static class PeriodicThreadDef
 	{
-		final static String PeriodicTaskName ="periodic_task%s_%s";
-		final static String PeriodicTaskFunctionTemplate = "void %s()\n{\n\tCALL_FUNC(%s, %s, %s, %s);\n}\n";
+		final static String PeriodicTaskName = "periodic_task%s_%s";
+		final static String PeriodicTaskFunctionTemplate = "void %s()\n{\n\tCALL_FUNC(%s, %s, %s, %s);\n\t%s\n}\n";
+		final static String PeriodicTaskFunctionLogCallTemplate = "g_fmiCallbackFunctions->logger((void*) 1, g_fmiInstanceName, fmi2OK, \"logAll\", \"called %s\\n\");";
 		final static String PeriodicTaskCallTemplate = "&%s";
 		// String periodicTaskFunction;
 		// String perioducTaskCall;
@@ -345,34 +347,34 @@ public class ExportSourceCodeFmuHandler extends ExportFmuHandler
 		{
 			return String.format("g_%s_%s", className, objectName);
 		}
-		
+
 		String getMangledCallName()
 		{
 			// _Z4loopEV
-					return String.format("_Z%d%sEV", callName.length(), callName);
+			return String.format("_Z%d%sEV", callName.length(), callName);
 		}
 
 		String getCallName()
 		{
 			// CLASS_Controller__Z4loopEV
-			return String.format("CLASS_%s_%s", className, getMangledCallName());
+			return String.format("CLASS_%s_%s", objectTypeName, getMangledCallName());
 		}
-		
+
 		String getPeriodicTaskCallName()
 		{
 			return String.format(PeriodicTaskCallTemplate, getPeriodicTaskName());
 		}
-		
+
 		String getPeriodicTaskName()
 		{
-			return String.format(PeriodicTaskName, getGlobalObjectName(),getMangledCallName());
+			return String.format(PeriodicTaskName, getGlobalObjectName(), getMangledCallName());
 		}
 
 		String getPeriodicTaskCallFunctionDefinition()
 		{
-			return String.format(PeriodicTaskFunctionTemplate,getPeriodicTaskName(),objectTypeName,objectTypeName,getGlobalObjectName(),getCallName());
+			return String.format(PeriodicTaskFunctionTemplate, getPeriodicTaskName(), objectTypeName, objectTypeName, getGlobalObjectName(), getCallName(), String.format(PeriodicTaskFunctionLogCallTemplate, getPeriodicTaskCallName()));
 		}
-		
+
 		String getInstance()
 		{
 			return String.format("{ %s, %s, 0 }", period, getPeriodicTaskCallName());
@@ -405,14 +407,8 @@ public class ExportSourceCodeFmuHandler extends ExportFmuHandler
 									{
 										PeriodicThreadDef ptDef = new PeriodicThreadDef();
 
-										// CALL_FUNC(World, World, world, CLASS_World__Z3runEV);
 										ptDef.className = varExp.getVardef().getClassDefinition().getName().getName();
-										// g_System_hwi
-										// String objectName = String.format("g_%s_%s", className,
-										// varExp.getName().getName());
 										ptDef.objectName = varExp.getName().getName();
-										
-										
 
 										PType type = varExp.getType();
 										if (type instanceof AOptionalType)
@@ -439,19 +435,7 @@ public class ExportSourceCodeFmuHandler extends ExportFmuHandler
 																+ periodicStm.getArgs().get(0);
 
 														ptDef.callName = periodicStm.getOpname().getName();
-														// // _Z4loopEV
-														// String mangledName = String.format("_Z%d%sEV", name.length(),
-														// name);
-														// // CLASS_Controller__Z4loopEV
-														// String callDef = String.format("CLASS_%s_%s", className,
-														// mangledName);
-
-														// String periodicDef =
-														// String.format("{ %s, \"%s\", \"%s\", 0 }", period,
-														// objectName, callDef);
 														periodicDefs.add(ptDef);
-
-														// ptDef.objectName =
 													}
 												}
 											}
