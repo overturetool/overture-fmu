@@ -5,7 +5,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.resources.IContainer;
@@ -128,6 +130,27 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 							out.println("Found system class: '"
 									+ cDef.getName().getName() + "'");
 						}
+					}
+
+					Map<String, FmuAnnotation> exportNames = new HashMap<>();
+					boolean hasDublications = false;
+					for (Entry<PDefinition, FmuAnnotation> entry : definitionAnnotation.entrySet())
+					{
+						FmuAnnotation value = entry.getValue();
+						if (exportNames.containsKey(value.name))
+						{
+							final String export = "'%s' at line %s with type '%s'";
+							FmuAnnotation original = exportNames.get(value.name);
+							err.print("Dublicate export name: "
+									+ String.format(export, value.name, value.tree.getLine(), value.type)+" dublicates: "+ String.format(export, original.name, original.tree.getLine(), original.type));
+							hasDublications = true;
+						}
+						exportNames.put(value.name, value);
+					}
+					
+					if(hasDublications)
+					{
+						return;
 					}
 
 					ModelDescriptionGenerator generator = new ModelDescriptionGenerator(model.getClassList(), system);
