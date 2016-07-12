@@ -77,23 +77,22 @@ public class ExportSourceCodeFmuHandler extends ExportFmuHandler
 
 		StringBuffer sb = generateIOCacheSyncMethods(info, periodicDefinition, systemName);
 
-		
-		
-		
 		// copy FMU files
 		copy(sourcesFolder, "Fmu.cpp", "includes/c-templates/Fmu.cpp");
 		copy(sourcesFolder, "FmuIO.c", "includes/c-templates/FmuIO.c");
 
 		IFile fileFmuh = createNewEmptyFile(sourcesFolder, "Fmu.h");
 		String contentFmuh = PluginFolderInclude.readFile(IFmuExport.PLUGIN_ID, "includes/c-templates/Fmu.h");
-		contentFmuh = contentFmuh.replace("//#define BOOL_COUNT", "#define BOOL_COUNT "+info.maxVariableReference);
-		contentFmuh = contentFmuh.replace("//#define REAL_COUNT", "#define REAL_COUNT "+info.maxVariableReference);
-		contentFmuh = contentFmuh.replace("//#define INT_COUNT", "#define INT_COUNT "+info.maxVariableReference);
-		
+		contentFmuh = contentFmuh.replace("//#define BOOL_COUNT", "#define BOOL_COUNT "
+				+ info.maxVariableReference);
+		contentFmuh = contentFmuh.replace("//#define REAL_COUNT", "#define REAL_COUNT "
+				+ info.maxVariableReference);
+		contentFmuh = contentFmuh.replace("//#define INT_COUNT", "#define INT_COUNT "
+				+ info.maxVariableReference);
+
 		byte[] bytes = contentFmuh.getBytes("UTF-8");
 		ByteArrayInputStream source = new ByteArrayInputStream(bytes);
 		fileFmuh.create(source, IResource.NONE, null);
-		
 
 		// copy FMI headers to support CMakeLists
 		final IFolder fmiFolder = sourcesFolder.getFolder("fmi");
@@ -125,7 +124,7 @@ public class ExportSourceCodeFmuHandler extends ExportFmuHandler
 		content = content.replace("//#GENERATED_SYSTEM_INIT", getSystemInitFunction(project, systemName));
 		content = content.replace("//#GENERATED_SYSTEM_SHUTDOWN", getSystemShutdownFunction(project, systemName));
 
-		content.getBytes("UTF-8");
+		bytes = content.getBytes("UTF-8");
 		source = new ByteArrayInputStream(bytes);
 		file.create(source, IResource.NONE, null);
 
@@ -139,6 +138,24 @@ public class ExportSourceCodeFmuHandler extends ExportFmuHandler
 		source = new ByteArrayInputStream(bytes);
 		file.create(source, IResource.NONE, null);
 
+		createNewEmptyFile(sourcesFolder, "defines.def").create(new ByteArrayInputStream("CUSTOM_IO".getBytes("UTF-8")), IResource.NONE, null);
+		createNewEmptyFile(sourcesFolder, "includes.txt").create(new ByteArrayInputStream("fmi\nvdmlib".getBytes("UTF-8")), IResource.NONE, null);
+
+		// Clean up after bad vdm2c lib generation
+		IFolder vdmlibFolder = sourcesFolder.getFolder("nativelib");
+		if (vdmlibFolder.exists())
+		{
+			for (String n : new String[] { "tests", "classes", "records" })
+			{
+				IFolder folder = vdmlibFolder.getFolder(n);
+				if (folder.exists())
+				{
+					folder.delete(true, null);
+				}
+			}
+			IFolder tmp = sourcesFolder.getFolder("vdmlib");
+			vdmlibFolder.move(tmp.getFullPath(), true, false, null);
+		}
 	}
 
 	private CharSequence getSystemInitFunction(IVdmProject project,
