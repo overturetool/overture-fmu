@@ -77,10 +77,23 @@ public class ExportSourceCodeFmuHandler extends ExportFmuHandler
 
 		StringBuffer sb = generateIOCacheSyncMethods(info, periodicDefinition, systemName);
 
+		
+		
+		
 		// copy FMU files
 		copy(sourcesFolder, "Fmu.cpp", "includes/c-templates/Fmu.cpp");
-		copy(sourcesFolder, "Fmu.h", "includes/c-templates/Fmu.h");
 		copy(sourcesFolder, "FmuIO.c", "includes/c-templates/FmuIO.c");
+
+		IFile fileFmuh = createNewEmptyFile(sourcesFolder, "Fmu.h");
+		String contentFmuh = PluginFolderInclude.readFile(IFmuExport.PLUGIN_ID, "includes/c-templates/Fmu.h");
+		contentFmuh = contentFmuh.replace("//#define BOOL_COUNT", "#define BOOL_COUNT "+info.maxVariableReference);
+		contentFmuh = contentFmuh.replace("//#define REAL_COUNT", "#define REAL_COUNT "+info.maxVariableReference);
+		contentFmuh = contentFmuh.replace("//#define INT_COUNT", "#define INT_COUNT "+info.maxVariableReference);
+		
+		byte[] bytes = contentFmuh.getBytes("UTF-8");
+		ByteArrayInputStream source = new ByteArrayInputStream(bytes);
+		fileFmuh.create(source, IResource.NONE, null);
+		
 
 		// copy FMI headers to support CMakeLists
 		final IFolder fmiFolder = sourcesFolder.getFolder("fmi");
@@ -112,8 +125,8 @@ public class ExportSourceCodeFmuHandler extends ExportFmuHandler
 		content = content.replace("//#GENERATED_SYSTEM_INIT", getSystemInitFunction(project, systemName));
 		content = content.replace("//#GENERATED_SYSTEM_SHUTDOWN", getSystemShutdownFunction(project, systemName));
 
-		byte[] bytes = content.getBytes("UTF-8");
-		ByteArrayInputStream source = new ByteArrayInputStream(bytes);
+		content.getBytes("UTF-8");
+		source = new ByteArrayInputStream(bytes);
 		file.create(source, IResource.NONE, null);
 
 		// copy CMakeLists

@@ -66,6 +66,7 @@ public class ModelDescriptionGenerator
 	{
 		public String modelDescription;
 		public final Map<PDefinition, ScalarInfo> context = new HashMap<>();
+		public int maxVariableReference;
 
 	}
 
@@ -180,6 +181,7 @@ public class ModelDescriptionGenerator
 		modelDescription = modelDescription.replace("{generationDateAndTime}", date);
 
 		info.modelDescription = modelDescription;
+		info.maxVariableReference = variableReference;
 		return info;
 	}
 

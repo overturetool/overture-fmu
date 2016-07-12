@@ -8,9 +8,9 @@
 #ifndef FMU_H_
 #define FMU_H_
 
-#define BOOL_COUNT 10
-#define REAL_COUNT 10
-#define INT_COUNT 10
+//#define BOOL_COUNT
+//#define REAL_COUNT
+//#define INT_COUNT
 
 #include "fmi2Functions.h"
 #include <stdio.h>
