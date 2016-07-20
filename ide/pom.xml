@@ -165,6 +165,20 @@ the manifests, though.
       <url>http://overture.au.dk/p2/crescendo-overture-development/</url>
       <layout>p2</layout>
     </repository>
+
+ <repository>
+      <id>development.vdm2c.overture.au.dk</id>
+      <url>http://overture.au.dk/vdm2c/development/repository/</url>
+      <layout>p2</layout>
+    </repository>
+
+ <repository>
+      <id>master.vdm2c.overture.au.dk</id>
+      <url>http://overture.au.dk/vdm2c/master/repository/</url>
+      <layout>p2</layout>
+    </repository>
+
+
 	</repositories>
 
 	<profiles>
