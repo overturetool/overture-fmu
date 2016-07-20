@@ -2,6 +2,7 @@ package org.crescendo.fmi;
 
 import java.io.File;
 import java.io.OutputStreamWriter;
+import java.net.URI;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Vector;
@@ -63,6 +64,10 @@ public class CrescendoFmu implements IServiceProtocol
 	final String sessionName;
 	CrescendoStateType protocolState = CrescendoStateType.None;
 	private boolean loggingOn = true;
+	
+	double lastCommunicationPoint = 0;
+	double lastStepSize = 0;
+	
 	private List<String> enabledLoggingCategories = new Vector<String>();
 
 	static final Fmi2StatusReply ok = Fmi2StatusReply.newBuilder().setStatus(Fmi2StatusReply.Status.Ok).build();
@@ -135,6 +140,9 @@ public class CrescendoFmu implements IServiceProtocol
 
 			double nextFmiTime = request.getCurrentCommunicationPoint()
 					+ request.getCommunicationStepSize();
+			
+			this.lastCommunicationPoint = request.getCurrentCommunicationPoint();
+			this.lastStepSize = request.getCommunicationStepSize();
 
 			fmiLog(FmiLogCategory.Protocol, "DoStep called: " + nextFmiTime);
 
@@ -328,7 +336,7 @@ public class CrescendoFmu implements IServiceProtocol
 	@Override
 	public Fmi2GetMaxStepSizeReply GetMaxStepSize(Fmi2Empty parseFrom)
 	{
-		return Fmi2GetMaxStepSizeReply.newBuilder().setMaxStepSize(time).build();
+		return Fmi2GetMaxStepSizeReply.newBuilder().setMaxStepSize(time-(lastCommunicationPoint+lastStepSize)).build();
 	}
 
 	@Override
@@ -379,7 +387,7 @@ public class CrescendoFmu implements IServiceProtocol
 
 			List<File> specfiles = new Vector<File>();
 
-			File root = new File(request.getFmuResourceLocation()).getParentFile();
+			File root = new File(new URI(request.getFmuResourceLocation())).getParentFile();
 			File sourceRoot = new File(root, "sources");
 			System.out.println("Source root: " + sourceRoot);
 
