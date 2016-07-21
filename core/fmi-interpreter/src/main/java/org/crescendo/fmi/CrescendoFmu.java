@@ -387,8 +387,8 @@ public class CrescendoFmu implements IServiceProtocol
 
 			List<File> specfiles = new Vector<File>();
 
-			File root = new File(new URI(request.getFmuResourceLocation())).getParentFile();
-			File sourceRoot = new File(root, "sources");
+			File root = new File(new URI(request.getFmuResourceLocation()));
+			File sourceRoot = new File(root, "model");
 			System.out.println("Source root: " + sourceRoot);
 
 			specfiles.addAll(FileUtils.listFiles(sourceRoot, new String[] { "vdmrt" }, true));

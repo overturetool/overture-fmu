@@ -149,13 +149,15 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 							final String export = "'%s' at line %s with type '%s'";
 							FmuAnnotation original = exportNames.get(value.name);
 							err.print("Dublicate export name: "
-									+ String.format(export, value.name, value.tree.getLine(), value.type)+" dublicates: "+ String.format(export, original.name, original.tree.getLine(), original.type));
+									+ String.format(export, value.name, value.tree.getLine(), value.type)
+									+ " dublicates: "
+									+ String.format(export, original.name, original.tree.getLine(), original.type));
 							hasDublications = true;
 						}
 						exportNames.put(value.name, value);
 					}
-					
-					if(hasDublications)
+
+					if (hasDublications)
 					{
 						return;
 					}
@@ -196,7 +198,7 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 						thisModelDescription.create(source, IResource.NONE, null);
 					}
 
-					copyFmuResources(info,thisFmu, project.getName(), project,system);
+					copyFmuResources(info, thisFmu, project.getName(), project, system);
 
 					final File fmuArchieveName = new File(outputContainer.getProject().getLocation().toFile().getAbsolutePath()
 							+ File.separatorChar + project.getName() + ".fmu");
@@ -243,8 +245,10 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 
 	}
 
-	protected void copyFmuResources(GeneratorInfo info, IFolder thisFmu, String name,
-			IVdmProject project, ASystemClassDefinition system) throws CoreException, IOException, AnalysisException, NotAllowedException
+	protected void copyFmuResources(GeneratorInfo info, IFolder thisFmu,
+			String name, IVdmProject project, ASystemClassDefinition system)
+			throws CoreException, IOException, AnalysisException,
+			NotAllowedException
 	{
 		final IFolder resourcesFolder = thisFmu.getFolder("resources");
 		if (!resourcesFolder.exists())
@@ -283,10 +287,18 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 		config.create(source, IResource.NONE, null);
 
 		// specification
-		IFolder sources = thisFmu.getFolder("sources");
+		IFolder sources = resourcesFolder.getFolder("model");
 		if (!sources.exists())
 		{
 			sources.create(IResource.NONE, true, null);
+		}
+
+		IFile thisModelDescription = sources.getFile("modelDescription.xml");
+		if (!thisModelDescription.exists())
+		{
+			bytes = info.modelDescription.getBytes("UTF-8");
+			source = new ByteArrayInputStream(bytes);
+			thisModelDescription.create(source, IResource.NONE, null);
 		}
 
 		IContainer lib = project.getModelBuildPath().getLibrary();
