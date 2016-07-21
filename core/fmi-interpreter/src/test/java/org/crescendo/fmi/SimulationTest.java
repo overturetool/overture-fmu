@@ -22,7 +22,7 @@ public class SimulationTest
 
 		CrescendoFmu fmu = new CrescendoFmu("test-in-out-session-test");
 
-		String resourcePath = new File(".").toURI().resolve("src/test/resources/var-transfer-in-out-test/resources").toString();
+		String resourcePath = new File(".").toURI().resolve("src/test/resources/var-transfer-in-out-test/").toString();
 		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.Instantiate(Fmi2InstantiateRequest.newBuilder().setFmuResourceLocation(resourcePath).build()).getStatus());
 
 		final int b_in = 1;
