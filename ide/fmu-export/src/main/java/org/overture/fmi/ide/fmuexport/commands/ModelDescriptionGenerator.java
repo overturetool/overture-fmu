@@ -152,7 +152,7 @@ public class ModelDescriptionGenerator
 			sbOutputs.append("\t<Outputs>\n");
 			for (Integer integer : outputIndices)
 			{
-				sbOutputs.append(String.format("\t\t\t<Unknown index=\"%d\"  />", integer));
+				sbOutputs.append(String.format("\t\t\t<Unknown index=\"%d\"  dependencies=\"\"/>", integer));
 			}
 			sbOutputs.append("\n\t</Outputs>\n");
 		}
