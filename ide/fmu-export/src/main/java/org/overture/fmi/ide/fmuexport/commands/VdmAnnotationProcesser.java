@@ -30,8 +30,6 @@ import org.overture.ide.core.ast.NotAllowedException;
 import org.overture.ide.core.resources.IVdmProject;
 import org.overture.ide.core.resources.IVdmSourceUnit;
 import org.overture.ide.core.utility.FileUtility;
-import org.overture.typechecker.TypeComparator;
-import org.overture.typechecker.assistant.TypeCheckerAssistantFactory;
 
 public class VdmAnnotationProcesser
 {
