@@ -1,3 +1,20 @@
+/******************************************************************************************************************************
+* FMI 2.0 interface for VDM
+*
+* The Port class is the base class for all ports. The following ports exists:
+* - IntPort
+* - BoolPort
+* - RealPort
+* - StringPort
+* These concreate ports must be used in the HardwareInterface class. All of them must contain a private 'value' field
+*  this field is accessed directly by the build-in FMI support in the simulator. The ports can be given as arguments to 
+*  other model elements. All access to the internal value must be done through set/getValue since this call insured that the
+*  simulator knows that the value have been read or written to and requires a co-simulation step for synchronization.
+*
+* A port can be instantiated with a value or with no values to use the library default value. 
+*
+******************************************************************************************************************************/
+
 class Port
 
 types
