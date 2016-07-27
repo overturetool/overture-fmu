@@ -19,6 +19,7 @@ import org.overture.ast.definitions.ASystemClassDefinition;
 import org.overture.ast.definitions.AValueDefinition;
 import org.overture.ast.definitions.PDefinition;
 import org.overture.ast.expressions.ANewExp;
+import org.overture.ast.expressions.AStringLiteralExp;
 import org.overture.ast.expressions.PExp;
 import org.overture.ast.types.ABooleanBasicType;
 import org.overture.ast.types.AClassType;
@@ -218,7 +219,7 @@ public class ModelDescriptionGenerator
 			sbLinks.append(String.format(linkTemplate, valueReference, definition.getLocation().getModule()
 					+ "." + vDef.getPattern()));
 
-			String type = getType(vDef.getType(),  vDef.getExpression());
+			String type = getType(vDef.getType(), vDef.getExpression());
 			return String.format(scalarVariableTemplate, name, valueReference, "parameter", "fixed", "exact", type);
 		} else if (definition instanceof AInstanceVariableDefinition)
 		{
@@ -242,9 +243,9 @@ public class ModelDescriptionGenerator
 
 				AInstanceVariableDefinition vDef = (AInstanceVariableDefinition) definition;
 				PType rawType = vDef.getType();
-				String type = getType(rawType,  vDef.getExpression());
-				return String.format(scalarVariableTemplateInput, name, valueReference, "input", (rawType instanceof ARealNumericBasicType ? "continuous"
-						: "discrete"), type);
+				String type = getType(rawType, vDef.getExpression());
+				return String.format(scalarVariableTemplateInput, name, valueReference, "input", rawType instanceof ARealNumericBasicType ? "continuous"
+						: "discrete", type);
 
 			}
 		}
@@ -255,14 +256,22 @@ public class ModelDescriptionGenerator
 	private String getType(PType type, PExp initialExp)
 	{
 		String typeTemplate = null;
-		String initial =null;
-		
-		if(initialExp instanceof ANewExp)
+		String initial = null;
+
+		if (initialExp instanceof ANewExp)
 		{
-			if(!((ANewExp) initialExp).getArgs().isEmpty())
-			initial = ((ANewExp) initialExp).getArgs().get(0).toString();
+			if (!((ANewExp) initialExp).getArgs().isEmpty())
+			{
+				PExp initialArg = ((ANewExp) initialExp).getArgs().get(0);
+				if (initialArg instanceof AStringLiteralExp)
+				{
+					initial = ((AStringLiteralExp) initialArg).getValue().getValue();
+				} else
+				{
+					initial = initialArg.toString();
+				}
+			}
 		}
-		
 
 		if (type instanceof AClassType)
 		{

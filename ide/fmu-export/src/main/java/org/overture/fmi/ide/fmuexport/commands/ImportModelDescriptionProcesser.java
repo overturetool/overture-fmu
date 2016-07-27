@@ -456,10 +456,10 @@ public class ImportModelDescriptionProcesser
 				String ret = null;
 				if (type.start != null)
 				{
-					ret = type.start.toString();
+					ret ="\""+ type.start.toString()+"\"";
 				} else
 				{
-					return "";
+					ret= "";
 				}
 				return "new StringPort(" + ret + ")";
 			}
