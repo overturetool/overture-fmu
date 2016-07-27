@@ -155,9 +155,9 @@ public class CrescendoFmu implements IServiceProtocol
 
 			double internalVdmClockTime = new Double(SystemClock.timeToInternal(TimeUnit.seconds, nextFmiTime));
 
-			System.out.println("DoStem VDM time: " + internalVdmClockTime);
+			System.out.println("DoStep VDM time: " + internalVdmClockTime);
 			List<NamedValue> res = FmiSimulationManager.getInstance().step(internalVdmClockTime, inputs);
-
+			System.out.println("DoStep VDM time: " + internalVdmClockTime+" - completed");
 			NamedValue timeValue = null;
 			for (NamedValue namedValue : res)
 			{

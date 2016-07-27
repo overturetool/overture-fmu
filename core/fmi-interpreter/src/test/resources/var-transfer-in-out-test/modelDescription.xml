@@ -51,20 +51,20 @@
 	<VendorAnnotations>
 		<Tool name="Overture">
 			<Overture>
-				<link valueReference="0" name="System.hwi.i_in" />
-				<link valueReference="1" name="System.hwi.b_in" />
-				<link valueReference="2" name="System.hwi.b_out" />
-				<link valueReference="3" name="System.hwi.i_out" />
-				<link valueReference="4" name="System.hwi.r_out" />
-				<link valueReference="5" name="System.hwi.r_in" />
+				<link valueReference="0" name="System.hwi.i_in.value" />
+				<link valueReference="1" name="System.hwi.b_in.value" />
+				<link valueReference="2" name="System.hwi.b_out.value" />
+				<link valueReference="3" name="System.hwi.i_out.value" />
+				<link valueReference="4" name="System.hwi.r_out.value" />
+				<link valueReference="5" name="System.hwi.r_in.value" />
 				
-				<link valueReference="6" name="System.hwi.s_out" />
-				<link valueReference="7" name="System.hwi.s_in" />
+				<link valueReference="6" name="System.hwi.s_out.value" />
+				<link valueReference="7" name="System.hwi.s_in.value" />
 				
-				<link valueReference="8" name="HardwareInterface.p_s" />
-				<link valueReference="9" name="System.hwi.p_out" />
-				<link valueReference="10" name="System.hwi.p2_out" />
-				<link valueReference="11" name="HardwareInterface.p2_s" />
+				<link valueReference="8" name="HardwareInterface.p_s.value" />
+				<link valueReference="9" name="System.hwi.p_out.value" />
+				<link valueReference="10" name="System.hwi.p2_out.value" />
+				<link valueReference="11" name="HardwareInterface.p2_s.value" />
 			</Overture>
 		</Tool>
 	</VendorAnnotations>

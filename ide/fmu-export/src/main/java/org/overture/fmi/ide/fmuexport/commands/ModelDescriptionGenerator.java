@@ -18,7 +18,10 @@ import org.overture.ast.definitions.AInstanceVariableDefinition;
 import org.overture.ast.definitions.ASystemClassDefinition;
 import org.overture.ast.definitions.AValueDefinition;
 import org.overture.ast.definitions.PDefinition;
+import org.overture.ast.expressions.ANewExp;
+import org.overture.ast.expressions.PExp;
 import org.overture.ast.types.ABooleanBasicType;
+import org.overture.ast.types.AClassType;
 import org.overture.ast.types.ARealNumericBasicType;
 import org.overture.ast.types.PType;
 import org.overture.ast.types.SNumericBasicType;
@@ -41,7 +44,7 @@ public class ModelDescriptionGenerator
 
 	final static String scalarVariableStartTemplate = "start=\"%s\"";
 
-	final static String linkTemplate = "\t\t\t\t<link valueReference=\"%d\" name=\"%s\" />\n";
+	final static String linkTemplate = "\t\t\t\t<link valueReference=\"%d\" name=\"%s.value\" />\n";
 
 	public final static String INTERFACE_CLASSNAME = "HardwareInterface";
 	public final static String INTERFACE_INSTANCE_NAME = "hwi";
@@ -215,7 +218,7 @@ public class ModelDescriptionGenerator
 			sbLinks.append(String.format(linkTemplate, valueReference, definition.getLocation().getModule()
 					+ "." + vDef.getPattern()));
 
-			String type = getType(vDef.getType(), "" + vDef.getExpression());
+			String type = getType(vDef.getType(),  vDef.getExpression());
 			return String.format(scalarVariableTemplate, name, valueReference, "parameter", "fixed", "exact", type);
 		} else if (definition instanceof AInstanceVariableDefinition)
 		{
@@ -239,7 +242,7 @@ public class ModelDescriptionGenerator
 
 				AInstanceVariableDefinition vDef = (AInstanceVariableDefinition) definition;
 				PType rawType = vDef.getType();
-				String type = getType(rawType, "" + vDef.getExpression());
+				String type = getType(rawType,  vDef.getExpression());
 				return String.format(scalarVariableTemplateInput, name, valueReference, "input", (rawType instanceof ARealNumericBasicType ? "continuous"
 						: "discrete"), type);
 
@@ -249,33 +252,67 @@ public class ModelDescriptionGenerator
 		return null;
 	}
 
-	private String getType(PType type, String initial)
+	private String getType(PType type, PExp initialExp)
 	{
 		String typeTemplate = null;
-
-		// TODO: check up on type chekcing here. This code does not work if a type def is used to add an invariant etc.
-		if (type instanceof ARealNumericBasicType)
+		String initial =null;
+		
+		if(initialExp instanceof ANewExp)
 		{
-			typeTemplate = scalarVariableRealTypeTemplate;
-			if (initial != null && !initial.contains("."))
-			{
-				initial += ".0";
-			}
-		} else if (type instanceof ABooleanBasicType)
-		{
-			typeTemplate = scalarVariableBooleanTypeTemplate;
-
-		} else if (type instanceof SNumericBasicType)
-		{
-			typeTemplate = scalarVariableIntegerTypeTemplate;
-
-		}else if(VdmAnnotationProcesser.isStringType(type))
-		{
-			typeTemplate = scalarVariableStringTypeTemplate;
+			if(!((ANewExp) initialExp).getArgs().isEmpty())
+			initial = ((ANewExp) initialExp).getArgs().get(0).toString();
 		}
+		
 
+		if (type instanceof AClassType)
+		{
+			String name = ((AClassType) type).getName().getName();
 
-		String start = initial != null ? String.format(scalarVariableStartTemplate, initial.replaceAll("\"","&quot;").replaceAll("\'","&apos;"))
+			if (name.equals("IntPort"))
+			{
+				typeTemplate = scalarVariableIntegerTypeTemplate;
+			} else if (name.equals("RealPort"))
+			{
+				typeTemplate = scalarVariableRealTypeTemplate;
+				if (initial != null && !initial.contains("."))
+				{
+					initial += ".0";
+				}
+			}
+			if (name.equals("BoolPort"))
+			{
+				typeTemplate = scalarVariableBooleanTypeTemplate;
+			}
+			if (name.equals("StringPort"))
+			{
+				typeTemplate = scalarVariableStringTypeTemplate;
+			}
+		} else
+		{
+
+			// TODO: check up on type checking here. This code does not work if a type def is used to add an invariant
+			// etc.
+			if (type instanceof ARealNumericBasicType)
+			{
+				typeTemplate = scalarVariableRealTypeTemplate;
+				if (initial != null && !initial.contains("."))
+				{
+					initial += ".0";
+				}
+			} else if (type instanceof ABooleanBasicType)
+			{
+				typeTemplate = scalarVariableBooleanTypeTemplate;
+
+			} else if (type instanceof SNumericBasicType)
+			{
+				typeTemplate = scalarVariableIntegerTypeTemplate;
+
+			} else if (VdmAnnotationProcesser.isStringType(type))
+			{
+				typeTemplate = scalarVariableStringTypeTemplate;
+			}
+		}
+		String start = initial != null ? String.format(scalarVariableStartTemplate, initial.replaceAll("\"", "&quot;").replaceAll("\'", "&apos;"))
 				: "";
 		return String.format(typeTemplate, start);
 	}

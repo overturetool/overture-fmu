@@ -13,6 +13,7 @@ import org.destecs.vdm.utility.ValueInfo;
 import org.overture.ast.definitions.AValueDefinition;
 import org.overture.ast.definitions.PDefinition;
 import org.overture.ast.definitions.SClassDefinition;
+import org.overture.ast.expressions.AApplyExp;
 import org.overture.ast.expressions.PExp;
 import org.overture.interpreter.runtime.Interpreter;
 import org.overture.interpreter.runtime.ValueException;
@@ -42,10 +43,13 @@ public class FmiSimulationManager extends SimulationManager
 	/**
 	 * FMI step method using basic named values
 	 * 
-	 * @param outputTime the time to step until
-	 * @param inputs the inputs needed for the step
+	 * @param outputTime
+	 *            the time to step until
+	 * @param inputs
+	 *            the inputs needed for the step
 	 * @return a list of outputs from the step
-	 * @throws RemoteSimulationException thrown if an internal error occur
+	 * @throws RemoteSimulationException
+	 *             thrown if an internal error occur
 	 */
 	public synchronized List<NamedValue> step(Double outputTime,
 			List<NamedValue> inputs) throws RemoteSimulationException
@@ -153,7 +157,8 @@ public class FmiSimulationManager extends SimulationManager
 	 * @param parameter
 	 *            A list of Maps containing (name,value) keys and {@code name->String}, {@code value->Double}
 	 * @return false if any error occur else true
-	 * @throws RemoteSimulationException thrown if an internal error occur
+	 * @throws RemoteSimulationException
+	 *             thrown if an internal error occur
 	 */
 	public Boolean setParameter(NamedValue parameter)
 			throws RemoteSimulationException
@@ -188,12 +193,16 @@ public class FmiSimulationManager extends SimulationManager
 						if (vDef.getPattern().toString().equals(vName.variableName)
 								&& Interpreter.getInstance().getAssistantFactory().createPDefinitionAssistant().isValueDefinition(vDef))
 						{
-							found=true;
+							found = true;
 							ParserResult<PExp> res = ParserUtil.parseExpression(parameter.value.toString());
 
 							if (res.errors.isEmpty())
 							{
-								vDef.setExpression(res.result);
+								if (vDef.getExpression() instanceof AApplyExp)
+								{
+									((AApplyExp) vDef.getExpression()).getArgs().add(0, res.result);
+								}
+								// vDef.setExpression(res.result);
 							} else
 							{
 								throw new RemoteSimulationException("Unable to parse initial parameter expression: '"

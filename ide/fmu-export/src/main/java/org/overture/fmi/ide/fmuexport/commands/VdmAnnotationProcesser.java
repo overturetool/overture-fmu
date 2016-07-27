@@ -2,6 +2,7 @@ package org.overture.fmi.ide.fmuexport.commands;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,12 +16,11 @@ import org.overture.ast.definitions.AInstanceVariableDefinition;
 import org.overture.ast.definitions.AValueDefinition;
 import org.overture.ast.definitions.PDefinition;
 import org.overture.ast.definitions.SClassDefinition;
-import org.overture.ast.types.ABooleanBasicType;
 import org.overture.ast.types.ACharBasicType;
+import org.overture.ast.types.AClassType;
 import org.overture.ast.types.ASeq1SeqType;
 import org.overture.ast.types.ASeqSeqType;
 import org.overture.ast.types.PType;
-import org.overture.ast.types.SNumericBasicType;
 import org.overture.fmi.annotation.AnnotationParserWrapper;
 import org.overture.fmi.annotation.FmuAnnotation;
 import org.overture.fmi.annotation.RetainVdmCommentsFilter;
@@ -30,6 +30,8 @@ import org.overture.ide.core.ast.NotAllowedException;
 import org.overture.ide.core.resources.IVdmProject;
 import org.overture.ide.core.resources.IVdmSourceUnit;
 import org.overture.ide.core.utility.FileUtility;
+import org.overture.typechecker.TypeComparator;
+import org.overture.typechecker.assistant.TypeCheckerAssistantFactory;
 
 public class VdmAnnotationProcesser
 {
@@ -70,10 +72,7 @@ public class VdmAnnotationProcesser
 								out.println(String.format("Found annotated definition '%s' with type '%s' and name '%s'", mDef.getLocation().getModule()
 										+ "." + name, annotation.type, annotation.name));
 
-								// FIXME: type chekc insuficient
-								if (mDef.getType() instanceof SNumericBasicType
-										|| mDef.getType() instanceof ABooleanBasicType
-										|| isStringType(mDef.getType()))
+								if (mDef.getType() instanceof AClassType && Arrays.asList(new String[]{"IntPort","RealPort","BoolPort","StringPort"}).contains( ((AClassType)mDef.getType()).getName().getName()))
 								{
 									definitionAnnotation.put(mDef, annotation);
 								} else

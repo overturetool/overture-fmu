@@ -278,6 +278,14 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 		StringBuffer sb = new StringBuffer();
 		sb.append("false\n");
 		sb.append("java\n");
+		if (false)
+		{
+			//remote debug
+			sb.append("-Xdebug\n");
+			sb.append("-Xrunjdwp:server=y,transport=dt_socket,address=4000,suspend=y\n");
+
+		}
+
 		sb.append("-cp\n");
 		sb.append("*\n");
 		sb.append("org.crescendo.fmi.ShmServer\n");
@@ -293,7 +301,7 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 			sources.create(IResource.NONE, true, null);
 		}
 
-		IFile thisModelDescription = sources.getFile("modelDescription.xml");
+		IFile thisModelDescription = resourcesFolder.getFile("modelDescription.xml");
 		if (!thisModelDescription.exists())
 		{
 			bytes = info.modelDescription.getBytes("UTF-8");
@@ -368,7 +376,7 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 				extension = ".dll";
 			}
 
-			is = this.getClass().getResourceAsStream("/fmu-shm-api/"
+			is = this.getClass().getResourceAsStream("/lib/vdm-tool-wrapper/binaries/"
 					+ folderName + "/vdm-tool-wrapper" + extension);
 
 			if (is != null)
@@ -382,6 +390,12 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 
 		}
 
+		is = this.getClass().getResourceAsStream("/lib/vdm-tool-wrapper/binaries/git-info.txt");
+
+		if (is != null)
+		{
+			binaries.getFile("git-info-txt").create(is, true, null);
+		}
 	}
 
 }

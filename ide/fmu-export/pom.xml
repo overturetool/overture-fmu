@@ -100,6 +100,12 @@
 									<version>2.4</version>
 								</artifactItem>
 
+								<artifactItems>
+									<groupId>org.intocps.java.fmi</groupId>
+									<artifactId>fmi-shm-server</artifactId>
+									<version>${intocps.shm.version}</version>
+								</artifactItems>
+
 
 							</artifactItems>
 						</configuration>
