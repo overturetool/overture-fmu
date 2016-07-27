@@ -19,16 +19,14 @@ import org.overture.fmi.ide.fmuexport.IFmuExport;
 import org.overture.ide.core.resources.IVdmProject;
 import org.overture.ide.ui.utility.PluginFolderInclude;
 
-public class AddVdmReflectLibraryHandler extends
+public class AddVdmFmiLibraryHandler extends
 		org.eclipse.core.commands.AbstractHandler
 {
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException
 	{
-
 		ISelection selections = HandlerUtil.getCurrentSelection(event);
-		// MessageConsole myConsole = findConsole(CONSOLE_NAME);
 
 		if (selections instanceof IStructuredSelection)
 		{
@@ -41,7 +39,7 @@ public class AddVdmReflectLibraryHandler extends
 				IVdmProject project = (IVdmProject) a.getAdapter(IVdmProject.class);
 				if (project != null)
 				{
-					addVdmReflectLibrary(project);
+					addVdmFmiLibrary(project);
 
 				}
 			}
@@ -50,7 +48,7 @@ public class AddVdmReflectLibraryHandler extends
 		return null;
 	}
 
-	public static void addVdmReflectLibrary(IVdmProject project)
+	public static void addVdmFmiLibrary(IVdmProject project)
 	{
 		IFolder libFolder = (IFolder) project.getModelBuildPath().getLibrary();
 
@@ -66,20 +64,11 @@ public class AddVdmReflectLibraryHandler extends
 		}
 		try
 		{
-			URL tmp = PluginFolderInclude.getResource(IFmuExport.PLUGIN_ID, "jars/vdm-reflect-library.jar");
+			URL tmp = PluginFolderInclude.getResource(IFmuExport.PLUGIN_ID, "includes/fmi/Fmi.vdmrt");
 
-			IFile vdmReflectLibraryFile = libFolder.getFile("vdm-reflect-library.jar");
+			InputStream in = tmp.openStream();
 
-			if (!vdmReflectLibraryFile.exists())
-			{
-				vdmReflectLibraryFile.delete(true, null);
-			}
-
-			vdmReflectLibraryFile.create(tmp.openStream(), true, null);
-
-			InputStream in = AddVdmReflectLibraryHandler.class.getClassLoader().getResourceAsStream("Reflect.vdmrt");
-
-			IFile reflectLib = libFolder.getFile("Reflect.vdmrt");
+			IFile reflectLib = libFolder.getFile("Fmi.vdmrt");
 			if (reflectLib.exists())
 			{
 				reflectLib.delete(true, null);
@@ -88,10 +77,10 @@ public class AddVdmReflectLibraryHandler extends
 			reflectLib.create(in, true, null);
 
 			libFolder.refreshLocal(IResource.DEPTH_INFINITE, null);
-		} catch (IOException e)
+		} catch (CoreException e)
 		{
 			FmuExportPlugin.log(e);
-		} catch (CoreException e)
+		} catch (IOException e)
 		{
 			FmuExportPlugin.log(e);
 		}

@@ -68,6 +68,7 @@ public class ImportModelDescriptionHandler extends
 							FmuExportPlugin.log(e);
 						}
 					}
+					AddVdmFmiLibraryHandler.addVdmFmiLibrary(project);
 				}
 			}
 		}

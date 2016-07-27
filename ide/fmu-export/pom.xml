@@ -61,13 +61,6 @@
 								</artifactItem>
 
 								<artifactItem>
-									<groupId>org.overturetool.fmi.core</groupId>
-									<artifactId>vdm-reflect-library</artifactId>
-									<type>jar</type>
-									<version>${project.version}</version>
-								</artifactItem>
-
-								<artifactItem>
 									<groupId>org.apache.commons</groupId>
 									<artifactId>commons-lang3</artifactId>
 									<type>jar</type>

@@ -272,7 +272,7 @@ public class ImportModelDescriptionProcesser
 					out.println("\t Found " + vars.size()
 							+ " scalar variables in '" + file.getName() + "'");
 
-					if (validate(annotations, vars,err))
+					if (validate(annotations, vars, err))
 					{
 						checkAndCreateStructure(project, model);
 						out.println("Importing...");
@@ -318,9 +318,11 @@ public class ImportModelDescriptionProcesser
 					out.println("Skipping import of '" + sv.name + "'");
 					if (!type.toString().equals(toVdmType(sv.type)))
 					{
-						err.println("WARNING: Skipping " + sv.name
-								+ " note that the defined type does not match importing. Defined: '"+type+"' Importing: '"+toVdmType(sv.type)+ "' at "
-								+ type.getLocation());
+						err.println("WARNING: Skipping "
+								+ sv.name
+								+ " note that the defined type does not match importing. Defined: '"
+								+ type + "' Importing: '" + toVdmType(sv.type)
+								+ "' at " + type.getLocation());
 					}
 				}
 			}
@@ -409,32 +411,58 @@ public class ImportModelDescriptionProcesser
 		{
 			case Boolean:
 			{
+				String ret = null;
 				if (type.start != null)
 				{
 					if (type.start instanceof Boolean)
 					{
-						return type.start.toString();
+						ret = type.start.toString();
 					}
 					if (type.start instanceof Integer)
 					{
-						return (Integer) type.start == 0 ? "false" : "true";
+						ret = (Integer) type.start == 0 ? "false" : "true";
 					}
+				} else
+				{
+					ret = "false";
 				}
-				return "false";
+				return "new BoolPort(" + ret + ")";
 			}
 			case Enumeration:
 				break;
 			case Integer:
 			case Real:
 			{
+				String ret = null;
 				if (type.start != null)
 				{
-					return type.start.toString();
+					ret = type.start.toString();
+				} else
+				{
+					return "0";
 				}
-				return "0";
+
+				if (type.type == Types.Real)
+				{
+					return "new RealPort(" + ret + ")";
+				} else
+				{
+					return "new IntPort(" + ret + ")";
+				}
 			}
 			case String:
-				return "seq of char";
+			{
+
+				String ret = null;
+				if (type.start != null)
+				{
+					ret = type.start.toString();
+				} else
+				{
+					return "";
+				}
+				return "new StringPort(" + ret + ")";
+			}
 			default:
 				break;
 		}
@@ -446,15 +474,15 @@ public class ImportModelDescriptionProcesser
 		switch (type.type)
 		{
 			case Boolean:
-				return "bool";
+				return "BoolPort";
 			case Enumeration:
 				break;
 			case Integer:
-				return "int";
+				return "IntPort";
 			case Real:
-				return "real";
+				return "RealPort";
 			case String:
-				return "seq of char";
+				return "StringPort";
 			default:
 				break;
 		}
@@ -471,7 +499,7 @@ public class ImportModelDescriptionProcesser
 	{
 		IContainer src0 = project.getModelBuildPath().getModelSrcPaths().get(0);
 
-		InputStream in = AddVdmReflectLibraryHandler.class.getClassLoader().getResourceAsStream(path);
+		InputStream in = AddVdmFmiLibraryHandler.class.getClassLoader().getResourceAsStream(path);
 
 		String name = path.substring(path.lastIndexOf('/') + 1);
 
@@ -584,15 +612,19 @@ public class ImportModelDescriptionProcesser
 		boolean abort = false;
 		for (Entry<PDefinition, FmuAnnotation> entry : annotations.entrySet())
 		{
-			if("input".equals(entry.getValue().type) || "output".equals(entry.getValue().type))
+			if ("input".equals(entry.getValue().type)
+					|| "output".equals(entry.getValue().type))
 			{
-				if(!HARDWARE_INTERFACE.equals(entry.getKey().getClassDefinition().getName().getName()))
+				if (!HARDWARE_INTERFACE.equals(entry.getKey().getClassDefinition().getName().getName()))
 				{
-					err.println("Model annotation of input/output outside class '"+HARDWARE_INTERFACE+"' not supported. "+entry.getKey().getLocation());
+					err.println("Model annotation of input/output outside class '"
+							+ HARDWARE_INTERFACE
+							+ "' not supported. "
+							+ entry.getKey().getLocation());
 					abort = true;
 				}
 			}
-			
+
 			if ("input".equals(entry.getValue().type))
 			{
 				boolean found = false;

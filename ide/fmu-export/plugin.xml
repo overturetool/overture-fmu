@@ -12,8 +12,8 @@
             name="Export Source Code FMU">
       </command>
       <command
-            id="org.overture.fmi.ide.fmuexport.addVdmReflectLibrary"
-            name="Add VDM Reflect Library">
+            id="org.overture.fmi.ide.fmuexport.addVdmFmiLibrary"
+            name="Add VDM FMI Library">
       </command>
       <command
             id="org.overture.fmi.ide.fmuexport.importModelDescription"
@@ -79,9 +79,9 @@
            </command>
            
             <command
-                 commandId="org.overture.fmi.ide.fmuexport.addVdmReflectLibrary"
+                 commandId="org.overture.fmi.ide.fmuexport.addVdmFmiLibrary"
                  icon="icons/vdm_library_obj.gif"
-                 label="Add VDM Reflect Library"
+                 label="Add VDM FMI Library"
                  style="push">
               <visibleWhen
                     checkEnabled="false">
@@ -142,8 +142,8 @@
             commandId="org.overture.fmi.ide.fmuexport.export.sourcecode">    
       		</handler>
            <handler
-                 class="org.overture.fmi.ide.fmuexport.commands.AddVdmReflectLibraryHandler"
-                 commandId="org.overture.fmi.ide.fmuexport.addVdmReflectLibrary">
+                 class="org.overture.fmi.ide.fmuexport.commands.AddVdmFmiLibraryHandler"
+                 commandId="org.overture.fmi.ide.fmuexport.addVdmFmiLibrary">
            </handler>
            <handler
                  class="org.overture.fmi.ide.fmuexport.commands.ImportModelDescriptionHandler"
