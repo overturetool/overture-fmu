@@ -13,7 +13,6 @@ import org.destecs.vdm.utility.ValueInfo;
 import org.overture.ast.definitions.AValueDefinition;
 import org.overture.ast.definitions.PDefinition;
 import org.overture.ast.definitions.SClassDefinition;
-import org.overture.ast.expressions.AApplyExp;
 import org.overture.ast.expressions.ANewExp;
 import org.overture.ast.expressions.PExp;
 import org.overture.interpreter.runtime.Interpreter;
