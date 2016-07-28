@@ -14,6 +14,7 @@ import org.overture.ast.definitions.AValueDefinition;
 import org.overture.ast.definitions.PDefinition;
 import org.overture.ast.definitions.SClassDefinition;
 import org.overture.ast.expressions.AApplyExp;
+import org.overture.ast.expressions.ANewExp;
 import org.overture.ast.expressions.PExp;
 import org.overture.interpreter.runtime.Interpreter;
 import org.overture.interpreter.runtime.ValueException;
@@ -198,9 +199,10 @@ public class FmiSimulationManager extends SimulationManager
 
 							if (res.errors.isEmpty())
 							{
-								if (vDef.getExpression() instanceof AApplyExp)
+								if (vDef.getExpression() instanceof ANewExp)
 								{
-									((AApplyExp) vDef.getExpression()).getArgs().add(0, res.result);
+									ANewExp newExp = ((ANewExp) vDef.getExpression());
+									newExp.getArgs().set(0, res.result);
 								}
 								// vDef.setExpression(res.result);
 							} else
