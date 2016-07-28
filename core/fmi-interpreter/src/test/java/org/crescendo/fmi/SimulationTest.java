@@ -38,6 +38,10 @@ public class SimulationTest
 		final int s_out = 6;
 		
 		final int p_s = 8;
+		
+		final int p2_out = 10;
+//		final int p2_s=11;
+		final int p_out=9;
 
 		// do step 1.
 		fmu.state.booleans[b_in] = true;
@@ -57,6 +61,8 @@ public class SimulationTest
 		Assert.assertEquals(9, fmu.state.integers[i_out]);
 		Assert.assertEquals(9.9, fmu.state.reals[r_out], 0.001);
 		Assert.assertEquals("my value", fmu.state.strings[s_out]);
+		Assert.assertEquals("parameter", fmu.state.strings[p_out]);
+		Assert.assertEquals("p2-default", fmu.state.strings[p2_out]);
 
 		// do step 2.
 		fmu.state.booleans[b_in] = false;
