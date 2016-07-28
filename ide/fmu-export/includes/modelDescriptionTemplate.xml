@@ -18,7 +18,7 @@
 					canInterpolateInputs="false" 
 					maxOutputDerivativeOrder="0" 
 					canRunAsynchronuously="false" 
-					canBeInstantiatedOnlyOncePerProcess="true"
+					canBeInstantiatedOnlyOncePerProcess="false"
 					canNotUseMemoryManagementFunctions="true" 
 					canGetAndSetFMUstate="false" 
 					canSerializeFMUstate="false" 
