@@ -99,7 +99,7 @@
 	<ScalarVariable name="p2_out" valueReference="10" causality="output" variability="discrete" initial="calculated"><String  /></ScalarVariable>
 	
 	<!-- Index 12 -->
-	<ScalarVariable name="p2_s" valueReference="11" causality="parameter" variability="fixed" initial="exact"><String start="&quot;&quot;" /></ScalarVariable>
+	<ScalarVariable name="p2_s" valueReference="11" causality="parameter" variability="fixed" initial="exact"><String start="" /></ScalarVariable>
 	
 	</ModelVariables>
 
