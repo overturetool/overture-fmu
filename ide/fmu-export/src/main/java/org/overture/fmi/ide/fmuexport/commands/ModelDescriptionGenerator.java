@@ -279,6 +279,21 @@ public class ModelDescriptionGenerator
 
 			if (name.equals("IntPort"))
 			{
+				if (initial != null)
+				{
+					try
+					{
+						initial = Integer.parseInt(initial) + "";
+					} catch (NumberFormatException e)
+					{
+						try
+						{
+							initial = (int) Double.parseDouble(initial) + "";
+						} catch (NumberFormatException e2)
+						{
+						}
+					}
+				}
 				typeTemplate = scalarVariableIntegerTypeTemplate;
 			} else if (name.equals("RealPort"))
 			{
@@ -299,8 +314,7 @@ public class ModelDescriptionGenerator
 		} else
 		{
 
-			// TODO: check up on type checking here. This code does not work if a type def is used to add an invariant
-			// etc.
+			// this is branch of is deprecated
 			if (type instanceof ARealNumericBasicType)
 			{
 				typeTemplate = scalarVariableRealTypeTemplate;
