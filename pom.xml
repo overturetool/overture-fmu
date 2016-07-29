@@ -18,7 +18,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<!--overture.version></overture.version-->
 		<crescendo.version>2.0.8</crescendo.version>
-		<intocps.shm.version>0.0.3-SNAPSHOT</intocps.shm.version>
+		<intocps.shm.version>0.0.4</intocps.shm.version>
 	</properties>
 
 
