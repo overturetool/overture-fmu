@@ -12,6 +12,7 @@ import org.destecs.core.vdmlink.LinkInfo;
 import org.destecs.protocol.exceptions.RemoteSimulationException;
 import org.destecs.vdmj.VDMCO;
 import org.intocps.java.fmi.service.IServiceProtocol;
+import org.intocps.java.fmi.service.LogProtocolDriver;
 import org.overture.config.Settings;
 import org.overture.interpreter.messages.Console;
 import org.overture.interpreter.messages.StderrRedirector;
@@ -39,6 +40,7 @@ import com.lausdahl.examples.Service.Fmi2GetRequest;
 import com.lausdahl.examples.Service.Fmi2GetStringReply;
 import com.lausdahl.examples.Service.Fmi2InstantiateRequest;
 import com.lausdahl.examples.Service.Fmi2IntegerStatusReply;
+import com.lausdahl.examples.Service.Fmi2LogReply;
 import com.lausdahl.examples.Service.Fmi2RealStatusReply;
 import com.lausdahl.examples.Service.Fmi2SetBooleanRequest;
 import com.lausdahl.examples.Service.Fmi2SetDebugLoggingRequest;
@@ -59,47 +61,89 @@ public class CrescendoFmu implements IServiceProtocol
 		None, Instantiated, Initialized, Stepping, Terminated
 	}
 
+	enum LogCategory
+	{
+
+		LogAll("logAll"), LogFmiCall("logFmiCall"), LogProtocol("Protocol"), LogVdmOut(
+				"VdmOut"), LogVdmErr("VdmErr"), LogError("logError");
+
+		final String name;
+
+		LogCategory(String name)
+		{
+			this.name = name;
+		}
+	}
+
 	public StateCache state;
 	Double time = (double) 0;
 	final String sessionName;
 	CrescendoStateType protocolState = CrescendoStateType.None;
 	private boolean loggingOn = true;
-	
+
 	double lastCommunicationPoint = 0;
 	double lastStepSize = 0;
-	
+
 	private List<String> enabledLoggingCategories = new Vector<String>();
+	private LogProtocolDriver logDriver = null;
+	private boolean loggerConnected = false;
 
 	static final Fmi2StatusReply ok = Fmi2StatusReply.newBuilder().setStatus(Fmi2StatusReply.Status.Ok).build();
 	static final Fmi2StatusReply fatal = Fmi2StatusReply.newBuilder().setStatus(Fmi2StatusReply.Status.Fatal).build();
 	static final Fmi2StatusReply error = Fmi2StatusReply.newBuilder().setStatus(Fmi2StatusReply.Status.Error).build();
 	static final Fmi2StatusReply discard = Fmi2StatusReply.newBuilder().setStatus(Fmi2StatusReply.Status.Discard).build();
 
-	enum FmiLogCategory
+	/**
+	 * Show the log message either in the console or sends through the log driver
+	 * 
+	 * @param message
+	 */
+	private void log(LogCategory category, Fmi2LogReply.Status status,
+			String message)
 	{
-		Protocol, VdmOut, VdmErr, Error
+		logger.trace("Log message Category: {}, Status: {}, Message: {}", category.name, status, message);
+		if (enabledLoggingCategories.contains(category.name))
+		{
+			if (logDriver != null && loggerConnected)
+			{
+				message = message.trim();
+				if (message.endsWith("\n"))
+				{
+					message.substring(0, message.length() - 2);
+				}
+				logDriver.log(category.name, status, message);
+			} else
+			{
+				System.out.println(message);
+			}
+		} else
+		{
+			logger.trace("Skipped log call back since category was not configured: {}", category.name);
+		}
 	}
 
-	public void fmiLog(FmiLogCategory category, String message)
+	public void fmiLog(LogCategory category, String message)
 	{
 
 		if (loggingOn)
 		{
 			switch (category)
 			{
-				case Error:
-					System.err.println(message);
+				case LogVdmErr:
+				case LogError:
+					log(category, Fmi2LogReply.Status.Error, message);
 					break;
-				case Protocol:
-				case VdmErr:
-				case VdmOut:
-					System.out.println(message);
+
+				case LogAll:
+				case LogFmiCall:
+				case LogProtocol:
+				case LogVdmOut:
 				default:
+					log(category, Fmi2LogReply.Status.Ok, message);
 					break;
 			}
 		}
 
-		// TODO: redirect to protocol
 	}
 
 	public CrescendoFmu(String sessionName)
@@ -122,7 +166,7 @@ public class CrescendoFmu implements IServiceProtocol
 	@Override
 	public void error(String string)
 	{
-		System.err.println(string);
+		fmiLog(LogCategory.LogError, string);
 	}
 
 	@Override
@@ -140,24 +184,26 @@ public class CrescendoFmu implements IServiceProtocol
 
 			double nextFmiTime = request.getCurrentCommunicationPoint()
 					+ request.getCommunicationStepSize();
-			
+
 			this.lastCommunicationPoint = request.getCurrentCommunicationPoint();
 			this.lastStepSize = request.getCommunicationStepSize();
 
-			fmiLog(FmiLogCategory.Protocol, "DoStep called: " + nextFmiTime);
+			fmiLog(LogCategory.LogProtocol, "DoStep called: " + nextFmiTime);
 
 			if (nextFmiTime < time)
 			{
-				fmiLog(FmiLogCategory.Protocol, "DoStep skipping execution next time is: "
+				fmiLog(LogCategory.LogProtocol, "DoStep skipping execution next time is: "
 						+ time);
 				return ok;
 			}
 
 			double internalVdmClockTime = new Double(SystemClock.timeToInternal(TimeUnit.seconds, nextFmiTime));
 
-			System.out.println("DoStep VDM time: " + internalVdmClockTime);
+			log(LogCategory.LogAll, Fmi2LogReply.Status.Ok, "DoStep VDM time: "
+					+ internalVdmClockTime);
 			List<NamedValue> res = FmiSimulationManager.getInstance().step(internalVdmClockTime, inputs);
-			System.out.println("DoStep VDM time: " + internalVdmClockTime+" - completed");
+			log(LogCategory.LogAll, Fmi2LogReply.Status.Ok, "DoStep VDM time: "
+					+ internalVdmClockTime + " - completed");
 			NamedValue timeValue = null;
 			for (NamedValue namedValue : res)
 			{
@@ -177,13 +223,13 @@ public class CrescendoFmu implements IServiceProtocol
 			state.syncOutputsToCache(res);
 
 			time = curTime;
-			fmiLog(FmiLogCategory.Protocol, "DoStep waiting for next DoStep at: "
+			fmiLog(LogCategory.LogProtocol, "DoStep waiting for next DoStep at: "
 					+ time);
 
 		} catch (Exception e)
 		{
 			e.printStackTrace();
-			fmiLog(FmiLogCategory.Error, "Error in DoStep: " + e.getMessage());
+			fmiLog(LogCategory.LogError, "Error in DoStep: " + e.getMessage());
 			return fatal;
 		}
 		return ok;
@@ -192,14 +238,14 @@ public class CrescendoFmu implements IServiceProtocol
 	@Override
 	public Fmi2StatusReply Terminate(Fmi2Empty parseFrom)
 	{
-		System.out.println("terminate");
+		log(LogCategory.LogAll, Fmi2LogReply.Status.Ok, "terminate");
 		try
 		{
 			FmiSimulationManager.getInstance().stopSimulation();
 		} catch (RemoteSimulationException e)
 		{
 			e.printStackTrace();
-			fmiLog(FmiLogCategory.Error, "Error in Terminate: "
+			fmiLog(LogCategory.LogError, "Error in Terminate: "
 					+ e.getMessage());
 			return fatal;
 		}
@@ -209,6 +255,7 @@ public class CrescendoFmu implements IServiceProtocol
 	@Override
 	public Fmi2StatusReply EnterInitializationMode(Fmi2Empty parseFrom)
 	{
+		loggerConnected = true;
 		return ok;
 	}
 
@@ -266,11 +313,11 @@ public class CrescendoFmu implements IServiceProtocol
 		} catch (RemoteSimulationException e)
 		{
 			e.printStackTrace();
-			fmiLog(FmiLogCategory.Error, "Error in ExitInitializationMode (setDesignParameters, start): "
+			fmiLog(LogCategory.LogError, "Error in ExitInitializationMode (setDesignParameters, start): "
 					+ e.getMessage());
 			return fatal;
 		}
-		System.out.println("exit init");
+		log(LogCategory.LogAll, Fmi2LogReply.Status.Ok, "exit init");
 		return ok;
 	}
 
@@ -336,7 +383,8 @@ public class CrescendoFmu implements IServiceProtocol
 	@Override
 	public Fmi2GetMaxStepSizeReply GetMaxStepSize(Fmi2Empty parseFrom)
 	{
-		return Fmi2GetMaxStepSizeReply.newBuilder().setMaxStepSize(time-(lastCommunicationPoint+lastStepSize)).build();
+		return Fmi2GetMaxStepSizeReply.newBuilder().setMaxStepSize(time
+				- (lastCommunicationPoint + lastStepSize)).build();
 	}
 
 	@Override
@@ -346,7 +394,16 @@ public class CrescendoFmu implements IServiceProtocol
 		{
 			return fatal;
 		}
-		System.out.println(String.format("Instantiating %s.%s with loggingOn = %s, resource location='%s'", request.getFmuGuid(), request.getInstanceName(), request.getLogginOn()
+
+		if (request.getLogginOn())
+		{
+			String callbackShmName = request.getCallbackShmName();
+			logger.debug("Connecting callback log driver with shm key: '{}'", callbackShmName);
+			logDriver = new LogProtocolDriver(callbackShmName);
+
+		}
+
+		logger.debug(String.format("Instantiating %s.%s with loggingOn = %s, resource location='%s'", request.getFmuGuid(), request.getInstanceName(), request.getLogginOn()
 				+ "", request.getFmuResourceLocation()));
 		try
 		{
@@ -359,7 +416,7 @@ public class CrescendoFmu implements IServiceProtocol
 				@Override
 				public void print(String message)
 				{
-					finalThis.fmiLog(FmiLogCategory.VdmErr, message);
+					finalThis.fmiLog(LogCategory.LogVdmOut, message);
 				}
 			};
 			Console.err = new StderrRedirector(new OutputStreamWriter(System.err, "UTF-8"))
@@ -367,7 +424,7 @@ public class CrescendoFmu implements IServiceProtocol
 				@Override
 				public void print(String message)
 				{
-					finalThis.fmiLog(FmiLogCategory.VdmOut, message);
+					finalThis.fmiLog(LogCategory.LogVdmErr, message);
 				}
 			};
 
@@ -389,7 +446,8 @@ public class CrescendoFmu implements IServiceProtocol
 
 			File root = new File(new URI(request.getFmuResourceLocation()));
 			File sourceRoot = new File(root, "model");
-			System.out.println("Source root: " + sourceRoot);
+			log(LogCategory.LogAll, Fmi2LogReply.Status.Ok, "Source root: "
+					+ sourceRoot);
 
 			specfiles.addAll(FileUtils.listFiles(sourceRoot, new String[] { "vdmrt" }, true));
 
@@ -404,9 +462,7 @@ public class CrescendoFmu implements IServiceProtocol
 
 		} catch (Exception e)
 		{
-			e.printStackTrace();
-			fmiLog(FmiLogCategory.Error, "Error in instantiate: "
-					+ e.getMessage());
+			logger.error("Error in instantiate: " + e.getMessage(), e);
 			return fatal;
 		}
 		return ok;
@@ -415,7 +471,7 @@ public class CrescendoFmu implements IServiceProtocol
 	@Override
 	public Fmi2StatusReply Reset(Fmi2Empty parseFrom)
 	{
-		fmiLog(FmiLogCategory.Protocol, "Reset not supported");
+		fmiLog(LogCategory.LogProtocol, "Reset not supported");
 		return error;
 	}
 
@@ -425,44 +481,27 @@ public class CrescendoFmu implements IServiceProtocol
 		loggingOn = request.getLoggingOn();
 		for (int i = 0; i < request.getCatogoriesCount(); i++)
 		{
-			enabledLoggingCategories.add(request.getCatogories(i));
+
+			String category = request.getCatogories(i);
+			logger.debug("Enabling logging for category: {}", category);
+			enabledLoggingCategories.add(category);
 		}
 		return ok;
 	}
 
-//	interface GetFunction<T>
-//	{
-//		T get(int id);
-//	}
-//
-//	private <T> Fmi2StatusReply genericSet(T[] array, int size,
-//			GetFunction<Integer> getIdFun, GetFunction<T> getValueFun)
-//	{
-//		boolean notInitialized = checkStats(CrescendoStateType.None, CrescendoStateType.Instantiated);
-//
-//		for (int i = 0; i < size; i++)
-//		{
-//			int id = getIdFun.get(i);
-//			if (notInitialized)
-//				state.markParameterPending(id);
-//			T value = getValueFun.get(i);
-//			logger.trace("Setting real[{}] = {}", id, value);
-//			array[(int) id] = value;
-//		}
-//		return ok;
-//	}
-
 	@Override
 	public Fmi2StatusReply SetReal(final Fmi2SetRealRequest request)
 	{
-				
+
 		boolean notInitialized = checkStats(CrescendoStateType.None, CrescendoStateType.Instantiated);
 
 		for (int i = 0; i < request.getValueReferenceCount(); i++)
 		{
 			int id = request.getValueReference(i);
 			if (notInitialized)
+			{
 				state.markParameterPending(id);
+			}
 			logger.trace("Setting real[{}] = {}", id, request.getValues(i));
 			state.reals[id] = request.getValues(i);
 		}
@@ -477,7 +516,9 @@ public class CrescendoFmu implements IServiceProtocol
 		{
 			int id = request.getValueReference(i);
 			if (notInitialized)
+			{
 				state.markParameterPending(id);
+			}
 			state.integers[id] = request.getValues(i);
 		}
 		return ok;
@@ -485,12 +526,15 @@ public class CrescendoFmu implements IServiceProtocol
 
 	@Override
 	public Fmi2StatusReply SetBoolean(Fmi2SetBooleanRequest request)
-	{boolean notInitialized = checkStats(CrescendoStateType.None, CrescendoStateType.Instantiated);
+	{
+		boolean notInitialized = checkStats(CrescendoStateType.None, CrescendoStateType.Instantiated);
 		for (int i = 0; i < request.getValueReferenceCount(); i++)
 		{
 			int id = request.getValueReference(i);
 			if (notInitialized)
+			{
 				state.markParameterPending(id);
+			}
 			state.booleans[id] = request.getValues(i);
 		}
 		return ok;
@@ -498,12 +542,15 @@ public class CrescendoFmu implements IServiceProtocol
 
 	@Override
 	public Fmi2StatusReply SetString(Fmi2SetStringRequest request)
-	{boolean notInitialized = checkStats(CrescendoStateType.None, CrescendoStateType.Instantiated);
+	{
+		boolean notInitialized = checkStats(CrescendoStateType.None, CrescendoStateType.Instantiated);
 		for (int i = 0; i < request.getValueReferenceCount(); i++)
 		{
 			int id = request.getValueReference(i);
 			if (notInitialized)
+			{
 				state.markParameterPending(id);
+			}
 			state.strings[id] = request.getValues(i);
 		}
 		return ok;
@@ -519,14 +566,13 @@ public class CrescendoFmu implements IServiceProtocol
 	public void error(InvalidProtocolBufferException e)
 	{
 		e.printStackTrace();
-		fmiLog(FmiLogCategory.Protocol, "Internal error: " + e.getMessage());
+		fmiLog(LogCategory.LogProtocol, "Internal error: " + e.getMessage());
 	}
 
 	@Override
 	public Fmi2StatusReply GetStatus(Fmi2StatusRequest request)
 	{
-		// TODO Auto-generated method stub
-		fmiLog(FmiLogCategory.Protocol, "GetStatus not supported");
+		fmiLog(LogCategory.LogProtocol, "GetStatus not supported");
 		return discard;
 	}
 
@@ -551,32 +597,28 @@ public class CrescendoFmu implements IServiceProtocol
 
 		}
 
-		// TODO Auto-generated method stub
-		fmiLog(FmiLogCategory.Protocol, "GetRealStatus not supported");
+		fmiLog(LogCategory.LogProtocol, "GetRealStatus not supported");
 		return null;
 	}
 
 	@Override
 	public Fmi2IntegerStatusReply GetIntegerStatus(Fmi2StatusRequest request)
 	{
-		// TODO Auto-generated method stub
-		fmiLog(FmiLogCategory.Protocol, "GetIntegerStatus not supported");
+		fmiLog(LogCategory.LogProtocol, "GetIntegerStatus not supported");
 		return null;
 	}
 
 	@Override
 	public Fmi2BooleanStatusReply GetBooleanStatus(Fmi2StatusRequest request)
 	{
-		// TODO Auto-generated method stub
-		fmiLog(FmiLogCategory.Protocol, "GetBooleanStatus not supported");
+		fmiLog(LogCategory.LogProtocol, "GetBooleanStatus not supported");
 		return null;
 	}
 
 	@Override
 	public Fmi2StringStatusReply GetStringStatus(Fmi2StatusRequest request)
 	{
-		// TODO Auto-generated method stub
-		fmiLog(FmiLogCategory.Protocol, "GetStringStatus not supported");
+		fmiLog(LogCategory.LogProtocol, "GetStringStatus not supported");
 		return null;
 	}
 

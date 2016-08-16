@@ -2,8 +2,12 @@ package org.crescendo.fmi;
 
 import java.io.File;
 
+import org.intocps.java.fmi.shm.SharedMemory;
+import org.intocps.java.fmi.shm.SharedMemoryServer;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.lausdahl.examples.Service.Fmi2DoStepRequest;
 import com.lausdahl.examples.Service.Fmi2Empty;
@@ -19,6 +23,9 @@ public class SimulationTest
 	@Test
 	public void test()
 	{
+		Logger logger = LoggerFactory.getLogger(ShmServer.class);
+		SharedMemory.setDebug(logger.isDebugEnabled());
+		SharedMemoryServer.setServerDebug(logger.isDebugEnabled());
 
 		CrescendoFmu fmu = new CrescendoFmu("test-in-out-session-test");
 

@@ -37,11 +37,11 @@
 		<Category name="logAll" />
 		<Category name="logError" />
 		<Category name="logFmiCall" />
-
+<!-- Category name="logShm" /-->
+<!-- Category name="logLaunch" /-->
 		<Category name="Protocol" />
 		<Category name="VdmOut" />
 		<Category name="VdmErr" />
-		<Category name="Error" />
 	</LogCategories>
 
 	<VendorAnnotations>
