@@ -1,8 +1,9 @@
-package org.overture.fmi.ide.fmuexport.commands;
+package org.overturetool.fmi.imports;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
@@ -19,28 +20,18 @@ import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.console.MessageConsoleStream;
 import org.overture.ast.definitions.AExplicitOperationDefinition;
 import org.overture.ast.definitions.AInstanceVariableDefinition;
 import org.overture.ast.definitions.ASystemClassDefinition;
 import org.overture.ast.definitions.PDefinition;
 import org.overture.ast.definitions.SClassDefinition;
-import org.overture.ast.lex.Dialect;
 import org.overture.ast.types.PType;
 import org.overture.fmi.annotation.FmuAnnotation;
-import org.overture.fmi.ide.fmuexport.FmuExportPlugin;
 import org.overture.fmi.ide.fmuexport.xml.NamedNodeMapIterator;
 import org.overture.fmi.ide.fmuexport.xml.NodeIterator;
-import org.overture.ide.core.IVdmModel;
-import org.overture.ide.core.ast.NotAllowedException;
-import org.overture.ide.core.resources.IVdmProject;
-import org.overture.ide.ui.utility.VdmTypeCheckerUi;
+import org.overturetool.fmi.AbortException;
+import org.overturetool.fmi.IProject;
+import org.overturetool.fmi.util.VdmAnnotationProcesser;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -166,20 +157,17 @@ public class ImportModelDescriptionProcesser
 	}
 
 	private static final boolean DEBUG = false;
-	final MessageConsoleStream out;
-	final MessageConsoleStream err;
-	final Shell shell;
+	final PrintStream out;
+	final PrintStream err;
 
-	public ImportModelDescriptionProcesser(Shell shell,
-			MessageConsoleStream out, MessageConsoleStream err)
+	public ImportModelDescriptionProcesser(PrintStream out, PrintStream err)
 	{
-		this.shell = shell;
 		this.out = out;
 		this.err = err;
 	}
 
-	public void importFromXml(IVdmProject project, File file)
-			throws SAXException, IOException, ParserConfigurationException
+	public void importFromXml(IProject project, File file) throws SAXException,
+			IOException, ParserConfigurationException
 	{
 
 		out.println("\n---------------------------------------");
@@ -188,121 +176,121 @@ public class ImportModelDescriptionProcesser
 		out.println("Starting FMU import for project: '" + project.getName()
 				+ "'");
 
-		final IVdmModel model = project.getModel();
-		if (model.isParseCorrect())
+		// final IVdmModel model = project.getModel();
+		// if (model.isParseCorrect())
+		// {
+		//
+		// if (model == null || !model.isTypeCorrect())
+		// {
+		// VdmTypeCheckerUi.typeCheck(shell, project);
+		// }
+		//
+		// if (model.isTypeCorrect() && project.getDialect() == Dialect.VDM_RT)
+		// {
+		if (project.typeCheck())
 		{
-
-			if (model == null || !model.isTypeCorrect())
+			try
 			{
-				VdmTypeCheckerUi.typeCheck(shell, project);
-			}
+				out.println("Collecting existing annotations...");
 
-			if (model.isTypeCorrect() && project.getDialect() == Dialect.VDM_RT)
-			{
+				Map<PDefinition, FmuAnnotation> annotations = new VdmAnnotationProcesser().collectAnnotatedDefinitions(project, out, err);
+				out.println("\t Found " + annotations.size()
+						+ " annotations in model");
 
-				try
+				out.println("Parsing ModelDescription.xml file...");
+				// Document document;
+				DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
+				// validateAgainstXSD(new StreamSource(xmlInputStream), schemaSource);
+
+				// xmlInputStream.reset();
+				Document doc = docBuilderFactory.newDocumentBuilder().parse(file);
+
+				XPathFactory xPathfactory = XPathFactory.newInstance();
+				XPath xpath = xPathfactory.newXPath();
+
+				List<ScalarVariable> vars = new Vector<ScalarVariable>();
+
+				for (Node n : new NodeIterator(lookup(doc, xpath, "fmiModelDescription/ModelVariables/ScalarVariable")))
 				{
-					out.println("Collecting existing annotations...");
+					ScalarVariable sc = new ScalarVariable();
+					// indexMap.put(++index, sc);
 
-					Map<PDefinition, FmuAnnotation> annotations = new VdmAnnotationProcesser().collectAnnotatedDefinitions(project, out, err);
-					out.println("\t Found " + annotations.size()
-							+ " annotations in model");
+					NamedNodeMap attributes = n.getAttributes();
+					sc.name = attributes.getNamedItem("name").getNodeValue();
+					sc.valueReference = Long.parseLong(attributes.getNamedItem("valueReference").getNodeValue());
 
-					out.println("Parsing ModelDescription.xml file...");
-					// Document document;
-					DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
-					// validateAgainstXSD(new StreamSource(xmlInputStream), schemaSource);
+					// optional
+					sc.causality = getAttribute(Causality.class, attributes, "causality");
+					// sc.variability = getAttribute(Variability.class, attributes, "variability");
+					sc.initial = getAttribute(Initial.class, attributes, "initial");
+					// sc.description = getNodeValue(attributes, "description", "");
 
-					// xmlInputStream.reset();
-					Document doc = docBuilderFactory.newDocumentBuilder().parse(file);
+					Node child = lookupSingle(n, xpath, "Real[1] | Boolean[1] | String[1] | Integer[1] | Enumeration[1]");
 
-					XPathFactory xPathfactory = XPathFactory.newInstance();
-					XPath xpath = xPathfactory.newXPath();
+					sc.type = new Type();
+					sc.type.type = Types.valueOfIgnorecase(child.getNodeName());
 
-					List<ScalarVariable> vars = new Vector<ScalarVariable>();
-
-					for (Node n : new NodeIterator(lookup(doc, xpath, "fmiModelDescription/ModelVariables/ScalarVariable")))
+					if (child.getAttributes() != null)
 					{
-						ScalarVariable sc = new ScalarVariable();
-						// indexMap.put(++index, sc);
-
-						NamedNodeMap attributes = n.getAttributes();
-						sc.name = attributes.getNamedItem("name").getNodeValue();
-						sc.valueReference = Long.parseLong(attributes.getNamedItem("valueReference").getNodeValue());
-
-						// optional
-						sc.causality = getAttribute(Causality.class, attributes, "causality");
-						// sc.variability = getAttribute(Variability.class, attributes, "variability");
-						sc.initial = getAttribute(Initial.class, attributes, "initial");
-						// sc.description = getNodeValue(attributes, "description", "");
-
-						Node child = lookupSingle(n, xpath, "Real[1] | Boolean[1] | String[1] | Integer[1] | Enumeration[1]");
-
-						sc.type = new Type();
-						sc.type.type = Types.valueOfIgnorecase(child.getNodeName());
-
-						if (child.getAttributes() != null)
+						Node startAtt = child.getAttributes().getNamedItem("start");
+						if (startAtt != null)
 						{
-							Node startAtt = child.getAttributes().getNamedItem("start");
-							if (startAtt != null)
+							switch (sc.type.type)
 							{
-								switch (sc.type.type)
-								{
-									case Boolean:
-										sc.type.start = Boolean.valueOf(startAtt.getNodeValue());
-										break;
-									case Integer:
-										sc.type.start = Integer.valueOf(startAtt.getNodeValue());
-										break;
-									case Real:
-										sc.type.start = Double.valueOf(startAtt.getNodeValue());
-										break;
-									case String:
-									default:
-										sc.type.start = startAtt.getNodeValue();
-										break;
-
-								}
+								case Boolean:
+									sc.type.start = Boolean.valueOf(startAtt.getNodeValue());
+									break;
+								case Integer:
+									sc.type.start = Integer.valueOf(startAtt.getNodeValue());
+									break;
+								case Real:
+									sc.type.start = Double.valueOf(startAtt.getNodeValue());
+									break;
+								case String:
+								default:
+									sc.type.start = startAtt.getNodeValue();
+									break;
 
 							}
+
 						}
-
-						vars.add(sc);
-					}
-					out.println("\t Found " + vars.size()
-							+ " scalar variables in '" + file.getName() + "'");
-
-					if (validate(annotations, vars, err))
-					{
-						checkAndCreateStructure(project, model);
-						out.println("Importing...");
-						out.println("");
-						List<ScalarVariable> filter = filter(annotations, vars, out, err);
-						VdmTypeCheckerUi.typeCheck(shell, project);
-						updateHardwareInterface(project, model, filter, out);
-						out.println("");
-						out.println("Import comepleted.");
-					} else
-					{
-						err.println("Aborting");
-						return;
 					}
 
-				} catch (Exception e)
-				{
-					FmuExportPlugin.log(e);
+					vars.add(sc);
 				}
-			} else
+				out.println("\t Found " + vars.size()
+						+ " scalar variables in '" + file.getName() + "'");
+
+				if (validate(annotations, vars, err))
+				{
+					checkAndCreateStructure(project);
+					out.println("Importing...");
+					out.println("");
+					List<ScalarVariable> filter = filter(annotations, vars, out, err);
+					// VdmTypeCheckerUi.typeCheck(shell, project);
+					project.typeCheck();
+					updateHardwareInterface(project, filter, out);
+					out.println("");
+					out.println("Import comepleted.");
+				} else
+				{
+					err.println("Aborting");
+					return;
+				}
+
+			} catch (Exception e)
 			{
-				err.println("Aborting VDM model does not type check");
+				project.log(e);
 			}
+		} else
+		{
+			err.println("Aborting VDM model does not type check");
 		}
 	}
 
 	private List<ScalarVariable> filter(
 			Map<PDefinition, FmuAnnotation> annotations,
-			List<ScalarVariable> vars, MessageConsoleStream out2,
-			MessageConsoleStream err2)
+			List<ScalarVariable> vars, PrintStream out2, PrintStream err2)
 	{
 		List<ScalarVariable> skipVars = new Vector<ImportModelDescriptionProcesser.ScalarVariable>();
 
@@ -332,12 +320,11 @@ public class ImportModelDescriptionProcesser
 		return vars;
 	}
 
-	private void updateHardwareInterface(IVdmProject project, IVdmModel model,
-			List<ScalarVariable> vars, MessageConsoleStream out)
-			throws NotAllowedException, IOException, CoreException
+	private void updateHardwareInterface(IProject project,
+			List<ScalarVariable> vars, PrintStream out) throws IOException
 	{
 		out.println("");
-		SClassDefinition hwi = getClassByName(model, HARDWARE_INTERFACE);
+		SClassDefinition hwi = getClassByName(project.getClasses(), HARDWARE_INTERFACE);
 
 		File file = hwi.getLocation().getFile();
 
@@ -401,7 +388,6 @@ public class ImportModelDescriptionProcesser
 		}
 
 		FileUtils.write(file, sb, Charset.forName("UTF-8"));
-		((IProject) project.getAdapter(IProject.class)).refreshLocal(IResource.DEPTH_INFINITE, null);
 	}
 
 	private String getValueOrDefault(Type type)
@@ -456,10 +442,10 @@ public class ImportModelDescriptionProcesser
 				String ret = null;
 				if (type.start != null)
 				{
-					ret ="\""+ type.start.toString()+"\"";
+					ret = "\"" + type.start.toString() + "\"";
 				} else
 				{
-					ret= "";
+					ret = "";
 				}
 				return "new StringPort(" + ret + ")";
 			}
@@ -494,40 +480,68 @@ public class ImportModelDescriptionProcesser
 		return name.replaceAll("[^A-Za-z0-9()\\[\\]]", "");
 	}
 
-	void copyVdmSourceTemplateToProject(IVdmProject project, String path)
-			throws CoreException
+	// void copyVdmSourceTemplateToProject(IProject project, String path)
+	// {
+	// IContainer src0 = project.getModelBuildPath().getModelSrcPaths().get(0);
+	//
+	// InputStream in = AddVdmFmiLibraryHandler.class.getClassLoader().getResourceAsStream(path);
+	//
+	// String name = path.substring(path.lastIndexOf('/') + 1);
+	//
+	// src0.getFile(new Path(name)).create(in, true, null);
+	// }
+
+	void copyVdmSourceTemplateToProject(IProject project, String classPathPath,
+			String projectPath) throws IOException
 	{
-		IContainer src0 = project.getModelBuildPath().getModelSrcPaths().get(0);
-
-		InputStream in = AddVdmFmiLibraryHandler.class.getClassLoader().getResourceAsStream(path);
-
-		String name = path.substring(path.lastIndexOf('/') + 1);
-
-		src0.getFile(new Path(name)).create(in, true, null);
+		InputStream is = this.getClass().getClassLoader().getResourceAsStream(classPathPath);
+		project.createSpecFileProjectRelative(projectPath, is);
+		// IContainer src0 = project.getModelBuildPath().getModelSrcPaths().get(0);
+		//
+		// InputStream in = AddVdmFmiLibraryHandler.class.getClassLoader().getResourceAsStream(path);
+		//
+		// String name = path.substring(path.lastIndexOf('/') + 1);
+		//
+		// src0.getFile(new Path(name)).create(in, true, null);
 	}
 
-	private void checkAndCreateStructure(IVdmProject project, IVdmModel model)
-			throws NotAllowedException, AbortException, CoreException
+	private void checkAndCreateStructure(IProject project)
+			throws AbortException, IOException
 	{
 		out.println("Checking class 'World'");
-		checkCreateWorld(project, model);
+		checkCreateWorld(project);
+
+		out.println("Checking for FMI library");
+		SClassDefinition port = getClassByName(project.getClasses(), "Port");
+		for (String pName : new String[] { "RealPort", "IntPort", "BoolPort",
+				"StringPort" })
+		{
+			if (getClassByName(project.getClasses(), pName) == null)
+			{
+				port = null;
+			}
+		}
+		if (port == null)
+		{
+			copyVdmSourceTemplateToProject(project, "fmi/Fmi.vdmrt", "lib/Fmi.vdmrt");
+		}
 
 		out.println("Checking class '" + HARDWARE_INTERFACE + "'");
-		SClassDefinition hwi = getClassByName(model, HARDWARE_INTERFACE);
+		SClassDefinition hwi = getClassByName(project.getClasses(), HARDWARE_INTERFACE);
 		if (hwi == null)
 		{
-			copyVdmSourceTemplateToProject(project, "templates/HardwareInterface.vdmrt");
+			copyVdmSourceTemplateToProject(project, "templates/HardwareInterface.vdmrt", "HardwareInterface.vdmrt");
 		}
 
 		out.println("Checking the system");
-		checkCreateSystem(project, model);
+		checkCreateSystem(project);
 	}
 
-	public void checkCreateSystem(IVdmProject project, IVdmModel model)
-			throws NotAllowedException, AbortException, CoreException
+	public void checkCreateSystem(IProject project) throws AbortException,
+			IOException
 	{
 		SClassDefinition systemClass = null;
-		for (SClassDefinition def : model.getClassList())
+		for (SClassDefinition def : project.getClasses())
 		{
 			if (def instanceof ASystemClassDefinition)
 			{
@@ -537,7 +551,7 @@ public class ImportModelDescriptionProcesser
 
 		if (systemClass == null)
 		{
-			copyVdmSourceTemplateToProject(project, "templates/System.vdmrt");
+			copyVdmSourceTemplateToProject(project, "templates/System.vdmrt", "System.vdmrt");
 		} else
 		{
 			boolean found = false;
@@ -564,13 +578,13 @@ public class ImportModelDescriptionProcesser
 		}
 	}
 
-	public void checkCreateWorld(IVdmProject project, IVdmModel model)
-			throws NotAllowedException, AbortException, CoreException
+	public void checkCreateWorld(IProject project) throws AbortException,
+			IOException
 	{
-		SClassDefinition worldClass = getClassByName(model, "World");
+		SClassDefinition worldClass = getClassByName(project.getClasses(), "World");
 		if (worldClass == null)
 		{
-			copyVdmSourceTemplateToProject(project, "templates/World.vdmrt");
+			copyVdmSourceTemplateToProject(project, "templates/World.vdmrt", "World.vdmrt");
 		} else
 		{
 			boolean found = false;
@@ -592,10 +606,10 @@ public class ImportModelDescriptionProcesser
 		}
 	}
 
-	SClassDefinition getClassByName(IVdmModel model, String name)
-			throws NotAllowedException
+	SClassDefinition getClassByName(List<? extends SClassDefinition> classList,
+			String name)
 	{
-		for (SClassDefinition def : model.getClassList())
+		for (SClassDefinition def : classList)
 		{
 			if (name.equals(def.getName().getName()))
 			{
@@ -606,7 +620,7 @@ public class ImportModelDescriptionProcesser
 	}
 
 	private boolean validate(Map<PDefinition, FmuAnnotation> annotations,
-			List<ScalarVariable> vars, MessageConsoleStream err)
+			List<ScalarVariable> vars, PrintStream err)
 	{
 		List<Entry<PDefinition, FmuAnnotation>> additionalInputs = new Vector<Map.Entry<PDefinition, FmuAnnotation>>();
 		boolean abort = false;

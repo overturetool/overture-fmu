@@ -47,9 +47,9 @@
 							<artifactItems>
 								<artifactItem>
 									<groupId>org.overturetool.fmi.core</groupId>
-									<artifactId>fmi-interpreter</artifactId>
-									<type>jar</type>
-									<classifier>jar-with-dependencies</classifier>
+									<artifactId>fmu-import-export</artifactId>
+									<!-- type>jar</type>
+									<classifier>jar-with-dependencies</classifier-->
 									<version>${project.version}</version>
 								</artifactItem>
 
@@ -74,6 +74,9 @@
 									<type>jar</type>
 									<version>${project.version}</version>
 								</artifactItem>
+								
+								
+								
 
 								<artifactItem>
 									<groupId>org.antlr</groupId>

@@ -1,6 +1,8 @@
-package org.overture.fmi.ide.fmuexport.commands;
+package org.overturetool.fmi.export;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -12,8 +14,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Vector;
 
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.ui.console.MessageConsoleStream;
+import org.apache.commons.io.IOUtils;
 import org.overture.ast.definitions.AInstanceVariableDefinition;
 import org.overture.ast.definitions.ASystemClassDefinition;
 import org.overture.ast.definitions.AValueDefinition;
@@ -28,10 +29,9 @@ import org.overture.ast.types.PType;
 import org.overture.ast.types.SNumericBasicType;
 import org.overture.ast.util.definitions.ClassList;
 import org.overture.fmi.annotation.FmuAnnotation;
-import org.overture.fmi.ide.fmuexport.IFmuExport;
-import org.overture.ide.core.resources.IVdmProject;
-import org.overture.ide.core.resources.IVdmSourceUnit;
-import org.overture.ide.ui.utility.PluginFolderInclude;
+import org.overturetool.fmi.AbortException;
+import org.overturetool.fmi.IProject;
+import org.overturetool.fmi.util.VdmAnnotationProcesser;
 
 public class ModelDescriptionGenerator
 {
@@ -82,9 +82,8 @@ public class ModelDescriptionGenerator
 
 	public GeneratorInfo generate(
 			Map<PDefinition, FmuAnnotation> definitionAnnotation,
-			IVdmProject project, MessageConsoleStream out,
-			MessageConsoleStream err) throws AbortException, CoreException,
-			IOException
+			IProject project, PrintStream out, PrintStream err)
+			throws AbortException, IOException
 	{
 		GeneratorInfo info = new GeneratorInfo();
 		boolean found = false;
@@ -163,7 +162,7 @@ public class ModelDescriptionGenerator
 
 		StringBuffer sbSourceFiles = createSourceFileElements(project);
 
-		final String modelDescriptionTemplate = PluginFolderInclude.readFile(IFmuExport.PLUGIN_ID, "includes/modelDescriptionTemplate.xml");
+		final String modelDescriptionTemplate = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("modelDescriptionTemplate.xml"));// PluginFolderInclude.readFile(IFmuExport.PLUGIN_ID,
 
 		String modelDescription = modelDescriptionTemplate.replace("<!-- {SCALARVARIABLES} -->", sbScalarVariables.toString());
 		modelDescription = modelDescription.replace("<!-- {OUTPUTS} -->", sbOutputs.toString());
@@ -179,8 +178,7 @@ public class ModelDescriptionGenerator
 
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 		String date = sdf.format(new Date());
-		out.println("Setting generation data to: " + date);
-		// Date d = sdf.parse(date);
+		out.println("Setting generation date to: " + date);
 
 		modelDescription = modelDescription.replace("{generationDateAndTime}", date);
 
@@ -189,14 +187,14 @@ public class ModelDescriptionGenerator
 		return info;
 	}
 
-	protected StringBuffer createSourceFileElements(IVdmProject project)
-			throws CoreException
+	protected StringBuffer createSourceFileElements(IProject project)
 	{
 		StringBuffer sbSourceFiles = new StringBuffer();
 
-		for (IVdmSourceUnit source : project.getSpecFiles())
+		for (File source : project.getSpecFiles())
 		{
-			sbSourceFiles.append(String.format("\t\t\t\t<File name=\"%s\" />\n", source.getFile().getProjectRelativePath()));
+			String path = source.getAbsolutePath().substring(project.getSourceRootPath().getAbsolutePath().length() + 1);
+			sbSourceFiles.append(String.format("\t\t\t\t<File name=\"%s\" />\n", path));
 		}
 		return sbSourceFiles;
 	}

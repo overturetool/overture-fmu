@@ -1,7 +1,9 @@
-package org.overture.fmi.ide.fmuexport.commands;
+package org.overturetool.fmi.util;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -9,9 +11,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.destecs.core.parsers.IError;
-import org.eclipse.core.resources.IMarker;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.ui.console.MessageConsoleStream;
 import org.overture.ast.definitions.AInstanceVariableDefinition;
 import org.overture.ast.definitions.AValueDefinition;
 import org.overture.ast.definitions.PDefinition;
@@ -24,31 +23,20 @@ import org.overture.ast.types.PType;
 import org.overture.fmi.annotation.AnnotationParserWrapper;
 import org.overture.fmi.annotation.FmuAnnotation;
 import org.overture.fmi.annotation.RetainVdmCommentsFilter;
-import org.overture.fmi.ide.fmuexport.FmuExportPlugin;
-import org.overture.fmi.ide.fmuexport.IFmuExport;
-import org.overture.ide.core.ast.NotAllowedException;
-import org.overture.ide.core.resources.IVdmProject;
-import org.overture.ide.core.resources.IVdmSourceUnit;
-import org.overture.ide.core.utility.FileUtility;
+import org.overturetool.fmi.IProject;
+import org.overturetool.fmi.IProject.MarkerType;
 
 public class VdmAnnotationProcesser
 {
 	public Map<PDefinition, FmuAnnotation> collectAnnotatedDefinitions(
-			IVdmProject project, MessageConsoleStream out,
-			MessageConsoleStream err) throws NotAllowedException
+			IProject project, PrintStream out, PrintStream err)
 	{
-		Map<IVdmSourceUnit, List<FmuAnnotation>> annotations = getSourceUnitAnnotations(project);
 
-		Map<File, List<FmuAnnotation>> annotationsLexLinked = new HashMap<File, List<FmuAnnotation>>();
-
-		for (Entry<IVdmSourceUnit, List<FmuAnnotation>> entry : annotations.entrySet())
-		{
-			annotationsLexLinked.put(entry.getKey().getSystemFile(), entry.getValue());
-		}
+		Map<File, List<FmuAnnotation>> annotationsLexLinked = getSourceUnitAnnotations(project);
 
 		Map<PDefinition, FmuAnnotation> definitionAnnotation = new HashMap<PDefinition, FmuAnnotation>();
 
-		for (SClassDefinition cDef : project.getModel().getClassList())
+		for (SClassDefinition cDef : project.getClasses())
 		{
 			File file = cDef.getName().getLocation().getFile();
 			if (annotationsLexLinked.containsKey(file))
@@ -70,7 +58,10 @@ public class VdmAnnotationProcesser
 								out.println(String.format("Found annotated definition '%s' with type '%s' and name '%s'", mDef.getLocation().getModule()
 										+ "." + name, annotation.type, annotation.name));
 
-								if (mDef.getType() instanceof AClassType && Arrays.asList(new String[]{"IntPort","RealPort","BoolPort","StringPort"}).contains( ((AClassType)mDef.getType()).getName().getName()))
+								if (mDef.getType() instanceof AClassType
+										&& Arrays.asList(new String[] {
+												"IntPort", "RealPort",
+												"BoolPort", "StringPort" }).contains(((AClassType) mDef.getType()).getName().getName()))
 								{
 									definitionAnnotation.put(mDef, annotation);
 								} else
@@ -91,20 +82,20 @@ public class VdmAnnotationProcesser
 		}
 
 		// Error reporting for unlinked definitions
-		for (List<FmuAnnotation> annotationList : annotations.values())
+		for (List<FmuAnnotation> annotationList : annotationsLexLinked.values())
 		{
 			for (FmuAnnotation commonTree : annotationList)
 			{
 				if (!definitionAnnotation.values().contains(commonTree))
 				{
 
-					for (Entry<IVdmSourceUnit, List<FmuAnnotation>> entry : annotations.entrySet())
+					for (Entry<File, List<FmuAnnotation>> entry : annotationsLexLinked.entrySet())
 					{
 						if (entry.getValue().contains(commonTree))
 						{
-							IVdmSourceUnit unit = entry.getKey();
-							FileUtility.addMarker(unit.getFile(), "Interface not linked to definition. The instanve-variable- or value- definition must be on the line below the annotation.", commonTree.tree.token.getLine() + 1, IMarker.SEVERITY_WARNING, IFmuExport.PLUGIN_ID);
-							err.println(String.format("Unlinked interface annotation: file %s:line %d ", unit.getFile().getName(), commonTree.tree.getLine()));
+							File unit = entry.getKey();
+							project.addMarkser(unit, "Interface not linked to definition. The instanve-variable- or value- definition must be on the line below the annotation.", commonTree.tree.token.getLine() + 1, MarkerType.Error);
+							err.println(String.format("Unlinked interface annotation: file %s:line %d ", unit.getName(), commonTree.tree.getLine()));
 						}
 					}
 				}
@@ -115,28 +106,32 @@ public class VdmAnnotationProcesser
 
 	public static boolean isStringType(PType type)
 	{
-		return (type instanceof ASeqSeqType && ((ASeqSeqType) type).getSeqof() instanceof ACharBasicType)
-				|| (type instanceof ASeq1SeqType && ((ASeq1SeqType) type).getSeqof() instanceof ACharBasicType);
+		return type instanceof ASeqSeqType
+				&& ((ASeqSeqType) type).getSeqof() instanceof ACharBasicType
+				|| type instanceof ASeq1SeqType
+				&& ((ASeq1SeqType) type).getSeqof() instanceof ACharBasicType;
 	}
 
-	private Map<IVdmSourceUnit, List<FmuAnnotation>> getSourceUnitAnnotations(
-			IVdmProject project)
+	private Map<File, List<FmuAnnotation>> getSourceUnitAnnotations(
+			IProject project)
 	{
 
-		Map<IVdmSourceUnit, List<FmuAnnotation>> annotations = new HashMap<IVdmSourceUnit, List<FmuAnnotation>>();
-		try
+		Map<File, List<FmuAnnotation>> annotations = new HashMap<File, List<FmuAnnotation>>();
+		for (File unit : project.getSpecFiles())
 		{
-			for (IVdmSourceUnit unit : project.getSpecFiles())
+			project.deleteMarker(unit);
+			AnnotationParserWrapper parser = new AnnotationParserWrapper();
+
+			List<FmuAnnotation> result;
+			try
 			{
-				FileUtility.deleteMarker(unit.getFile(), IMarker.PROBLEM, IFmuExport.PLUGIN_ID);
-				AnnotationParserWrapper parser = new AnnotationParserWrapper();
-				List<FmuAnnotation> result = parser.parse(unit.getSystemFile(), new RetainVdmCommentsFilter(unit.getFile().getContents(), "--@"));
+				result = parser.parse(unit, new RetainVdmCommentsFilter(new FileInputStream(unit), "--@"));
 
 				if (parser.hasErrors())
 				{
 					for (IError error : parser.getErrors())
 					{
-						FileUtility.addMarker(unit.getFile(), error.getMessage(), error.getLine() + 1, IMarker.SEVERITY_ERROR, IFmuExport.PLUGIN_ID);
+						project.addMarkser(unit, error.getMessage(), error.getLine() + 1, MarkerType.Error);
 					}
 				}
 
@@ -145,16 +140,13 @@ public class VdmAnnotationProcesser
 					annotations.put(unit, result);
 				}
 
+			} catch (IOException e)
+			{
+				project.log(e);
 			}
-		} catch (CoreException e)
-		{
-			FmuExportPlugin.log("Error in annotation parsing", e);
-		} catch (IOException e)
-		{
-			FmuExportPlugin.log("Error in annotation parsing", e);
+
 		}
 
 		return annotations;
 	}
-
 }

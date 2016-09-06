@@ -20,5 +20,6 @@ Bundle-ClassPath: .,
  jars/parsers.jar,
  jars/commons-io.jar,
  jars/commons-lang3.jar,
- jars/fmi-shm-server.jar
+ jars/fmi-shm-server.jar,
+ jars/fmu-import-export.jar
 

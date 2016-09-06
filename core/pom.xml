@@ -16,6 +16,7 @@
     <module>fmi-interpreter</module>
 		<module>annotation-parser</module>  
 		<module>vdm-reflect-library</module>
+    <module>fmu-import-export</module>
   </modules>
 
 <dependencies>

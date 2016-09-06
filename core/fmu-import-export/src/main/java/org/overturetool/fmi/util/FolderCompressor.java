@@ -1,4 +1,4 @@
-package org.overture.fmi.ide.fmuexport;
+package org.overturetool.fmi.util;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,11 +9,15 @@ import java.util.Vector;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-public class FmuCompressor
+public class FolderCompressor
 {
 
 	public static void compress(File input, File output) throws IOException
 	{
+		if (output.getParentFile() != null)
+		{
+			output.getParentFile().mkdirs();
+		}
 		FileOutputStream fos = new FileOutputStream(output);
 
 		ZipOutputStream zos = new ZipOutputStream(fos);

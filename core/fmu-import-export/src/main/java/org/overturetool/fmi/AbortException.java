@@ -1,4 +1,4 @@
-package org.overture.fmi.ide.fmuexport.commands;
+package org.overturetool.fmi;
 
 public class AbortException extends Exception
 {
