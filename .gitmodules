@@ -1,0 +1,3 @@
+[submodule "testing/fmu-tester"]
+	path = testing/fmu-tester
+	url = git@gitlab.au.dk:into-cps/fmu-tester.git
