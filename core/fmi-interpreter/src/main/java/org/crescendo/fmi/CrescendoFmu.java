@@ -52,7 +52,7 @@ import com.lausdahl.examples.Service.Fmi2StatusReply;
 import com.lausdahl.examples.Service.Fmi2StatusRequest;
 import com.lausdahl.examples.Service.Fmi2StringStatusReply;
 
-public class CrescendoFmu implements IServiceProtocol
+public abstract class CrescendoFmu implements IServiceProtocol
 {
 	final static Logger logger = LoggerFactory.getLogger(CrescendoFmu.class);
 
@@ -621,5 +621,19 @@ public class CrescendoFmu implements IServiceProtocol
 		fmiLog(LogCategory.LogProtocol, "GetStringStatus not supported");
 		return null;
 	}
+
+	@Override
+	public void FreeInstantiate(Fmi2Empty arg0)
+	{
+		if (logDriver != null)
+		{
+			logger.debug("Closing log driver");
+			loggerConnected = false;
+			logDriver.close();
+			close();
+		}
+	}
+
+	public abstract void close();
 
 }

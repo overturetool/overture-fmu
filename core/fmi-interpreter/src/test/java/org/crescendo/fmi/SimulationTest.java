@@ -27,7 +27,13 @@ public class SimulationTest
 		SharedMemory.setDebug(logger.isDebugEnabled());
 		SharedMemoryServer.setServerDebug(logger.isDebugEnabled());
 
-		CrescendoFmu fmu = new CrescendoFmu("test-in-out-session-test");
+		CrescendoFmu fmu = new CrescendoFmu("test-in-out-session-test"){
+
+			@Override
+			public void close()
+			{
+				
+			}};
 
 		String resourcePath = new File(".").toURI().resolve("src/test/resources/var-transfer-in-out-test/").toString();
 		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.Instantiate(Fmi2InstantiateRequest.newBuilder().setFmuResourceLocation(resourcePath).build()).getStatus());
