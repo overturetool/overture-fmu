@@ -54,7 +54,11 @@ public class VdmAnnotationProcesser
 							{
 								String name = mDef instanceof AValueDefinition ? ((AValueDefinition) mDef).getPattern()
 										+ ""
-										: mDef.getName().getFullName();
+										: mDef.getName().getName();
+								if (annotation.name == null)
+								{
+									annotation.name = name;
+								}
 								out.println(String.format("Found annotated definition '%s' with type '%s' and name '%s'", mDef.getLocation().getModule()
 										+ "." + name, annotation.type, annotation.name));
 
