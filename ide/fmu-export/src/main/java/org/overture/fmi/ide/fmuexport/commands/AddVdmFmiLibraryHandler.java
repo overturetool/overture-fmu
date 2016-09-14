@@ -15,9 +15,8 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.handlers.HandlerUtil;
 import org.overture.fmi.ide.fmuexport.FmuExportPlugin;
-import org.overture.fmi.ide.fmuexport.IFmuExport;
 import org.overture.ide.core.resources.IVdmProject;
-import org.overture.ide.ui.utility.PluginFolderInclude;
+import org.overturetool.fmi.export.FmuExporter;
 
 public class AddVdmFmiLibraryHandler extends
 		org.eclipse.core.commands.AbstractHandler
@@ -64,7 +63,7 @@ public class AddVdmFmiLibraryHandler extends
 		}
 		try
 		{
-			URL tmp = PluginFolderInclude.getResource(IFmuExport.PLUGIN_ID, "includes/fmi/Fmi.vdmrt");
+			URL tmp = FmuExporter.class.getClassLoader().getResource( "fmi/Fmi.vdmrt");
 
 			InputStream in = tmp.openStream();
 
