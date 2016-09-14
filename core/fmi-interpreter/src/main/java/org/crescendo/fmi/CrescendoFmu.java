@@ -492,16 +492,15 @@ public abstract class CrescendoFmu implements IServiceProtocol
 	@Override
 	public Fmi2StatusReply SetReal(final Fmi2SetRealRequest request)
 	{
-
-		boolean notInitialized = checkStats(CrescendoStateType.None, CrescendoStateType.Instantiated);
+		if (!checkStats(CrescendoStateType.Instantiated, CrescendoStateType.Initialized,CrescendoStateType.Stepping))
+		{
+			return error;
+		}
 
 		for (int i = 0; i < request.getValueReferenceCount(); i++)
 		{
 			int id = request.getValueReference(i);
-			if (notInitialized)
-			{
-				state.markParameterPending(id);
-			}
+			state.markParameterPending(id);
 			logger.trace("Setting real[{}] = {}", id, request.getValues(i));
 			state.reals[id] = request.getValues(i);
 		}
@@ -511,14 +510,15 @@ public abstract class CrescendoFmu implements IServiceProtocol
 	@Override
 	public Fmi2StatusReply SetInteger(Fmi2SetIntegerRequest request)
 	{
-		boolean notInitialized = checkStats(CrescendoStateType.None, CrescendoStateType.Instantiated);
+		if (!checkStats(CrescendoStateType.Instantiated, CrescendoStateType.Initialized,CrescendoStateType.Stepping))
+		{
+			return error;
+		}
+
 		for (int i = 0; i < request.getValueReferenceCount(); i++)
 		{
 			int id = request.getValueReference(i);
-			if (notInitialized)
-			{
-				state.markParameterPending(id);
-			}
+			state.markParameterPending(id);
 			state.integers[id] = request.getValues(i);
 		}
 		return ok;
@@ -527,14 +527,15 @@ public abstract class CrescendoFmu implements IServiceProtocol
 	@Override
 	public Fmi2StatusReply SetBoolean(Fmi2SetBooleanRequest request)
 	{
-		boolean notInitialized = checkStats(CrescendoStateType.None, CrescendoStateType.Instantiated);
+		if (!checkStats(CrescendoStateType.Instantiated, CrescendoStateType.Initialized,CrescendoStateType.Stepping))
+		{
+			return error;
+		}
+
 		for (int i = 0; i < request.getValueReferenceCount(); i++)
 		{
 			int id = request.getValueReference(i);
-			if (notInitialized)
-			{
-				state.markParameterPending(id);
-			}
+			state.markParameterPending(id);
 			state.booleans[id] = request.getValues(i);
 		}
 		return ok;
@@ -543,14 +544,14 @@ public abstract class CrescendoFmu implements IServiceProtocol
 	@Override
 	public Fmi2StatusReply SetString(Fmi2SetStringRequest request)
 	{
-		boolean notInitialized = checkStats(CrescendoStateType.None, CrescendoStateType.Instantiated);
+		if (!checkStats(CrescendoStateType.Instantiated, CrescendoStateType.Initialized,CrescendoStateType.Stepping))
+		{
+			return error;
+		}
 		for (int i = 0; i < request.getValueReferenceCount(); i++)
 		{
 			int id = request.getValueReference(i);
-			if (notInitialized)
-			{
-				state.markParameterPending(id);
-			}
+			state.markParameterPending(id);
 			state.strings[id] = request.getValues(i);
 		}
 		return ok;
