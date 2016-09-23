@@ -29,7 +29,7 @@ ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 
 SET(CMAKE_VERBOSE_MAKEFILE ON)
 
-file(GLOB C_FILES nativelib/*.c *.c) 
+file(GLOB C_FILES vdmlib/*.c *.c) 
 file(GLOB CPP_FILES *.cpp)
 
 add_library(${PROJECT_NAME} SHARED ${C_FILES} ${CPP_FILES})
@@ -44,7 +44,7 @@ ENDIF()
 ENDIF()
 
 include_directories(fmi)
-include_directories(nativelib)
+include_directories(vdmlib)
 
 
 foreach(LETTER ${CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES})

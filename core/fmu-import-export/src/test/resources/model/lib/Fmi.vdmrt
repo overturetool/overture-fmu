@@ -12,7 +12,7 @@ operations
 	public getValue : () ==> FmiPortType
 	getValue() == is subclass responsibility;
 
-	public static create: FmiPortType ==> IntPort | BoolPort | RealPort | StringPort
+/*	public static create: FmiPortType ==> IntPort | BoolPort | RealPort | StringPort
 	create(v) ==
 		if is_(v, String) then
 			return new StringPort(v)
@@ -22,7 +22,7 @@ operations
 			return new IntPort(v)
 	else
 			return new RealPort(v)
-			
+	*/		
 end Port
 
 class IntPort is subclass of Port

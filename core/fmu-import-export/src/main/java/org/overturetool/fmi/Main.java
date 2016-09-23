@@ -30,6 +30,7 @@ import org.overture.parser.syntax.ParserException;
 import org.overture.typechecker.util.TypeCheckerUtil;
 import org.overture.typechecker.util.TypeCheckerUtil.TypeCheckResult;
 import org.overturetool.fmi.export.FmuExporter;
+import org.overturetool.fmi.export.FmuSourceCodeExporter;
 import org.overturetool.fmi.imports.ImportModelDescriptionProcesser;
 import org.xml.sax.SAXException;
 
@@ -149,10 +150,24 @@ public class Main
 		ConsoleProject project = new ConsoleProject(projectName, projectRoot, outputFolder, specFiles);
 
 		if (cmd.hasOption(exportOpt.getOpt())
-				&& cmd.hasOption(exportToolWrapperOpt.getOpt()))
+				&& (cmd.hasOption(exportToolWrapperOpt.getOpt()) || cmd.hasOption(exportCOpt.getOpt())))
 		{
 
-			File fmuFile = new FmuExporter().exportFmu(project, projectName, System.out, System.err);
+			File fmuFile = null;
+
+			if (cmd.hasOption(exportToolWrapperOpt.getOpt()))
+			{
+				fmuFile = new FmuExporter().exportFmu(project, projectName, System.out, System.err);
+			} else if (cmd.hasOption(exportCOpt.getOpt()))
+			{
+				fmuFile = new FmuSourceCodeExporter().exportFmu(project, projectName, System.out, System.err);
+			}
+
+			if (fmuFile == null)
+			{
+				System.err.println("Generation faild.");
+				return;
+			}
 
 			// Process p = Runtime.getRuntime().exec("unzip -l "
 			// + fmuFile.getAbsolutePath());

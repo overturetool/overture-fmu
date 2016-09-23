@@ -89,7 +89,7 @@ public class FmuExporter
 
 				project.createProjectTempRelativeFile("modelDescription.xml", new ByteArrayInputStream(info.modelDescription.getBytes("UTF-8")));
 
-				copyFmuResources(info, project.getName(), project, system);
+				copyFmuResources(info, project.getName(), project, system, out, err);
 				final File fmuArchieveName = new File(project.getOutputFolder(), project.getName()
 						+ ".fmu");
 
@@ -133,8 +133,8 @@ public class FmuExporter
 	}
 
 	protected void copyFmuResources(GeneratorInfo info, String name,
-			IProject project, ASystemClassDefinition system)
-			throws IOException, AnalysisException
+			IProject project, ASystemClassDefinition system, PrintStream out,
+			PrintStream err) throws IOException, AnalysisException
 	{
 		final String resourcesFolder = "resources";
 

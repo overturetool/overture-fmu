@@ -38,13 +38,6 @@ extern "C"
 
 TVP sys = NULL;
 
-void replaceTvp(TVP* val,TVP newVal)
-{
-	TVP tmp = *val;
-	*val = newVal;
-	vdmFree(tmp);
-}
-
 //#GENERATED_INSERT
 
 #ifndef PERIODIC_GENERATED
