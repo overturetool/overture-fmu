@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 2.8.5)
 project (##PROJECT_NAME## C CXX)
 
 
-add_definitions(-DCUSTOM_IO)
+add_definitions(-DCUSTOM_IO -DPERIODIC_GENERATED -DFMI_COSIMULATION)
 
 
 set(CMAKE_INCLUDE_CURRENT_DIR on)
@@ -34,14 +34,14 @@ file(GLOB CPP_FILES *.cpp)
 
 add_library(${PROJECT_NAME} SHARED ${C_FILES} ${CPP_FILES})
 
-if (UNIX)
-        if(APPLE)
-
-set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/fmu/watertank-vdm-c-fmu/binaries/darwin64)
-   ELSE()
-set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/fmu/watertank-vdm-c-fmu/binaries/linux64)
-ENDIF()
-ENDIF()
+#if (UNIX)
+#        if(APPLE)
+#
+#set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../binaries/darwin64)
+#   ELSE()
+#set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../binaries/linux64)
+#ENDIF()
+#ENDIF()
 
 include_directories(fmi)
 include_directories(vdmlib)

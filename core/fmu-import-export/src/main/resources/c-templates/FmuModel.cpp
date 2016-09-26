@@ -13,81 +13,29 @@ extern "C"
 #include <stdarg.h>
 #include "Fmu.h"
 #include "Vdm.h"
-#ifndef PERIODIC_GENERATED
-#include "LevelSensor.h"
-#include "ValveActuator.h"
-#include "Controller.h"
-#include <unistd.h>
-
-#include "System.h"
-#include "World.h"
-#include <pthread.h>
-#endif
 
 //#GENERATED_MODEL_INCLUDE
 }
 
-#ifndef PERIODIC_GENERATED
-// FMI variable reference mapping
-#define MIN_LEVEL_ID 1
-#define MAX_LEVEL_ID 0
-
-#define VALVE_ID 4
-#define LEVEL_ID 3
-#endif
-
 TVP sys = NULL;
 
 //#GENERATED_INSERT
-
-#ifndef PERIODIC_GENERATED
-
-void syncInputsToModel()
-{
-	SET_FIELD(HardwareInterface, HardwareInterface, g_System_hwi, level, newReal(fmiBuffer.realBuffer[LEVEL_ID]));
-
-	replaceTvp(&g_HardwareInterface_minlevel, newReal(fmiBuffer.realBuffer[MIN_LEVEL_ID]));
-	replaceTvp(&g_HardwareInterface_maxlevel, newReal(fmiBuffer.realBuffer[MAX_LEVEL_ID]));
-
-}
-
-void syncOutputsToBuffers()
-{
-
-//	TVP val = GET_FIELD(HardwareInterface,HardwareInterface,g_System_hwi,valveState);
-	fmiBuffer.booleanBuffer[VALVE_ID]=GET_FIELD(HardwareInterface,HardwareInterface,g_System_hwi,valveState)->value.boolVal; // == 0 ? false : true;
-}
-
-
-
-void systemInit()
-{
-	HardwareInterface_const_init();
-	Controller_const_init();
-	System_static_init();
-
-	sys = _Z6SystemEV(NULL);
-
-}
-
-void systemDeInit()
-{
-	HardwareInterface_const_shutdown();
-	Controller_const_shutdown();
-	System_static_shutdown();
-
-	vdmFree(sys);
-}
-#endif
 
 //#GENERATED_SYSTEM_INIT
 
 //#GENERATED_SYSTEM_SHUTDOWN
 
 
-
+/*
+* Both time value are given in seconds
+*/
 fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationStepSize)
 {
+
+	//convert seconds to nanoseconds
+	currentCommunicationPoint = currentCommunicationPoint*1E9;
+	communicationStepSize = communicationStepSize*1E9;
+
 	int i, j;
 	int threadRunCount;
 
@@ -125,40 +73,6 @@ void systemMain()
 	vdmFree(world);
 }
 
-void *PrintHello(void *threadid)
-{
-	while (true)
-	{
-		systemMain();
-		usleep(10E3);
-	}
-}
-
-
-#ifndef PERIODIC_GENERATED
-
-struct PeriodicThreadStatus threads[] =
-{
-{ 1.0E7, the_call_name, 0 }
-};
-
-
-int main()
-{
-	systemInit();
-	pthread_t thread = NULL;
-	pthread_create(&thread, NULL, PrintHello, 0);
-	while (1)
-	{
-
-		double a;
-		scanf("%lf", &a);
-		printf("Just read: %f\n", a);
-		SET_FIELD(HardwareInterface, HardwareInterface, g_System_hwi, level, newReal(a));
-	}
-}
-
-#endif
 
 #ifdef PERIODIC_GENERATED
 
@@ -194,11 +108,14 @@ int main()
         }
     }
     
-    printf("Stepsize is: %f\n",stepSize);
+    //convert to seconds
+    stepSize = stepSize / 1E9;
+    
+    printf("Stepsize is: %f seconds.\n",stepSize);
     
     for (double time =0; time < totalTime; time=time+stepSize) {
         
-            if(fmi2OK !=vdmStep(time,stepSize))
+            if(fmi2OK !=fmi2DoStep(NULL,time,stepSize,false))
             {
                 printf("Step did not return ok\n");
                 return 1;
