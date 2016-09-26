@@ -1,6 +1,5 @@
 package org.overturetool.fmi.export;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
@@ -82,7 +81,7 @@ public class ModelDescriptionGenerator
 
 	public GeneratorInfo generate(
 			Map<PDefinition, FmuAnnotation> definitionAnnotation,
-			IProject project, PrintStream out, PrintStream err)
+			IProject project,ModelDescriptionConfig config, PrintStream out, PrintStream err)
 			throws AbortException, IOException
 	{
 		GeneratorInfo info = new GeneratorInfo();
@@ -160,7 +159,7 @@ public class ModelDescriptionGenerator
 			sbOutputs.append("\n\t</Outputs>\n");
 		}
 
-		StringBuffer sbSourceFiles = createSourceFileElements(project);
+		StringBuffer sbSourceFiles = createSourceFileElements(config);
 
 		final String modelDescriptionTemplate = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("modelDescriptionTemplate.xml"));// PluginFolderInclude.readFile(IFmuExport.PLUGIN_ID,
 
@@ -171,6 +170,10 @@ public class ModelDescriptionGenerator
 
 		modelDescription = modelDescription.replace("{modelName}", project.getName());
 		modelDescription = modelDescription.replace("{modelIdentifier}", project.getName());
+		
+		modelDescription = modelDescription.replace("{needsExecutionTool}", config.needsExecutionTool+"");
+		modelDescription = modelDescription.replace("{canBeInstantiatedOnlyOncePerProcess}", config.canBeInstantiatedOnlyOncePerProcess+"");
+		
 		modelDescription = modelDescription.replace("{description}", "");
 		modelDescription = modelDescription.replace("{author}", "");
 		modelDescription = modelDescription.replace("{guid}", "{"
@@ -187,14 +190,13 @@ public class ModelDescriptionGenerator
 		return info;
 	}
 
-	protected StringBuffer createSourceFileElements(IProject project)
+	protected StringBuffer createSourceFileElements(ModelDescriptionConfig config)
 	{
 		StringBuffer sbSourceFiles = new StringBuffer();
 
-		for (File source : project.getSpecFiles())
+		for (String source : config.sourceFiles)
 		{
-			String path = source.getAbsolutePath().substring(project.getSourceRootPath().getAbsolutePath().length() + 1);
-			sbSourceFiles.append(String.format("\t\t\t\t<File name=\"%s\" />\n", path));
+			sbSourceFiles.append(String.format("\t\t\t\t<File name=\"%s\" />\n", source));
 		}
 		return sbSourceFiles;
 	}

@@ -13,12 +13,12 @@
 						numberOfEventIndicators="0">
 
 	<CoSimulation 	modelIdentifier="{modelIdentifier}" 
-					needsExecutionTool="true" 
+					needsExecutionTool="{needsExecutionTool}" 
 					canHandleVariableCommunicationStepSize="true" 
 					canInterpolateInputs="false" 
 					maxOutputDerivativeOrder="0" 
 					canRunAsynchronuously="false" 
-					canBeInstantiatedOnlyOncePerProcess="false"
+					canBeInstantiatedOnlyOncePerProcess="{canBeInstantiatedOnlyOncePerProcess}"
 					canNotUseMemoryManagementFunctions="true" 
 					canGetAndSetFMUstate="false" 
 					canSerializeFMUstate="false" 

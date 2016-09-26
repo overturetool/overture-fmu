@@ -79,7 +79,7 @@ public class FmuExporter
 				classList.addAll(project.getClasses());
 				ModelDescriptionGenerator generator = new ModelDescriptionGenerator(classList, system);
 
-				GeneratorInfo info = generator.generate(definitionAnnotation, project, out, err);
+				GeneratorInfo info = generator.generate(definitionAnnotation, project, getModelDescriptionConfig(project), out, err);
 
 				if (project.isOutputDebugEnabled())
 				{
@@ -130,6 +130,21 @@ public class FmuExporter
 			}
 		}
 		return null;
+	}
+
+	protected ModelDescriptionConfig getModelDescriptionConfig(IProject project)
+	{
+		ModelDescriptionConfig config = new ModelDescriptionConfig();
+		config.canBeInstantiatedOnlyOncePerProcess = false;
+		config.needsExecutionTool = true;
+
+		for (File source : project.getSpecFiles())
+		{
+			String path = source.getAbsolutePath().substring(project.getSourceRootPath().getAbsolutePath().length() + 1);
+			config.sourceFiles.add(path);
+		}
+
+		return config;
 	}
 
 	protected void copyFmuResources(GeneratorInfo info, String name,

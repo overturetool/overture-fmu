@@ -42,6 +42,15 @@ public class FmuSourceCodeExporter extends FmuExporter
 	static final String PARAMETER = "{\n\t\tTVP newValue = %s(fmiBuffer.%s[%s]);\n\t\t"
 			+ "SET_FIELD(%s,%s,g_HardwareInterface_%s,value,newValue);\n\t\t"
 			+ "vdmFree(newValue);\n\t}";
+	
+	protected ModelDescriptionConfig getModelDescriptionConfig(IProject project)
+	{
+		ModelDescriptionConfig config = new ModelDescriptionConfig();
+		config.canBeInstantiatedOnlyOncePerProcess = true;
+		config.needsExecutionTool = false;
+
+		return config;
+	}
 
 	@Override
 	protected void copyFmuResources(GeneratorInfo info, String name,
