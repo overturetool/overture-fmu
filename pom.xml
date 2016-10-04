@@ -16,31 +16,17 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<!--overture.version></overture.version-->
-		<crescendo.version>2.0.8</crescendo.version>
+		<crescendo.version>2.1.0</crescendo.version>
 		<intocps.shm.version>0.0.7-SNAPSHOT</intocps.shm.version>
 	</properties>
 
 
 	<repositories>
 
-		<!--repository>
-				<id>overture.au.dk</id>
-				<name>overture.au.dk-releases</name>
-				<url>http://overture.au.dk/artifactory/into-cps</url>
-				</repository-->
-
-	<!--repository>
-      <id>into-cps.au.dk</id>
-      <name>overture.au.dk-releases</name>
-      <url>http://overture.au.dk/artifactory/into-cps</url>
-    </repository-->
-
-
 		<repository>
 			<id>crescendo-development</id>
 			<name>crescendo-development</name>
-			<url>http://overture.au.dk/artifactory/crescendo-development</url>
+			<url>http://overture.au.dk/artifactory/crescendo</url>
 		</repository>
 
 
@@ -58,23 +44,10 @@
         <url>http://overture.au.dk/artifactory/vdm2c-pvj</url>
     </repository>
 
-
-
- <!--repository>
-      <id>overture.au.dk Eclipse P2 repo for overture crescendo development</id>
-      <url>http://overture.au.dk/p2/crescendo-overture-development/</url>
-      <layout>p2</layout>
-    </repository-->
-
-
-		<!-- repository> <id>mxtelecom</id> <name>mxtelecom.com</name> <url>http://opensource.mxtelecom.com/maven/repo</url> 
-				 </repository -->
 	</repositories>
 
 
 	<modules>
-		<!--module>native-fmi</module-->
-		<!--module>java-fmi</module-->
 		<module>core</module>
 		
 	</modules>
