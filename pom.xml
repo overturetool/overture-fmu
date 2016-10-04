@@ -38,10 +38,10 @@
     </repository>
 
 
-<repository>
-        <id>overture.au.dk-vdm2c</id>
-        <name>overture.au.dk-releases</name>
-        <url>http://overture.au.dk/artifactory/vdm2c-pvj</url>
+		<repository>
+      <id>overture.au.dk-vdm2c</id>
+      <name>overture.au.dk-releases</name>
+      <url>http://overture.au.dk/artifactory/vdm2c-pvj</url>
     </repository>
 
 	</repositories>
