@@ -405,8 +405,12 @@ public abstract class CrescendoFmu implements IServiceProtocol
 		{
 			String callbackShmName = request.getCallbackShmName();
 			logger.debug("Connecting callback log driver with shm key: '{}'", callbackShmName);
+			try{
 			logDriver = new LogProtocolDriver(callbackShmName);
-
+			}catch(Throwable t)
+			{
+				logger.error("Faild to connect log protocol driver: {}",t.getMessage(),t);
+			}
 		}
 
 		logger.debug(String.format("Instantiating %s.%s with loggingOn = %s, resource location='%s'", request.getFmuGuid(), request.getInstanceName(), request.getLogginOn()
