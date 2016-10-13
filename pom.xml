@@ -41,7 +41,7 @@
 		<repository>
       <id>overture.au.dk-vdm2c</id>
       <name>overture.au.dk-releases</name>
-      <url>http://overture.au.dk/artifactory/vdm2c-pvj</url>
+      <url>http://overture.au.dk/artifactory/vdm2c</url>
     </repository>
 
 	</repositories>
@@ -280,7 +280,7 @@ http://mojo.codehaus.org/versions-maven-plugin/
 					<artifactId>maven-release-plugin</artifactId>
 					<version>2.5</version>
 					<configuration>
-						<releaseProfiles>build-server,With-IDE,all-platforms</releaseProfiles>
+						<releaseProfiles>build-server,With-IDE,all-platforms,codesigning</releaseProfiles>
 						<tagNameFormat>Release/@{project.version}</tagNameFormat>
 					</configuration>
 				</plugin>

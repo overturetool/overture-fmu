@@ -24,8 +24,8 @@ public class ExportFmuTest
 			InterruptedException, SAXException, ParserConfigurationException
 	{
 		String output = "target/" + this.getClass().getSimpleName() + "/";
-		Main.main(new String[] { "-name", "wt2", "-export", "-t", "-root",
-				"src/test/resources/model", "-output", output });
+		Main.main(new String[] { "-name", "wt2", "-export", "tool", "-root",
+				"src/test/resources/model", "-output", output, "-v" });
 
 		File outputZip = new File(output + "/wt2.fmu");
 
@@ -57,15 +57,14 @@ public class ExportFmuTest
 			Assert.assertTrue("Missing: " + string, files.contains(string));
 		}
 	}
-	
-	
+
 	@Test
 	public void testExportFmuNoName() throws AbortException, IOException,
 			InterruptedException, SAXException, ParserConfigurationException
 	{
 		String output = "target/" + this.getClass().getSimpleName() + "/";
-		Main.main(new String[] { "-name", "wt2", "-export", "-t", "-root",
-				"src/test/resources/model_no_name", "-output", output });
+		Main.main(new String[] { "-name", "wt2", "-export", "tool", "-root",
+				"src/test/resources/model_no_name", "-output", output, "-v" });
 
 		File outputZip = new File(output + "/wt2.fmu");
 

@@ -4,9 +4,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.util.Collection;
 import java.util.List;
+import java.util.Properties;
 import java.util.Vector;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -22,6 +24,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.output.NullOutputStream;
 import org.overture.ast.definitions.SClassDefinition;
 import org.overture.ast.lex.Dialect;
 import org.overture.config.Release;
@@ -59,25 +62,24 @@ public class Main
 		Option helpOpt = Option.builder("h").longOpt("help").desc("Show this description").build();
 
 		Option releaseOpt = Option.builder("r").longOpt("release").desc("Overture release version").hasArg().build();
-		Option exportToolWrapperOpt = Option.builder("t").longOpt("tool").desc("Export Overture Tool Wrapper FMU").build();
-		Option exportOpt = Option.builder("export").desc("Export").build();
-		Option exportCOpt = Option.builder("c").longOpt("c-standalone").desc("Export Overture Tool Wrapper FMU").build();
+		Option exportOpt = Option.builder("export").desc("Export").hasArg().numberOfArgs(1).argName("source> or <tool").build();
 		Option importModelDescriptionOpt = Option.builder("import").longOpt("modeldescrption").desc("Import modelDescription.xml").hasArg().build();
 
 		Option projectNameOpt = Option.builder("name").desc("Project name / FMU name").hasArg().build();
 		Option projectRootOpt = Option.builder("root").desc("Project root directory").required().hasArg().build();
-		Option otuputFolderOpt = Option.builder("output").desc("Outout location").hasArg().build();
+		Option outputFolderOpt = Option.builder("output").desc("Outout location").hasArg().build();
+		Option forceOpt = Option.builder("f").longOpt("force").desc("Force override of existing output files").build();
+		Option verboseOpt = Option.builder("v").longOpt("verbose").desc("Verbose mode or print diagnostic version info").build();
 
 		options.addOption(helpOpt);
 		options.addOption(releaseOpt);
-		options.addOption(exportToolWrapperOpt);
 		options.addOption(exportOpt);
-		options.addOption(exportCOpt);
 		options.addOption(importModelDescriptionOpt);
 
 		options.addOption(projectNameOpt);
 		options.addOption(projectRootOpt);
-		options.addOption(otuputFolderOpt);
+		options.addOption(outputFolderOpt);
+		options.addOption(verboseOpt);
 
 		CommandLineParser parser = new DefaultParser();
 		CommandLine cmd = null;
@@ -99,19 +101,27 @@ public class Main
 
 		// check option combinations
 
+		boolean exportSourceFmu = false;
+		boolean exportToolFmu = false;
+		boolean force = cmd.hasOption(forceOpt.getOpt());
+		boolean verbose = cmd.hasOption(verboseOpt.getOpt());
+
 		if (cmd.hasOption(exportOpt.getOpt()))
 		{
-			if (!checkRequiredOptions(cmd, otuputFolderOpt, projectRootOpt, projectNameOpt))
+			if (!checkRequiredOptions(cmd, outputFolderOpt, projectRootOpt, projectNameOpt))
 			{
 				return;
 			}
 
-			if (!(cmd.hasOption(exportToolWrapperOpt.getOpt()) || cmd.hasOption(exportCOpt.getOpt())))
+			String exportType = cmd.getOptionValue(exportOpt.getOpt());
+
+			exportSourceFmu = "source".equals(exportType);
+			exportToolFmu = "tool".equals(exportType);
+
+			if (!(exportSourceFmu || exportToolFmu))
 			{
 				System.err.println("The -" + exportOpt.getOpt()
-						+ " must be used in combination with one of: -"
-						+ exportCOpt.getOpt() + " or -"
-						+ exportToolWrapperOpt.getOpt());
+						+ " argument only accepts <source> or <tool>");
 				return;
 			}
 		} else if (cmd.hasOption(importModelDescriptionOpt.getOpt()))
@@ -121,6 +131,13 @@ public class Main
 				return;
 			}
 		}
+		
+		
+		if(verbose)
+		{
+			showVersion();
+		}
+		
 
 		if (cmd.hasOption(releaseOpt.getOpt()))
 		{
@@ -136,9 +153,9 @@ public class Main
 		File projectRoot = new File(cmd.getOptionValue(projectRootOpt.getOpt()));
 		File outputFolder = null;
 
-		if (cmd.hasOption(otuputFolderOpt.getOpt()))
+		if (cmd.hasOption(outputFolderOpt.getOpt()))
 		{
-			outputFolder = new File(cmd.getOptionValue(otuputFolderOpt.getOpt()));
+			outputFolder = new File(cmd.getOptionValue(outputFolderOpt.getOpt()));
 		}
 
 		Settings.dialect = Dialect.VDM_RT;
@@ -150,18 +167,20 @@ public class Main
 		}
 		ConsoleProject project = new ConsoleProject(projectName, projectRoot, outputFolder, specFiles);
 
-		if (cmd.hasOption(exportOpt.getOpt())
-				&& (cmd.hasOption(exportToolWrapperOpt.getOpt()) || cmd.hasOption(exportCOpt.getOpt())))
+		PrintStream out = (verbose ? System.out
+				: new PrintStream(new NullOutputStream()));
+
+		if (cmd.hasOption(exportOpt.getOpt()))
 		{
 
 			File fmuFile = null;
 
-			if (cmd.hasOption(exportToolWrapperOpt.getOpt()))
+			if (exportToolFmu)
 			{
-				fmuFile = new FmuExporter().exportFmu(project, projectName, System.out, System.err);
-			} else if (cmd.hasOption(exportCOpt.getOpt()))
+				fmuFile = new FmuExporter().exportFmu(project, projectName, out, System.err, force);
+			} else if (exportSourceFmu)
 			{
-				fmuFile = new FmuSourceCodeExporter().exportFmu(project, projectName, System.out, System.err);
+				fmuFile = new FmuSourceCodeExporter().exportFmu(project, projectName, out, System.err, force);
 			}
 
 			if (fmuFile == null)
@@ -176,19 +195,34 @@ public class Main
 			// System.out.println(IOUtils.toString(p.getInputStream()));
 			// p.waitFor();
 
-			System.out.println("The zip contains: ");
+			out.println("The zip contains: ");
 			try (ZipFile zipFile = new ZipFile(fmuFile);)
 			{
-				zipFile.stream().map(ZipEntry::getName).forEach(System.out::println);
+				zipFile.stream().map(ZipEntry::getName).forEach(out::println);
 			}
 		} else if (cmd.hasOption(importModelDescriptionOpt.getOpt()))
 		{
 			File md = new File(cmd.getOptionValue(importModelDescriptionOpt.getOpt()));
-			new ImportModelDescriptionProcesser(System.out, System.err).importFromXml(project, md);
+			new ImportModelDescriptionProcesser(out, System.err).importFromXml(project, md);
 		}
 
 		project.cleanUp();
 
+	}
+
+	private static void showVersion()
+	{
+		try
+		{
+			Properties prop = new Properties();
+			InputStream coeProp = Main.class.getResourceAsStream("/fmu-import-export.properties");
+			prop.load(coeProp);
+			System.out.println("Tool: " + prop.getProperty("artifactId"));
+			System.out.println("Version: " + prop.getProperty("version"));
+		} catch (Exception e)
+		{
+		}
+		
 	}
 
 	public static void showHelp(Options options)

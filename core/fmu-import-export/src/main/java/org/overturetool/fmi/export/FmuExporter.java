@@ -28,7 +28,7 @@ public class FmuExporter
 {
 
 	public File exportFmu(IProject project, String title, PrintStream out,
-			PrintStream err) throws AbortException
+			PrintStream err, boolean force) throws AbortException
 	{
 		out.println("\n---------------------------------------");
 		out.println("|             " + title + "             |");
@@ -92,6 +92,12 @@ public class FmuExporter
 				copyFmuResources(info, project.getName(), project, system, out, err);
 				final File fmuArchieveName = new File(project.getOutputFolder(), project.getName()
 						+ ".fmu");
+				
+				if(fmuArchieveName.exists())
+				{	
+					if(force)
+						fmuArchieveName.delete();
+				}
 
 				project.scheduleJob(new IJob()
 				{

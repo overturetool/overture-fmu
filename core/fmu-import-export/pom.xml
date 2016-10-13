@@ -7,7 +7,7 @@
 		<version>0.1.1-SNAPSHOT</version>
 	</parent>
 	<properties>
-	<vdm2c.version>0.0.3-SNAPSHOT</vdm2c.version>
+	<vdm2c.version>0.0.8</vdm2c.version>
 	</properties>
 
 	<groupId>org.overturetool.fmi.core</groupId>
@@ -73,6 +73,17 @@
 	</dependencies>
 
 	<build>
+	
+	<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>false</filtering>
+			</resource>
+			<resource>
+				<directory>src/main/resources/fmu-import-export</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
 
 		<plugins>
 
