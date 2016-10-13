@@ -80,6 +80,7 @@ public class Main
 		options.addOption(projectRootOpt);
 		options.addOption(outputFolderOpt);
 		options.addOption(verboseOpt);
+		options.addOption(forceOpt);
 
 		CommandLineParser parser = new DefaultParser();
 		CommandLine cmd = null;
