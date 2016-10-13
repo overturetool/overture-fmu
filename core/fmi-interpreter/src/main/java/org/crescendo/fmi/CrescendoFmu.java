@@ -111,9 +111,11 @@ public abstract class CrescendoFmu implements IServiceProtocol
 				{
 					message.substring(0, message.length() - 2);
 				}
+				logger.trace("Sending log message category: {}, data: {}",category.name,message);
 				logDriver.log(category.name, status, message);
 			} else
 			{
+				logger.warn("Log driver present: {}, is connected: {}, category: {}", logDriver != null, loggerConnected, category.name);
 				System.out.println(message);
 			}
 		} else
@@ -330,6 +332,7 @@ public abstract class CrescendoFmu implements IServiceProtocol
 		for (int i = 0; i < request.getValueReferenceCount(); i++)
 		{
 			long id = request.getValueReference(i);
+			logger.trace("GetReal index: {}", id);
 			reply.addValues(state.reals[new Long(id).intValue()]);
 		}
 		return reply.build();
@@ -344,6 +347,7 @@ public abstract class CrescendoFmu implements IServiceProtocol
 		for (int i = 0; i < request.getValueReferenceCount(); i++)
 		{
 			long id = request.getValueReference(i);
+			logger.trace("GetBoolean index: {}", id);
 			reply.addValues(state.booleans[new Long(id).intValue()]);
 		}
 		return reply.build();
@@ -358,6 +362,7 @@ public abstract class CrescendoFmu implements IServiceProtocol
 		for (int i = 0; i < request.getValueReferenceCount(); i++)
 		{
 			long id = request.getValueReference(i);
+			logger.trace("GetInteger index: {}", id);
 			reply.addValues(state.integers[new Long(id).intValue()]);
 		}
 		return reply.build();
@@ -372,6 +377,7 @@ public abstract class CrescendoFmu implements IServiceProtocol
 		for (int i = 0; i < request.getValueReferenceCount(); i++)
 		{
 			long id = request.getValueReference(i);
+			logger.trace("GetString index: {}", id);
 			reply.addValues(state.strings[new Long(id).intValue()]);
 		}
 		return reply.build();
@@ -448,11 +454,15 @@ public abstract class CrescendoFmu implements IServiceProtocol
 			File sourceRoot = new File(root, "model");
 			log(LogCategory.LogAll, Fmi2LogReply.Status.Ok, "Source root: "
 					+ sourceRoot);
+			logger.trace("Source root: {}", sourceRoot);
 
 			specfiles.addAll(FileUtils.listFiles(sourceRoot, new String[] { "vdmrt" }, true));
+			logger.trace("Spec files: {}", org.apache.commons.lang3.StringUtils.join(specfiles, ","));
 
 			File linkFile = new File(root, "modelDescription.xml".replace('/', File.separatorChar));
 			File baseDirFile = new File(".");
+
+			logger.trace("Model Description path: {}", linkFile);
 
 			state = new StateCache(linkFile);
 
@@ -492,7 +502,7 @@ public abstract class CrescendoFmu implements IServiceProtocol
 	@Override
 	public Fmi2StatusReply SetReal(final Fmi2SetRealRequest request)
 	{
-		if (!checkStats(CrescendoStateType.Instantiated, CrescendoStateType.Initialized,CrescendoStateType.Stepping))
+		if (!checkStats(CrescendoStateType.Instantiated, CrescendoStateType.Initialized, CrescendoStateType.Stepping))
 		{
 			return error;
 		}
@@ -510,7 +520,7 @@ public abstract class CrescendoFmu implements IServiceProtocol
 	@Override
 	public Fmi2StatusReply SetInteger(Fmi2SetIntegerRequest request)
 	{
-		if (!checkStats(CrescendoStateType.Instantiated, CrescendoStateType.Initialized,CrescendoStateType.Stepping))
+		if (!checkStats(CrescendoStateType.Instantiated, CrescendoStateType.Initialized, CrescendoStateType.Stepping))
 		{
 			return error;
 		}
@@ -527,7 +537,7 @@ public abstract class CrescendoFmu implements IServiceProtocol
 	@Override
 	public Fmi2StatusReply SetBoolean(Fmi2SetBooleanRequest request)
 	{
-		if (!checkStats(CrescendoStateType.Instantiated, CrescendoStateType.Initialized,CrescendoStateType.Stepping))
+		if (!checkStats(CrescendoStateType.Instantiated, CrescendoStateType.Initialized, CrescendoStateType.Stepping))
 		{
 			return error;
 		}
@@ -544,7 +554,7 @@ public abstract class CrescendoFmu implements IServiceProtocol
 	@Override
 	public Fmi2StatusReply SetString(Fmi2SetStringRequest request)
 	{
-		if (!checkStats(CrescendoStateType.Instantiated, CrescendoStateType.Initialized,CrescendoStateType.Stepping))
+		if (!checkStats(CrescendoStateType.Instantiated, CrescendoStateType.Initialized, CrescendoStateType.Stepping))
 		{
 			return error;
 		}
