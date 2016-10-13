@@ -1,6 +1,7 @@
 package org.overturetool.fmi;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -273,13 +274,23 @@ public class Main
 				InputStream content) throws IOException
 		{
 			File file = new File(getTempFolder(), path.replace('/', File.separatorChar));
+
+			FileOutputStream outStream = null;
 			try
 			{
-				IOUtils.copy(content, FileUtils.openOutputStream(file));
-			} catch (IOException e)
+				outStream = FileUtils.openOutputStream(file);
+				try
+				{
+					IOUtils.copy(content, outStream);
+				} catch (IOException e)
+				{
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			} finally
 			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				IOUtils.closeQuietly(outStream);
+				IOUtils.closeQuietly(content);
 			}
 		}
 
