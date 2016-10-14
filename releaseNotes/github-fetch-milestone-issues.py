@@ -74,7 +74,7 @@ for milestone in r.json():
         continue
     else:
         fileM = open(mdname, "w")
-        writeMilestone(fileM,"Overture "+version,milestone['html_url'],milestone['due_on'],"ReleaseNotes-template.md")
+        writeMilestone(fileM,"Overture FMU "+version,milestone['html_url'],milestone['due_on'],"ReleaseNotes-template.md")
 
 
     if os.path.isfile(mdnameabb):
@@ -82,7 +82,7 @@ for milestone in r.json():
         
     else:
         fileMabb = open(mdnameabb, "w")
-        writeMilestone(fileMabb,"Overture "+version,milestone['html_url'],milestone['due_on'],"ReleaseNotes-template-abbrev.md")
+        writeMilestone(fileMabb,"Overture FMU "+version,milestone['html_url'],milestone['due_on'],"ReleaseNotes-template-abbrev.md")
         
 #    writeMilestone(file,version,milestone['url'],milestone['due_on'],None)
 
