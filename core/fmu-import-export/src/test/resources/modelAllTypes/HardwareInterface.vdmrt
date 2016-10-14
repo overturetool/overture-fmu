@@ -1,0 +1,80 @@
+-- Generated class
+class HardwareInterface
+
+values
+	-- @ interface: type = parameter;
+	public r : RealPort = new RealPort(1.0);
+	-- @ interface: type = parameter;
+	public r_default : RealPort = new RealPort();
+	
+	-- @ interface: type = parameter;
+	public i : IntPort = new IntPort(1);
+	-- @ interface: type = parameter;
+	public i_default : IntPort = new IntPort();
+	
+	-- @ interface: type = parameter;
+	public b : BoolPort = new BoolPort(true);
+	-- @ interface: type = parameter;
+	public b_default : BoolPort = new BoolPort();
+	
+	
+	-- @ interface: type = parameter;
+	public s : StringPort = new StringPort("some value");
+	-- @ interface: type = parameter;
+	public s_empty : StringPort = new StringPort("");
+		-- @ interface: type = parameter;
+	public s_default : StringPort = new StringPort();
+	
+	
+instance variables
+	-- @ interface: type = input;
+	public in_r : RealPort := new RealPort(1.0);
+	-- @ interface: type = input;
+	public in_r_default : RealPort := new RealPort();
+	
+	-- @ interface: type = input;
+	public in_i : IntPort := new IntPort(1);
+	-- @ interface: type = input;
+	public in_i_default : IntPort := new IntPort();
+	
+	-- @ interface: type = input;
+	public in_b : BoolPort := new BoolPort(true);
+	-- @ interface: type = input;
+	public in_b_default : BoolPort := new BoolPort();
+	
+	
+	-- @ interface: type = input;
+	public in_s : StringPort := new StringPort("some value");
+	-- @ interface: type = input;
+	public in_s_empty : StringPort := new StringPort("");
+		-- @ interface: type = input;
+	public in_s_default : StringPort := new StringPort();
+
+
+instance variables
+	-- @ interface: type = output;
+	public out_r : RealPort := new RealPort(1.0);
+	-- @ interface: type = output;
+	public out_r_default : RealPort := new RealPort();
+	
+	-- @ interface: type = output;
+	public out_i : IntPort := new IntPort(1);
+	-- @ interface: type = output;
+	public out_i_default : IntPort := new IntPort();
+	
+	-- @ interface: type = output;
+	public out_b : BoolPort := new BoolPort(true);
+	-- @ interface: type = output;
+	public out_b_default : BoolPort := new BoolPort();
+	
+	
+	-- @ interface: type = output;
+	public out_s : StringPort := new StringPort("some value");
+	-- @ interface: type = output;
+	public out_s_empty : StringPort := new StringPort("");
+		-- @ interface: type = output;
+	public out_s_default : StringPort := new StringPort();
+
+
+end HardwareInterface
+

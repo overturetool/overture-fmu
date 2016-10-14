@@ -81,8 +81,8 @@ public class ModelDescriptionGenerator
 
 	public GeneratorInfo generate(
 			Map<PDefinition, FmuAnnotation> definitionAnnotation,
-			IProject project,ModelDescriptionConfig config, PrintStream out, PrintStream err)
-			throws AbortException, IOException
+			IProject project, ModelDescriptionConfig config, PrintStream out,
+			PrintStream err) throws AbortException, IOException
 	{
 		GeneratorInfo info = new GeneratorInfo();
 		boolean found = false;
@@ -170,10 +170,12 @@ public class ModelDescriptionGenerator
 
 		modelDescription = modelDescription.replace("{modelName}", project.getName());
 		modelDescription = modelDescription.replace("{modelIdentifier}", project.getName());
-		
-		modelDescription = modelDescription.replace("{needsExecutionTool}", config.needsExecutionTool+"");
-		modelDescription = modelDescription.replace("{canBeInstantiatedOnlyOncePerProcess}", config.canBeInstantiatedOnlyOncePerProcess+"");
-		
+
+		modelDescription = modelDescription.replace("{needsExecutionTool}", config.needsExecutionTool
+				+ "");
+		modelDescription = modelDescription.replace("{canBeInstantiatedOnlyOncePerProcess}", config.canBeInstantiatedOnlyOncePerProcess
+				+ "");
+
 		modelDescription = modelDescription.replace("{description}", "");
 		modelDescription = modelDescription.replace("{author}", "");
 		modelDescription = modelDescription.replace("{guid}", "{"
@@ -190,7 +192,8 @@ public class ModelDescriptionGenerator
 		return info;
 	}
 
-	protected StringBuffer createSourceFileElements(ModelDescriptionConfig config)
+	protected StringBuffer createSourceFileElements(
+			ModelDescriptionConfig config)
 	{
 		StringBuffer sbSourceFiles = new StringBuffer();
 
@@ -293,23 +296,40 @@ public class ModelDescriptionGenerator
 						{
 						}
 					}
+				} else
+				{
+					initial = "0";
 				}
 				typeTemplate = scalarVariableIntegerTypeTemplate;
 			} else if (name.equals("RealPort"))
 			{
 				typeTemplate = scalarVariableRealTypeTemplate;
-				if (initial != null && !initial.contains("."))
+				if (initial != null)
 				{
-					initial += ".0";
+					if (!initial.contains("."))
+					{
+						initial += ".0";
+					}
+				} else
+				{
+					initial = "0.0";
 				}
 			}
 			if (name.equals("BoolPort"))
 			{
 				typeTemplate = scalarVariableBooleanTypeTemplate;
+				if (initial == null)
+				{
+					initial = "false";
+				}
 			}
 			if (name.equals("StringPort"))
 			{
 				typeTemplate = scalarVariableStringTypeTemplate;
+				if (initial == null)
+				{
+					initial = "";
+				}
 			}
 		} else
 		{
@@ -335,7 +355,7 @@ public class ModelDescriptionGenerator
 				typeTemplate = scalarVariableStringTypeTemplate;
 			}
 		}
-		String start = initial != null ? String.format(scalarVariableStartTemplate, initial.replaceAll("\"", "&quot;").replaceAll("\'", "&apos;"))
+		String start = initial != null && initialExp!=null ? String.format(scalarVariableStartTemplate, initial.replaceAll("\"", "&quot;").replaceAll("\'", "&apos;"))
 				: "";
 		return String.format(typeTemplate, start);
 	}

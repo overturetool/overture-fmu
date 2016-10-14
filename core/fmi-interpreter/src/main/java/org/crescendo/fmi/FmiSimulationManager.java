@@ -24,6 +24,8 @@ import org.overture.interpreter.values.UndefinedValue;
 import org.overture.interpreter.values.Value;
 import org.overture.parser.util.ParserUtil;
 import org.overture.parser.util.ParserUtil.ParserResult;
+import org.overture.typechecker.util.TypeCheckerUtil;
+import org.overture.typechecker.util.TypeCheckerUtil.TypeCheckResult;
 
 public class FmiSimulationManager extends SimulationManager
 {
@@ -200,8 +202,20 @@ public class FmiSimulationManager extends SimulationManager
 							{
 								if (vDef.getExpression() instanceof ANewExp)
 								{
-									ANewExp newExp = ((ANewExp) vDef.getExpression());
-									newExp.getArgs().set(0, res.result);
+									ANewExp newExp = (ANewExp) vDef.getExpression();
+									if (newExp.getArgs().isEmpty())
+									{
+										TypeCheckResult<PExp> tcRes = TypeCheckerUtil.typeCheckExpression(parameter.value.toString());
+										if (tcRes.errors.isEmpty())
+										{
+											newExp.getArgs().add(tcRes.result);
+										} else
+											throw new RemoteSimulationException("Unable to parse parameter: "
+													+ parameter);
+									} else
+									{
+										newExp.getArgs().set(0, res.result);
+									}
 								}
 								// vDef.setExpression(res.result);
 							} else
