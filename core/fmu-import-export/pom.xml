@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.overturetool.fmi</groupId>
 		<artifactId>core</artifactId>
-		<version>0.1.1-SNAPSHOT</version>
+		<version>0.1.2</version>
 	</parent>
 	<properties>
 	<vdm2c.version>0.0.8</vdm2c.version>
@@ -193,7 +193,7 @@
 										</goals>
 									</pluginExecutionFilter>
 									<action>
-										<ignore></ignore>
+										<ignore />
 									</action>
 								</pluginExecution>
 							</pluginExecutions>
