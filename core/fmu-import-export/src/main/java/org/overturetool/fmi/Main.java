@@ -66,10 +66,11 @@ public class Main
 		Option importModelDescriptionOpt = Option.builder("import").longOpt("modeldescrption").desc("Import modelDescription.xml").hasArg().build();
 
 		Option projectNameOpt = Option.builder("name").desc("Project name / FMU name").hasArg().build();
-		Option projectRootOpt = Option.builder("root").desc("Project root directory").required().hasArg().build();
+		Option projectRootOpt = Option.builder("root").desc("Project root directory").hasArg().build();
 		Option outputFolderOpt = Option.builder("output").desc("Outout location").hasArg().build();
 		Option forceOpt = Option.builder("f").longOpt("force").desc("Force override of existing output files").build();
 		Option verboseOpt = Option.builder("v").longOpt("verbose").desc("Verbose mode or print diagnostic version info").build();
+		Option versionOpt = Option.builder("V").longOpt("version").desc("Show version").build();
 
 		options.addOption(helpOpt);
 		options.addOption(releaseOpt);
@@ -81,6 +82,7 @@ public class Main
 		options.addOption(outputFolderOpt);
 		options.addOption(verboseOpt);
 		options.addOption(forceOpt);
+		options.addOption(versionOpt);
 
 		CommandLineParser parser = new DefaultParser();
 		CommandLine cmd = null;
@@ -106,6 +108,26 @@ public class Main
 		boolean exportToolFmu = false;
 		boolean force = cmd.hasOption(forceOpt.getOpt());
 		boolean verbose = cmd.hasOption(verboseOpt.getOpt());
+		boolean version = cmd.hasOption(versionOpt.getOpt());
+
+		if (verbose || version)
+		{
+			showVersion();
+			if (version)
+			{
+				return;
+			}
+		}
+
+		if (!cmd.hasOption(projectRootOpt.getOpt())
+				|| cmd.getOptionValue(projectRootOpt.getOpt()) == null)
+		{
+			System.err.println("Parsing failed. Reason: "
+					+ "Missing required option: " + projectRootOpt.getOpt());
+
+			showHelp(options);
+			return;
+		}
 
 		if (cmd.hasOption(exportOpt.getOpt()))
 		{
@@ -132,13 +154,6 @@ public class Main
 				return;
 			}
 		}
-		
-		
-		if(verbose)
-		{
-			showVersion();
-		}
-		
 
 		if (cmd.hasOption(releaseOpt.getOpt()))
 		{
@@ -168,8 +183,8 @@ public class Main
 		}
 		ConsoleProject project = new ConsoleProject(projectName, projectRoot, outputFolder, specFiles);
 
-		PrintStream out = (verbose ? System.out
-				: new PrintStream(new NullOutputStream()));
+		PrintStream out = verbose ? System.out
+				: new PrintStream(new NullOutputStream());
 
 		if (cmd.hasOption(exportOpt.getOpt()))
 		{
@@ -223,7 +238,7 @@ public class Main
 		} catch (Exception e)
 		{
 		}
-		
+
 	}
 
 	public static void showHelp(Options options)
