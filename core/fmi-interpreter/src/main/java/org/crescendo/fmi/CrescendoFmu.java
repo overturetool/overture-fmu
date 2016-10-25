@@ -645,8 +645,8 @@ public abstract class CrescendoFmu implements IServiceProtocol
 			logger.debug("Closing log driver");
 			loggerConnected = false;
 			logDriver.close();
-			close();
 		}
+		close();
 	}
 
 	public abstract void close();
