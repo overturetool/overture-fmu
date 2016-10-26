@@ -31,14 +31,14 @@ operations
 
 	public static create: FmiPortType ==> IntPort | BoolPort | RealPort | StringPort
 	create(v) ==
-		if is_(v, String) then
-			return new StringPort(v)
+		if is_(v, real) then
+			return new RealPort(v)
 		elseif is_(v,bool) then
 			return new BoolPort(v)
 	 elseif is_(v,int) then
 			return new IntPort(v)
 	else
-			return new RealPort(v)
+			return new StringPort(v)
 			
 end Port
 
