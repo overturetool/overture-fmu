@@ -70,6 +70,9 @@ public class FmuSourceCodeExporter extends FmuExporter
 
 		StringBuffer sb = generateIOCacheSyncMethods(info, periodicDefinition, systemName);
 
+
+		//EMIT GUID HEADER FILE HERE.
+
 		// copy FMU files
 		copySource(project, sources + "/Fmu.cpp", "/c-templates/Fmu.cpp");
 		copySource(project, sources + "/FmuIO.c", "/c-templates/FmuIO.c");
