@@ -25,7 +25,7 @@ echo "Test will be performed on: '${JAR}'"
 echo "Test will be performed on model: ${MODEL}"
 
 rm -rf output
-java -jar $JAR -export --tool -name $NAME -root $MODEL -output output
+java -jar $JAR -export tool -name $NAME -root $MODEL -output output
 
 cd output
 unzip $NAME.fmu

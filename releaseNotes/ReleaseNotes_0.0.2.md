@@ -1,5 +1,5 @@
 
-# [Overture 0.0.2 - Release Notes](https://github.com/overturetool/overture-fmu/milestones/v0.0.2)
+# [Overture FMU 0.0.2 - Release Notes](https://github.com/overturetool/overture-fmu/milestones/v0.0.2)
 
 ## Bugfixes
 

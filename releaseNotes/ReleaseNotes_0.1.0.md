@@ -1,5 +1,5 @@
 
-# [Overture 0.1.0 - Release Notes - 28 July 2016](https://github.com/overturetool/overture-fmu/milestones/v0.1.0)
+# [Overture FMU 0.1.0 - Release Notes - 28 July 2016](https://github.com/overturetool/overture-fmu/milestones/v0.1.0)
 
 ## Bugfixes
 

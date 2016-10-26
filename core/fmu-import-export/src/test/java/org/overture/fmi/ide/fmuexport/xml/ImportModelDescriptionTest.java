@@ -34,18 +34,19 @@ public class ImportModelDescriptionTest
 			InterruptedException, SAXException, ParserConfigurationException,
 			ParserException, LexException
 	{
-		String output = "target/" + this.getClass().getSimpleName() + "/testImportEmpty/";
-		importSingleEmpty(output,"src/test/resources/modelDescription.xml");
+		String output = "target/" + this.getClass().getSimpleName()
+				+ "/testImportEmpty/";
+		importSingleEmpty(output, "src/test/resources/modelDescription.xml");
 
 	}
 
-
-	private void importSingleEmpty(String output,String modelDescriptionPath) throws AbortException, IOException,
-			InterruptedException, SAXException, ParserConfigurationException,
-			ParserException, LexException
+	private void importSingleEmpty(String output, String modelDescriptionPath)
+			throws AbortException, IOException, InterruptedException,
+			SAXException, ParserConfigurationException, ParserException,
+			LexException
 	{
 		Main.main(new String[] { "-name", "wt2", "-import",
-				modelDescriptionPath, "-root", output });
+				modelDescriptionPath, "-root", output, "-v" });
 
 		List<File> specFiles = new Vector<>();
 		specFiles.addAll(FileUtils.listFiles(new File(output), new String[] { "vdmrt" }, true));
@@ -75,21 +76,27 @@ public class ImportModelDescriptionTest
 	}
 
 	@Test
-	public void testReImport() throws ParserException, LexException, AbortException, IOException, InterruptedException, SAXException, ParserConfigurationException
+	public void testReImport() throws ParserException, LexException,
+			AbortException, IOException, InterruptedException, SAXException,
+			ParserConfigurationException
 	{
-		String output = "target/" + this.getClass().getSimpleName() + "/testReImport/";
-		importSingleEmpty(output,"src/test/resources/modelDescription.xml");
-		importSingleEmpty(output,"src/test/resources/modelDescription.xml");
+		String output = "target/" + this.getClass().getSimpleName()
+				+ "/testReImport/";
+		importSingleEmpty(output, "src/test/resources/modelDescription.xml");
+		importSingleEmpty(output, "src/test/resources/modelDescription.xml");
 	}
-	
+
 	@Test
-	public void testImportImportMerge() throws ParserException, LexException, AbortException, IOException, InterruptedException, SAXException, ParserConfigurationException
+	public void testImportImportMerge() throws ParserException, LexException,
+			AbortException, IOException, InterruptedException, SAXException,
+			ParserConfigurationException
 	{
-		String output = "target/" + this.getClass().getSimpleName() + "/testImportImportMerge/";
-		importSingleEmpty(output,"src/test/resources/modelDescription.xml");
-		importSingleEmpty(output,"src/test/resources/modelDescription2.xml");
+		String output = "target/" + this.getClass().getSimpleName()
+				+ "/testImportImportMerge/";
+		importSingleEmpty(output, "src/test/resources/modelDescription.xml");
+		importSingleEmpty(output, "src/test/resources/modelDescription2.xml");
 	}
-	
+
 	private void checkDef(List<PDefinition> defs, String name,
 			String expectedType, PExp... args)
 	{

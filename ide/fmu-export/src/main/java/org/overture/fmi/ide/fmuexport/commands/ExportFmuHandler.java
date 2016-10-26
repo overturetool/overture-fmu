@@ -56,7 +56,7 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 						generate(project, out, err, projectWrapper);
 						((org.eclipse.core.resources.IProject) project.getAdapter(org.eclipse.core.resources.IProject.class)).refreshLocal(IResource.DEPTH_INFINITE, null);
 
-						//projectWrapper.cleanUp();
+						// projectWrapper.cleanUp();
 					} catch (AbortException | CoreException e)
 					{
 					}
@@ -82,13 +82,12 @@ public class ExportFmuHandler extends org.eclipse.core.commands.AbstractHandler
 			MessageConsoleStream err, ProjectWrapper projectWrapper)
 			throws AbortException
 	{
-		new FmuExporter().exportFmu(projectWrapper, project.getName(), new PrintStream(out), new PrintStream(err));
+		new FmuExporter().exportFmu(projectWrapper, project.getName(), new PrintStream(out), new PrintStream(err), true);
 	}
 
 	protected String getTitle()
 	{
 		return "FMU Export";
 	}
-
 
 }

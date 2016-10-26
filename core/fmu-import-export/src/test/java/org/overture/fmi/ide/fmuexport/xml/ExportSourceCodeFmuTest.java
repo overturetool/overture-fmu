@@ -29,8 +29,8 @@ public class ExportSourceCodeFmuTest
 			InterruptedException, SAXException, ParserConfigurationException
 	{
 		String output = "target/" + this.getClass().getSimpleName() + "/";
-		Main.main(new String[] { "-name", "wt2", "-export", "-c", "-root",
-				"src/test/resources/model", "-output", output });
+		Main.main(new String[] { "-name", "wt2", "-export", "source", "-root",
+				"src/test/resources/model", "-output", output, "-v" });
 
 		File outputZip = new File(output + "/wt2.fmu");
 
