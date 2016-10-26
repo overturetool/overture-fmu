@@ -445,7 +445,7 @@ public abstract class CrescendoFmu implements IServiceProtocol
 			Settings.invchecks = true;
 			Settings.dynamictypechecks = true;
 			Settings.measureChecks = true;
-			boolean disableRtLog = false;
+			boolean disableRtLog = true;
 			boolean disableCoverage = false;
 			boolean disableOptimization = false;
 
