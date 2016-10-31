@@ -13,7 +13,7 @@ cd ..
 
 echo "Fetch current version"
 
-VERSION=`mvn -q -Dexec.executable="echo" -Dexec.args='${project.version}' --non-recursive org.codehaus.mojo:exec-maven-plugin:1.3.1:exec -f ../core/fmu-import-export`
+VERSION=`mvn -q -Dexec.executable="echo" -Dexec.args='${project.version}' --non-recursive org.codehaus.mojo:exec-maven-plugin:1.3.1:exec -f ../`
 
 echo "Version is '${VERSION}'"
 
