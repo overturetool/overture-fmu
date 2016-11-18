@@ -42,7 +42,7 @@ public class FmuSourceCodeExporter extends FmuExporter
 	static final String PARAMETER = "{\n\t\tTVP newValue = %s(fmiBuffer.%s[%s]);\n\t\t"
 			+ "SET_FIELD(%s,%s,g_HardwareInterface_%s,value,newValue);\n\t\t"
 			+ "vdmFree(newValue);\n\t}";
-	
+
 	protected ModelDescriptionConfig getModelDescriptionConfig(IProject project)
 	{
 		ModelDescriptionConfig config = new ModelDescriptionConfig();
@@ -50,6 +50,28 @@ public class FmuSourceCodeExporter extends FmuExporter
 		config.needsExecutionTool = false;
 
 		return config;
+	}
+
+	private boolean HWInterfaceHasStatics(IProject project)
+	{
+		for(SClassDefinition c :  project.getClasses())
+		{
+			if(c.getName().getName().equals("HardwareInterface"))
+			{
+				for(PDefinition i : c.getDefinitions())
+				{
+					if(i instanceof AInstanceVariableDefinition)
+					{
+						if(((AInstanceVariableDefinition)i).getAccess().getStatic() != null)
+						{
+							return true;
+						}
+					}
+				}
+			}
+		}
+
+		return false;
 	}
 
 	@Override
