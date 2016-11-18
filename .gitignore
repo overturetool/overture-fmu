@@ -107,3 +107,4 @@ orchestration/coe/interpreter.log*
 core/fmi-interpreter/src/main/resources/fmu-shm-api/
 
 repository
+testing/output/**

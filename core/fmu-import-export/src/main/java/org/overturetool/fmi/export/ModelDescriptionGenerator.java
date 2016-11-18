@@ -1,6 +1,7 @@
 package org.overturetool.fmi.export;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -9,6 +10,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Vector;
@@ -30,6 +32,7 @@ import org.overture.ast.util.definitions.ClassList;
 import org.overture.fmi.annotation.FmuAnnotation;
 import org.overturetool.fmi.AbortException;
 import org.overturetool.fmi.IProject;
+import org.overturetool.fmi.Main;
 import org.overturetool.fmi.util.VdmAnnotationProcesser;
 
 public class ModelDescriptionGenerator
@@ -170,6 +173,16 @@ public class ModelDescriptionGenerator
 
 		modelDescription = modelDescription.replace("{modelName}", project.getName());
 		modelDescription = modelDescription.replace("{modelIdentifier}", project.getName());
+		
+		try
+		{
+			Properties prop = new Properties();
+			InputStream coeProp = Main.class.getResourceAsStream("/fmu-import-export.properties");
+			prop.load(coeProp);
+			modelDescription = modelDescription.replace("{overture.fmu.version}", prop.getProperty("version"));
+		} catch (Exception e)
+		{
+		}
 
 		modelDescription = modelDescription.replace("{needsExecutionTool}", config.needsExecutionTool
 				+ "");
