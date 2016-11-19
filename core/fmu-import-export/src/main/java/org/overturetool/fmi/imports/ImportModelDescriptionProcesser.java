@@ -226,6 +226,12 @@ public class ImportModelDescriptionProcesser
 					// sc.description = getNodeValue(attributes, "description", "");
 
 					Node child = lookupSingle(n, xpath, "Real[1] | Boolean[1] | String[1] | Integer[1] | Enumeration[1]");
+					
+					if(child==null)
+					{
+						err.println("Missing type for: "+sc.name);
+						return;
+					}
 
 					sc.type = new Type();
 					sc.type.type = Types.valueOfIgnorecase(child.getNodeName());
