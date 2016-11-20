@@ -70,7 +70,11 @@ public class ModelDescriptionGenerator
 
 	public static class GeneratorInfo
 	{
-		public String modelDescription;
+		public static interface ModelDescriptionStringGenerator{
+			String getModelDescription();
+		}
+		//public String modelDescription;
+		public ModelDescriptionStringGenerator modelDescriptionStringGenerator;
 		public final Map<PDefinition, ScalarInfo> context = new HashMap<>();
 		public int maxVariableReference;
 
@@ -161,46 +165,57 @@ public class ModelDescriptionGenerator
 			}
 			sbOutputs.append("\n\t</Outputs>\n");
 		}
-
-		StringBuffer sbSourceFiles = createSourceFileElements(config);
-
+		
 		final String modelDescriptionTemplate = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("modelDescriptionTemplate.xml"));// PluginFolderInclude.readFile(IFmuExport.PLUGIN_ID,
 
-		String modelDescription = modelDescriptionTemplate.replace("<!-- {SCALARVARIABLES} -->", sbScalarVariables.toString());
-		modelDescription = modelDescription.replace("<!-- {OUTPUTS} -->", sbOutputs.toString());
-		modelDescription = modelDescription.replace("<!-- {LINKS} -->", sbLinks.toString());
-		modelDescription = modelDescription.replace("<!-- {SourceFiles} -->", sbSourceFiles.toString());
-
-		modelDescription = modelDescription.replace("{modelName}", project.getName());
-		modelDescription = modelDescription.replace("{modelIdentifier}", project.getName());
 		
-		try
+		info.modelDescriptionStringGenerator = new GeneratorInfo.ModelDescriptionStringGenerator()
 		{
-			Properties prop = new Properties();
-			InputStream coeProp = Main.class.getResourceAsStream("/fmu-import-export.properties");
-			prop.load(coeProp);
-			modelDescription = modelDescription.replace("{overture.fmu.version}", prop.getProperty("version"));
-		} catch (Exception e)
-		{
-		}
+			
+			@Override
+			public String getModelDescription()
+			{
+				StringBuffer sbSourceFiles = createSourceFileElements(config);
 
-		modelDescription = modelDescription.replace("{needsExecutionTool}", config.needsExecutionTool
-				+ "");
-		modelDescription = modelDescription.replace("{canBeInstantiatedOnlyOncePerProcess}", config.canBeInstantiatedOnlyOncePerProcess
-				+ "");
+				String modelDescription = modelDescriptionTemplate.replace("<!-- {SCALARVARIABLES} -->", sbScalarVariables.toString());
+				modelDescription = modelDescription.replace("<!-- {OUTPUTS} -->", sbOutputs.toString());
+				modelDescription = modelDescription.replace("<!-- {LINKS} -->", sbLinks.toString());
+				modelDescription = modelDescription.replace("<!-- {SourceFiles} -->", sbSourceFiles.toString());
 
-		modelDescription = modelDescription.replace("{description}", "");
-		modelDescription = modelDescription.replace("{author}", "");
-		modelDescription = modelDescription.replace("{guid}", "{"
-				+ java.util.UUID.randomUUID().toString() + "}");
+				modelDescription = modelDescription.replace("{modelName}", project.getName());
+				modelDescription = modelDescription.replace("{modelIdentifier}", project.getName());
+				
+				try
+				{
+					Properties prop = new Properties();
+					InputStream coeProp = Main.class.getResourceAsStream("/fmu-import-export.properties");
+					prop.load(coeProp);
+					modelDescription = modelDescription.replace("{overture.fmu.version}", prop.getProperty("version"));
+				} catch (Exception e)
+				{
+				}
 
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-		String date = sdf.format(new Date());
-		out.println("Setting generation date to: " + date);
+				modelDescription = modelDescription.replace("{needsExecutionTool}", config.needsExecutionTool
+						+ "");
+				modelDescription = modelDescription.replace("{canBeInstantiatedOnlyOncePerProcess}", config.canBeInstantiatedOnlyOncePerProcess
+						+ "");
 
-		modelDescription = modelDescription.replace("{generationDateAndTime}", date);
+				modelDescription = modelDescription.replace("{description}", "");
+				modelDescription = modelDescription.replace("{author}", "");
+				modelDescription = modelDescription.replace("{guid}", "{"
+						+ java.util.UUID.randomUUID().toString() + "}");
 
-		info.modelDescription = modelDescription;
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+				String date = sdf.format(new Date());
+				out.println("Setting generation date to: " + date);
+
+				modelDescription = modelDescription.replace("{generationDateAndTime}", date);
+
+				return modelDescription;
+			}
+		};
+
+		
 		info.maxVariableReference = variableReference;
 		return info;
 	}

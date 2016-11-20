@@ -80,16 +80,17 @@ public class FmuExporter
 				ModelDescriptionGenerator generator = new ModelDescriptionGenerator(classList, system);
 
 				GeneratorInfo info = generator.generate(definitionAnnotation, project, getModelDescriptionConfig(project), out, err);
+				copyFmuResources(info, project.getName(), project, system, out, err);
 
+				final String modelDescription = info.modelDescriptionStringGenerator.getModelDescription();
 				if (project.isOutputDebugEnabled())
 				{
 					out.println("\n########################\n Model Description: \n");
-					out.println(info.modelDescription);
+					out.println(modelDescription);
 				}
 
-				project.createProjectTempRelativeFile("modelDescription.xml", new ByteArrayInputStream(info.modelDescription.getBytes("UTF-8")));
+				project.createProjectTempRelativeFile("modelDescription.xml", new ByteArrayInputStream(modelDescription.getBytes("UTF-8")));
 
-				copyFmuResources(info, project.getName(), project, system, out, err);
 				final File fmuArchieveName = new File(project.getOutputFolder(), project.getName()
 						+ ".fmu");
 				
@@ -185,7 +186,7 @@ public class FmuExporter
 		byte[] bytes = sb.toString().getBytes("UTF-8");
 		InputStream source = new ByteArrayInputStream(bytes);
 		project.createProjectTempRelativeFile(resourcesFolder + "/config.txt", source);
-		bytes = info.modelDescription.getBytes("UTF-8");
+		bytes = info.modelDescriptionStringGenerator.getModelDescription().getBytes("UTF-8");
 		source = new ByteArrayInputStream(bytes);
 		project.createProjectTempRelativeFile(resourcesFolder
 				+ "/modelDescription.xml", source);
