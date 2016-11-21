@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map.Entry;
 import java.util.Vector;
 
@@ -81,11 +83,14 @@ public class FmuSourceCodeExporter extends FmuExporter
 	{
 		final String systemName = system.getName().getName();
 		final String sources = "sources";
+		List<File> emittedFiles, emittedFilesTmp;
 
 		CGenerator generator = new CGenerator(project);
 
-		generator.generate(new File(project.getTempFolder(), sources), out, err);
-
+		//Add just the generated files to the list of files first.
+		emittedFiles = new LinkedList<>(generator.generate(new File(project.getTempFolder(), sources), out, err));
+		emittedFilesTmp = new LinkedList<>();
+		
 		final List<PeriodicThreadDef> periodicDefs = extractPeriodicDefs(project);
 
 		String periodicDefinition = createPeriodicDefinitionString(periodicDefs);
@@ -97,7 +102,9 @@ public class FmuSourceCodeExporter extends FmuExporter
 
 		// copy FMU files
 		copySource(project, sources + "/Fmu.cpp", "/c-templates/Fmu.cpp");
+		emittedFiles.add(new File("Fmu.cpp"));
 		copySource(project, sources + "/FmuIO.c", "/c-templates/FmuIO.c");
+		emittedFiles.add(new File("FmuIO.c"));
 
 		String contentFmuh = IOUtils.toString(this.getClass().getResourceAsStream("/c-templates/Fmu.h"));
 		contentFmuh = contentFmuh.replace("//#define BOOL_COUNT", "#define BOOL_COUNT "
@@ -113,8 +120,11 @@ public class FmuSourceCodeExporter extends FmuExporter
 
 		// copy FMI headers to support CMakeLists
 		copySource(project, sources + "/fmi/fmi2Functions.h", "/c-templates/fmi/fmi2Functions.h");
+		emittedFiles.add(new File("fmi/fmi2Functions.h"));
 		copySource(project, sources + "/fmi/fmi2FunctionTypes.h", "/c-templates/fmi/fmi2FunctionTypes.h");
+		emittedFiles.add(new File("fmi/fmi2FunctionTypes.h"));
 		copySource(project, sources + "/fmi/fmi2TypesPlatform.h", "/c-templates/fmi/fmi2TypesPlatform.h");
+		emittedFiles.add(new File("fmi/fmi2TypesPlatform.h"));
 
 		// copy FmuModel.cpp
 		String content = IOUtils.toString(this.getClass().getResourceAsStream("/c-templates/FmuModel.cpp"));
@@ -137,6 +147,7 @@ public class FmuSourceCodeExporter extends FmuExporter
 		bytes = content.getBytes("UTF-8");
 		source = new ByteArrayInputStream(bytes);
 		project.createProjectTempRelativeFile(sources + "/FmuModel.cpp", source);
+		emittedFiles.add(new File("FmuModel.cpp"));
 
 		// copy CMakeLists
 		content = IOUtils.toString(this.getClass().getResourceAsStream("/c-templates/CMakeLists.txt"));
