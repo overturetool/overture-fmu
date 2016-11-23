@@ -79,8 +79,9 @@ public class FmuExporter
 				classList.addAll(project.getClasses());
 				ModelDescriptionGenerator generator = new ModelDescriptionGenerator(classList, system);
 
-				GeneratorInfo info = generator.generate(definitionAnnotation, project, getModelDescriptionConfig(project), out, err);
-				copyFmuResources(info, project.getName(), project, system, out, err);
+				ModelDescriptionConfig modelDescriptionConfig = getModelDescriptionConfig(project);
+				GeneratorInfo info = generator.generate(definitionAnnotation, project, modelDescriptionConfig, out, err);
+				copyFmuResources(info, project.getName(), project,modelDescriptionConfig, system, out, err);
 
 				final String modelDescription = info.modelDescriptionStringGenerator.getModelDescription();
 				if (project.isOutputDebugEnabled())
@@ -155,7 +156,7 @@ public class FmuExporter
 	}
 
 	protected void copyFmuResources(GeneratorInfo info, String name,
-			IProject project, ASystemClassDefinition system, PrintStream out,
+			IProject project, ModelDescriptionConfig modelDescriptionConfig, ASystemClassDefinition system, PrintStream out,
 			PrintStream err) throws IOException, AnalysisException
 	{
 		final String resourcesFolder = "resources";
