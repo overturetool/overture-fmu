@@ -90,6 +90,9 @@ public class FmuSourceCodeExporter extends FmuExporter
 		//Add just the generated files to the list of files first.
 		emittedFiles = new LinkedList<>(generator.generate(new File(project.getTempFolder(), sources), out, err));
 		emittedFilesTmp = new LinkedList<>();
+		//Need to filter out non-source code files here.
+		
+		
 		
 		final List<PeriodicThreadDef> periodicDefs = extractPeriodicDefs(project);
 
