@@ -78,7 +78,7 @@ public class FmuSourceCodeExporter extends FmuExporter
 
 	@Override
 	protected void copyFmuResources(GeneratorInfo info, String name,
-			IProject project, ASystemClassDefinition system, PrintStream out,
+			IProject project,ModelDescriptionConfig modelDescriptionConfig, ASystemClassDefinition system, PrintStream out,
 			PrintStream err) throws IOException, AnalysisException
 	{
 		final String systemName = system.getName().getName();
