@@ -53,28 +53,6 @@ public class FmuSourceCodeExporter extends FmuExporter
 		return config;
 	}
 
-	private boolean HWInterfaceHasStatics(IProject project)
-	{
-		for(SClassDefinition c :  project.getClasses())
-		{
-			if(c.getName().getName().equals("HardwareInterface"))
-			{
-				for(PDefinition i : c.getDefinitions())
-				{
-					if(i instanceof AInstanceVariableDefinition)
-					{
-						if(((AInstanceVariableDefinition)i).getAccess().getStatic() != null)
-						{
-							return true;
-						}
-					}
-				}
-			}
-		}
-
-		return false;
-	}
-
 	@Override
 	protected void copyFmuResources(GeneratorInfo info, String name,
 			IProject project,ModelDescriptionConfig modelDescriptionConfig, ASystemClassDefinition system, PrintStream out,

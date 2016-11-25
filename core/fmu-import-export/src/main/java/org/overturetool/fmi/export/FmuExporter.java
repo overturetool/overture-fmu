@@ -12,7 +12,9 @@ import java.util.Map.Entry;
 import org.apache.commons.io.FileUtils;
 import org.intocps.java.fmi.shm.SharedMemory;
 import org.overture.ast.analysis.AnalysisException;
+import org.overture.ast.definitions.AInstanceVariableDefinition;
 import org.overture.ast.definitions.ASystemClassDefinition;
+import org.overture.ast.definitions.AValueDefinition;
 import org.overture.ast.definitions.PDefinition;
 import org.overture.ast.definitions.SClassDefinition;
 import org.overture.ast.util.definitions.ClassList;
@@ -26,6 +28,28 @@ import org.overturetool.fmi.util.VdmAnnotationProcesser;
 
 public class FmuExporter
 {
+	private boolean HWInterfaceHasStatics(IProject project)
+	{
+		for(SClassDefinition c :  project.getClasses())
+		{
+			if(c.getName().getName().equals("HardwareInterface"))
+			{
+
+				for(PDefinition i : c.getDefinitions())
+				{
+					if(i instanceof AInstanceVariableDefinition)
+					{
+						if(((AInstanceVariableDefinition)i).getAccess().getStatic() != null)
+						{
+							return true;
+						}
+					}
+				}
+			}
+		}
+
+		return false;
+	}
 
 	public File exportFmu(IProject project, String title, PrintStream out,
 			PrintStream err, boolean force) throws AbortException
@@ -34,7 +58,7 @@ public class FmuExporter
 		out.println("|             " + title + "             |");
 		out.println("---------------------------------------");
 		out.println("Starting FMU export for project: '" + project.getName()
-				+ "'");
+		+ "'");
 
 		if (project.typeCheck())
 		{
@@ -54,7 +78,7 @@ public class FmuExporter
 				}
 
 				Map<String, FmuAnnotation> exportNames = new HashMap<>();
-				boolean hasDublications = false;
+				boolean hasDuplicates = false;
 				for (Entry<PDefinition, FmuAnnotation> entry : definitionAnnotation.entrySet())
 				{
 					FmuAnnotation value = entry.getValue();
@@ -62,19 +86,26 @@ public class FmuExporter
 					{
 						final String export = "'%s' at line %s with type '%s'";
 						FmuAnnotation original = exportNames.get(value.name);
-						err.print("Dublicate export name: "
+						err.print("Duplicate export name: "
 								+ String.format(export, value.name, value.tree.getLine(), value.type)
-								+ " dublicates: "
+								+ " duplicates: "
 								+ String.format(export, original.name, original.tree.getLine(), original.type));
-						hasDublications = true;
+						hasDuplicates = true;
 					}
 					exportNames.put(value.name, value);
 				}
 
-				if (hasDublications)
+				if (hasDuplicates)
 				{
 					return null;
 				}
+
+				if(HWInterfaceHasStatics(project))
+				{
+					err.println("The HardwareInterface class must not contain static definitions.");
+					return null;
+				}
+
 				ClassList classList = new ClassList();
 				classList.addAll(project.getClasses());
 				ModelDescriptionGenerator generator = new ModelDescriptionGenerator(classList, system);
@@ -84,7 +115,7 @@ public class FmuExporter
 				copyFmuResources(info, project.getName(), project,modelDescriptionConfig, system, out, err);
 
 				final String modelDescription = info.modelDescriptionStringGenerator.getModelDescription();
-				
+
 				if (project.isOutputDebugEnabled())
 				{
 					out.println("\n########################\n Model Description: \n");
@@ -95,7 +126,7 @@ public class FmuExporter
 
 				final File fmuArchieveName = new File(project.getOutputFolder(), project.getName()
 						+ ".fmu");
-				
+
 				if(fmuArchieveName.exists())
 				{	
 					if(force)
