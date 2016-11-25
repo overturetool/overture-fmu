@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -22,6 +23,7 @@ import org.overturetool.fmi.IProject;
 import org.overturetool.fmi.IProject.IJob;
 import org.overturetool.fmi.export.ModelDescriptionGenerator.GeneratorInfo;
 import org.overturetool.fmi.util.FolderCompressor;
+import org.overturetool.fmi.util.Tracability;
 import org.overturetool.fmi.util.VdmAnnotationProcesser;
 
 public class FmuExporter
@@ -81,7 +83,7 @@ public class FmuExporter
 
 				ModelDescriptionConfig modelDescriptionConfig = getModelDescriptionConfig(project);
 				GeneratorInfo info = generator.generate(definitionAnnotation, project, modelDescriptionConfig, out, err);
-				copyFmuResources(info, project.getName(), project,modelDescriptionConfig, system, out, err);
+				copyFmuResources(info, project.getName(), project, modelDescriptionConfig, system, out, err);
 
 				final String modelDescription = info.modelDescriptionStringGenerator.getModelDescription();
 				if (project.isOutputDebugEnabled())
@@ -94,10 +96,10 @@ public class FmuExporter
 
 				final File fmuArchieveName = new File(project.getOutputFolder(), project.getName()
 						+ ".fmu");
-				
-				if(fmuArchieveName.exists())
-				{	
-					if(force)
+
+				if (fmuArchieveName.exists())
+				{
+					if (force)
 						fmuArchieveName.delete();
 				}
 
@@ -114,6 +116,22 @@ public class FmuExporter
 							try
 							{
 								FolderCompressor.compress(fmuFolderPath, fmuArchieveName);
+
+								String hash = Tracability.calculateGitHash(fmuArchieveName);
+
+								for (SClassDefinition cDef : classList)
+								{
+									if (ModelDescriptionGenerator.INTERFACE_CLASSNAME.equals(cDef.getName().getName()))
+									{
+										File hwiFile = cDef.getLocation().getFile();
+										String data = FileUtils.readFileToString(hwiFile, Charset.forName("UTF-8"));
+										StringBuilder sb = new StringBuilder(data);
+										sb.insert(0, String.format("--##\tEXPORT\t%s\t%s\t%s\t%s\t%s\n",hash,fmuArchieveName.getName(),Tracability.getCurrentTimeStamp(),getExportType(),Tracability.getToolId()));
+										FileUtils.write(hwiFile, sb, Charset.forName("UTF-8"));
+									}
+								}
+
+								
 								project.cleanUp();
 							} catch (IOException e)
 							{
@@ -140,6 +158,11 @@ public class FmuExporter
 		return null;
 	}
 
+	protected String getExportType()
+	{
+		return "tool-wrapper";
+	}
+
 	protected ModelDescriptionConfig getModelDescriptionConfig(IProject project)
 	{
 		ModelDescriptionConfig config = new ModelDescriptionConfig();
@@ -156,8 +179,9 @@ public class FmuExporter
 	}
 
 	protected void copyFmuResources(GeneratorInfo info, String name,
-			IProject project, ModelDescriptionConfig modelDescriptionConfig, ASystemClassDefinition system, PrintStream out,
-			PrintStream err) throws IOException, AnalysisException
+			IProject project, ModelDescriptionConfig modelDescriptionConfig,
+			ASystemClassDefinition system, PrintStream out, PrintStream err)
+			throws IOException, AnalysisException
 	{
 		final String resourcesFolder = "resources";
 

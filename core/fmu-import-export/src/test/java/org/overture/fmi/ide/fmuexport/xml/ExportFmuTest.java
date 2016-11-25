@@ -19,6 +19,7 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -113,8 +114,11 @@ public class ExportFmuTest
 	{
 		String output = "target/" + this.getClass().getSimpleName() + "/"
 				+ getCurrentClassAndMethodNames() + "/";
+		
+		FileUtils.copyDirectory(new File("src/test/resources/model"),new File( output));
+		
 		Main.main(new String[] { "-name", "wt2", "-export", "tool", "-root",
-				"src/test/resources/model", "-output", output, "-v" });
+				output, "-output", output, "-v" });
 
 		File outputZip = new File(output + "/wt2.fmu");
 
@@ -153,8 +157,11 @@ public class ExportFmuTest
 	{
 		String output = "target/" + this.getClass().getSimpleName() + "/"
 				+ getCurrentClassAndMethodNames() + "/";
+		
+		FileUtils.copyDirectory(new File("src/test/resources/model_no_name"),new File( output));
+		
 		Main.main(new String[] { "-name", "wt2", "-export", "tool", "-root",
-				"src/test/resources/model_no_name", "-output", output, "-v" });
+				output, "-output", output, "-v" });
 
 		File outputZip = new File(output + "/wt2.fmu");
 
@@ -194,8 +201,11 @@ public class ExportFmuTest
 	{
 		String output = "target/" + this.getClass().getSimpleName() + "/"
 				+ getCurrentClassAndMethodNames() + "/";
+		
+		FileUtils.copyDirectory(new File("src/test/resources/modelAllTypes"),new File( output));
+		
 		Main.main(new String[] { "-name", "wt2", "-export", "tool", "-root",
-				"src/test/resources/modelAllTypes", "-output", output, "-v" });
+				output, "-output", output, "-v" });
 
 		File outputZip = new File(output + "/wt2.fmu");
 

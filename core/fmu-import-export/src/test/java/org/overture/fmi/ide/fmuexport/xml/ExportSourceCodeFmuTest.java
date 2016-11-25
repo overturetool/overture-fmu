@@ -15,6 +15,7 @@ import java.util.zip.ZipFile;
 
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -29,8 +30,10 @@ public class ExportSourceCodeFmuTest
 			InterruptedException, SAXException, ParserConfigurationException
 	{
 		String output = "target/" + this.getClass().getSimpleName() + "/";
+		FileUtils.copyDirectory(new File("src/test/resources/model"),new File( output));
 		Main.main(new String[] { "-name", "wt2", "-export", "source", "-root",
-				"src/test/resources/model", "-output", output, "-v" });
+				output, "-output", output, "-v" });
+		
 
 		File outputZip = new File(output + "/wt2.fmu");
 

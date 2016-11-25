@@ -51,6 +51,11 @@ public class FmuSourceCodeExporter extends FmuExporter
 
 		return config;
 	}
+	
+	protected String getExportType()
+	{
+		return "c-code";
+	}
 
 	private boolean HWInterfaceHasStatics(IProject project)
 	{

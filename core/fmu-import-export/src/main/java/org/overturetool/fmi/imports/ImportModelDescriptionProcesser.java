@@ -31,6 +31,7 @@ import org.overture.fmi.ide.fmuexport.xml.NamedNodeMapIterator;
 import org.overture.fmi.ide.fmuexport.xml.NodeIterator;
 import org.overturetool.fmi.AbortException;
 import org.overturetool.fmi.IProject;
+import org.overturetool.fmi.util.Tracability;
 import org.overturetool.fmi.util.VdmAnnotationProcesser;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
@@ -176,6 +177,8 @@ public class ImportModelDescriptionProcesser
 		out.println("Starting FMU import for project: '" + project.getName()
 				+ "'");
 
+		String hash = Tracability.calculateGitHash(file);
+		out.println(file.getName() + "\t" + hash);
 		// final IVdmModel model = project.getModel();
 		// if (model.isParseCorrect())
 		// {
@@ -226,10 +229,10 @@ public class ImportModelDescriptionProcesser
 					// sc.description = getNodeValue(attributes, "description", "");
 
 					Node child = lookupSingle(n, xpath, "Real[1] | Boolean[1] | String[1] | Integer[1] | Enumeration[1]");
-					
-					if(child==null)
+
+					if (child == null)
 					{
-						err.println("Missing type for: "+sc.name);
+						err.println("Missing type for: " + sc.name);
 						return;
 					}
 
@@ -275,7 +278,7 @@ public class ImportModelDescriptionProcesser
 					List<ScalarVariable> filter = filter(annotations, vars, out, err);
 					// VdmTypeCheckerUi.typeCheck(shell, project);
 					project.typeCheck();
-					updateHardwareInterface(project, filter, out);
+					updateHardwareInterface(project, filter, out,hash,file.getName().replace(" ", "%20"));
 					out.println("");
 					out.println("Import comepleted.");
 				} else
@@ -293,6 +296,8 @@ public class ImportModelDescriptionProcesser
 			err.println("Aborting VDM model does not type check");
 		}
 	}
+
+	
 
 	private List<ScalarVariable> filter(
 			Map<PDefinition, FmuAnnotation> annotations,
@@ -327,7 +332,7 @@ public class ImportModelDescriptionProcesser
 	}
 
 	private void updateHardwareInterface(IProject project,
-			List<ScalarVariable> vars, PrintStream out) throws IOException
+			List<ScalarVariable> vars, PrintStream out, Object hash, Object importFileName) throws IOException
 	{
 		out.println("");
 		SClassDefinition hwi = getClassByName(project.getClasses(), HARDWARE_INTERFACE);
@@ -339,6 +344,9 @@ public class ImportModelDescriptionProcesser
 		int endOffset = hwi.getName().getLocation().getEndOffset();
 
 		StringBuilder sb = new StringBuilder(data);
+		
+		
+		
 
 		StringBuilder sbValues = new StringBuilder();
 		StringBuilder sbOutputs = new StringBuilder();
@@ -393,6 +401,8 @@ public class ImportModelDescriptionProcesser
 			sb.insert(endOffset, "\nvalues\n" + sbValues + "\n\n");
 		}
 
+		// insert at beginning but after all other inserts to preserve index offset
+		sb.insert(0, String.format("--##\tIMPORT\t%s\t%s\t%s\t%s\t%s\n",hash,importFileName,Tracability.getCurrentTimeStamp(),"FMI-ModelDescription",Tracability.getToolId()));
 		FileUtils.write(file, sb, Charset.forName("UTF-8"));
 	}
 
