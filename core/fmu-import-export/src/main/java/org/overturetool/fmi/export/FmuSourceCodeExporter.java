@@ -8,7 +8,6 @@ import java.io.PrintStream;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map.Entry;
 import java.util.Vector;
 
@@ -90,8 +89,21 @@ public class FmuSourceCodeExporter extends FmuExporter
 		//Add just the generated files to the list of files first.
 		emittedFiles = new LinkedList<>(generator.generate(new File(project.getTempFolder(), sources), out, err));
 		emittedFilesTmp = new LinkedList<>();
-		//Need to filter out non-source code files here.
 		
+		//Filter out non-source code files.		
+		for(int i = 0; i < emittedFiles.size(); i++)
+		{
+			if(emittedFiles.get(i).getName().endsWith(".c") ||
+					emittedFiles.get(i).getName().endsWith(".c") ||
+					emittedFiles.get(i).getName().endsWith(".cpp") ||
+					emittedFiles.get(i).getName().endsWith(".h"))
+			{
+				emittedFilesTmp.add(emittedFiles.get(i));
+			}
+		}
+		
+		if( ! emittedFilesTmp.isEmpty())
+			emittedFiles = emittedFilesTmp;
 		
 		
 		final List<PeriodicThreadDef> periodicDefs = extractPeriodicDefs(project);
@@ -163,6 +175,13 @@ public class FmuSourceCodeExporter extends FmuExporter
 
 		project.createProjectTempRelativeFile(sources + "/defines.def", new ByteArrayInputStream("CUSTOM_IO".getBytes("UTF-8")));
 		project.createProjectTempRelativeFile(sources + "/includes.txt", new ByteArrayInputStream("fmi\nvdmlib".getBytes("UTF-8")));
+		
+		//Populate list of source files in modelDescription.xml file.
+		for(int i = 0; i < emittedFiles.size(); i++)
+		{
+			modelDescriptionConfig.sourceFiles.add(
+						emittedFiles.get(i).toString());
+		}
 	}
 
 	private void copySource(IProject project, String path, String sourcePath)
