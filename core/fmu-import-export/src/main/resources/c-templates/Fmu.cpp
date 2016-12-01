@@ -25,9 +25,14 @@ extern "C" fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuTy
 		fmi2String fmuResourceLocation, const fmi2CallbackFunctions *functions, fmi2Boolean visible,
 		fmi2Boolean loggingOn)
 {
+	char *tmpInstanceName;
+	
 	g_fmiCallbackFunctions = functions;
-	std::string* f = new std::string(instanceName);
-	g_fmiInstanceName = f->c_str();
+	
+	tmpInstanceName = (char*)malloc(strlen(instanceName) + 1);
+	strcpy(tmpInstanceName, instanceName);
+	g_fmiInstanceName = tmpInstanceName;
+	
 	systemInit();
 
 	return (void*) 1;
@@ -45,7 +50,7 @@ extern "C" fmi2Status fmi2EnterInitializationMode(fmi2Component c)
 }
 
 extern "C" fmi2Status fmi2ExitInitializationMode(fmi2Component c)
-{
+{	
 	return fmi2OK;
 }
 
