@@ -92,7 +92,7 @@ int main()
 {
     fmi2CallbackFunctions callback={&fmuLoggerCache,NULL,NULL,NULL,NULL};
     
-    fmi2Instantiate("this system",fmi2CoSimulation,"","",&callback,true,true);
+    fmi2Instantiate("this system",fmi2CoSimulation,"","",&callback,fmi2True,fmi2True);
     systemInit();
     syncInputsToModel();
     
@@ -115,7 +115,7 @@ int main()
     
     for (double time =0; time < totalTime; time=time+stepSize) {
         
-            if(fmi2OK !=fmi2DoStep(NULL,time,stepSize,false))
+            if(fmi2OK !=fmi2DoStep(NULL,time,stepSize,fmi2False))
             {
                 printf("Step did not return ok\n");
                 return 1;
