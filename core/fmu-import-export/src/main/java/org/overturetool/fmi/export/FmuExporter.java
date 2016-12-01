@@ -86,6 +86,7 @@ public class FmuExporter
 				copyFmuResources(info, project.getName(), project, modelDescriptionConfig, system, out, err);
 
 				final String modelDescription = info.modelDescriptionStringGenerator.getModelDescription();
+				
 				if (project.isOutputDebugEnabled())
 				{
 					out.println("\n########################\n Model Description: \n");
