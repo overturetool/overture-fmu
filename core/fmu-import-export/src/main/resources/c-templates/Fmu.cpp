@@ -9,7 +9,7 @@
 
 #include "Fmu.h"
 
-#include <string>
+#include <string.h>
 
 bool terminateSystemThread = false;
 bool isTerminated = false;
