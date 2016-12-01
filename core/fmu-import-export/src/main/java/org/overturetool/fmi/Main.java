@@ -201,7 +201,7 @@ public class Main
 
 			if (fmuFile == null)
 			{
-				System.err.println("Generation faild.");
+				System.err.println("Generation failed.");
 				return;
 			}
 
