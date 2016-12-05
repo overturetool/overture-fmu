@@ -14,6 +14,7 @@ import java.util.jar.JarInputStream;
 import org.overture.ast.analysis.AnalysisException;
 import org.overture.ast.node.INode;
 import org.overture.codegen.utils.GeneratedData;
+import org.overture.codegen.utils.GeneratedModule;
 import org.overture.codegen.vdm2c.CGen;
 import org.overture.config.Settings;
 import org.overturetool.fmi.IProject;
@@ -31,15 +32,24 @@ public class CGenerator
 			throws AnalysisException
 	{
 
-		final CGen vdm2c = new CGen(outputDir);
+		final CGen vdm2c = new CGen();
 
 		List<INode> nodes = new Vector<>();
 		List<File> libFiles;
 		nodes.addAll(project.getClasses());
 
 		// Generate user specified classes
-		vdm2c.generate(nodes);
-
+		GeneratedData data = vdm2c.generate(nodes);
+		
+		try {
+			vdm2c.genCSourceFiles(outputDir, data.getClasses());
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		out.println("Project dialect: " + Settings.dialect);
 
 		out.println("Code generation completed successfully.");
