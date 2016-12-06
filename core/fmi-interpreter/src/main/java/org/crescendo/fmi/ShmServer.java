@@ -30,7 +30,7 @@ public class ShmServer
 			logger.debug("Starting Crescendo ShmServer with key: '" + memoryKey
 					+ "'");
 
-			SharedMemory.setDebug(logger.isDebugEnabled());
+			new SharedMemory().setDebug(logger.isDebugEnabled());
 			SharedMemoryServer.setServerDebug(logger.isDebugEnabled());
 
 			driver = new ProtocolDriver(memoryKey, new CrescendoFmu(memoryKey)

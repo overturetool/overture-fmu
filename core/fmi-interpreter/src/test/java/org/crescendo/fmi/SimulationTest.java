@@ -24,7 +24,7 @@ public class SimulationTest
 	public void test()
 	{
 		Logger logger = LoggerFactory.getLogger(ShmServer.class);
-		SharedMemory.setDebug(logger.isDebugEnabled());
+		new SharedMemory().setDebug(logger.isDebugEnabled());
 		SharedMemoryServer.setServerDebug(logger.isDebugEnabled());
 
 		CrescendoFmu fmu = new CrescendoFmu("test-in-out-session-test"){
