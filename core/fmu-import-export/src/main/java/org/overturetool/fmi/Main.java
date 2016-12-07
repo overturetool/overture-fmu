@@ -71,11 +71,13 @@ public class Main
 		Option forceOpt = Option.builder("f").longOpt("force").desc("Force override of existing output files").build();
 		Option verboseOpt = Option.builder("v").longOpt("verbose").desc("Verbose mode or print diagnostic version info").build();
 		Option versionOpt = Option.builder("V").longOpt("version").desc("Show version").build();
+		Option toolDebugOpt = Option.builder("debug").longOpt("Tool debug").hasArg(true).argName("port=y/n for auto suspend").desc("Generate tool debug config. Connect with 'localhost' port '4000'").build();
 
 		options.addOption(helpOpt);
 		options.addOption(releaseOpt);
 		options.addOption(exportOpt);
 		options.addOption(importModelDescriptionOpt);
+		options.addOption(toolDebugOpt);
 
 		options.addOption(projectNameOpt);
 		options.addOption(projectRootOpt);
@@ -183,6 +185,17 @@ public class Main
 		}
 		ConsoleProject project = new ConsoleProject(projectName, projectRoot, outputFolder, specFiles);
 
+		if (!exportToolFmu && cmd.hasOption(toolDebugOpt.getOpt()))
+		{
+			System.err.println("Tool debug can only be used with the tool export option.");
+			return;
+		}
+
+		if (cmd.hasOption(toolDebugOpt.getOpt()))
+		{
+			project.enableOutputDebug(cmd.getOptionValue(toolDebugOpt.getOpt()));
+		}
+
 		PrintStream out = verbose ? System.out
 				: new PrintStream(new NullOutputStream());
 
@@ -257,6 +270,8 @@ public class Main
 		private final List<File> specFiles;
 		private File tempFolder = null;
 		private List<? extends SClassDefinition> classes;
+		private boolean outputDebugEnabled = false;
+		private String toolDebugConfig;
 
 		public ConsoleProject(String name, File sourceRoot, File outputFolder,
 				Collection<File> specFiles)
@@ -434,7 +449,22 @@ public class Main
 		@Override
 		public boolean isOutputDebugEnabled()
 		{
-			return false;
+			return outputDebugEnabled;
+		}
+		
+		
+		
+
+		public void enableOutputDebug(String config)
+		{
+			this.outputDebugEnabled = true;
+			this.toolDebugConfig = config;
+		}
+
+		@Override
+		public String getToolDebugConfig()
+		{
+			return this.toolDebugConfig;
 		}
 
 	}

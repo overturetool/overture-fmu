@@ -54,4 +54,6 @@ public interface IProject
 	void cleanUp() throws IOException;
 
 	boolean isOutputDebugEnabled();
+	
+	String getToolDebugConfig();
 }

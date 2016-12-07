@@ -232,7 +232,15 @@ public class FmuExporter
 		{
 			// remote debug
 			sb.append("-Xdebug\n");
-			sb.append("-Xrunjdwp:server=y,transport=dt_socket,address=4000,suspend=y\n");
+			int port = 4000;
+			String austouspend = "n";
+			String[] configs = project.getToolDebugConfig().split("=");
+			if(configs.length>1)
+			{
+				port = Integer.parseInt(configs[0]);
+				austouspend = "y".equals((""+configs[1]).toLowerCase())?"y":"n";
+			}
+			sb.append(String.format("-Xrunjdwp:server=y,transport=dt_socket,address=%d,suspend=%s\n",port,austouspend));
 		}
 
 		sb.append("-cp\n");
