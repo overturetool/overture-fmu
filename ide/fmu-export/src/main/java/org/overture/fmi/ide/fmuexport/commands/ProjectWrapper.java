@@ -284,4 +284,10 @@ public class ProjectWrapper implements org.overturetool.fmi.IProject
 	{
 		return false;
 	}
+
+	@Override
+	public String getToolDebugConfig()
+	{
+		return null;
+	}
 }
