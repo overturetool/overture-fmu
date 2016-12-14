@@ -9,7 +9,7 @@ operations
 	public setValue : FmiPortType ==> ()
 	setValue(v) == is subclass responsibility;
 
-	public getValue : () ==> FmiPortType
+	public pure getValue : () ==> FmiPortType
 	getValue() == is subclass responsibility;
 
 /*	public static create: FmiPortType ==> IntPort | BoolPort | RealPort | StringPort
@@ -37,7 +37,7 @@ operations
 	public setValue : int ==> ()
 	setValue(v) ==value :=v;
 
-	public getValue : () ==> int
+	public pure getValue : () ==> int
 	getValue() == return value;
 
 end IntPort
@@ -54,7 +54,7 @@ operations
 	public setValue : bool ==> ()
 	setValue(v) ==value :=v;
 
-	public getValue : () ==> bool
+	public pure getValue : () ==> bool
 	getValue() == return value;
 
 end BoolPort
@@ -71,7 +71,7 @@ operations
 	public setValue : real ==> ()
 	setValue(v) ==value :=v;
 
-	public getValue : () ==> real
+	public pure getValue : () ==> real
 	getValue() == return value;
 
 end RealPort
@@ -88,7 +88,7 @@ operations
 	public setValue : String ==> ()
 	setValue(v) ==value :=v;
 
-	public getValue : () ==> String
+	public pure getValue : () ==> String
 	getValue() == return value;
 
 end StringPort

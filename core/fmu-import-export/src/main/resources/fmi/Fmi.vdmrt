@@ -6,12 +6,14 @@
 * - BoolPort
 * - RealPort
 * - StringPort
-* These concreate ports must be used in the HardwareInterface class. All of them must contain a private 'value' field
+* These concrete ports must be used in the HardwareInterface class. All of them must contain a private 'value' field
 *  this field is accessed directly by the build-in FMI support in the simulator. The ports can be given as arguments to 
 *  other model elements. All access to the internal value must be done through set/getValue since this call insured that the
 *  simulator knows that the value have been read or written to and requires a co-simulation step for synchronization.
 *
 * A port can be instantiated with a value or with no values to use the library default value. 
+*
+* Version 0.0.2
 *
 ******************************************************************************************************************************/
 
@@ -26,7 +28,7 @@ operations
 	public setValue : FmiPortType ==> ()
 	setValue(v) == is subclass responsibility;
 
-	public getValue : () ==> FmiPortType
+	public pure getValue : () ==> FmiPortType
 	getValue() == is subclass responsibility;
 
 end Port
@@ -43,7 +45,7 @@ operations
 	public setValue : int ==> ()
 	setValue(v) ==value :=v;
 
-	public getValue : () ==> int
+	public pure getValue : () ==> int
 	getValue() == return value;
 
 end IntPort
@@ -60,7 +62,7 @@ operations
 	public setValue : bool ==> ()
 	setValue(v) ==value :=v;
 
-	public getValue : () ==> bool
+	public pure getValue : () ==> bool
 	getValue() == return value;
 
 end BoolPort
@@ -77,7 +79,7 @@ operations
 	public setValue : real ==> ()
 	setValue(v) ==value :=v;
 
-	public getValue : () ==> real
+	public pure getValue : () ==> real
 	getValue() == return value;
 
 end RealPort
@@ -94,7 +96,7 @@ operations
 	public setValue : String ==> ()
 	setValue(v) ==value :=v;
 
-	public getValue : () ==> String
+	public pure getValue : () ==> String
 	getValue() == return value;
 
 end StringPort
