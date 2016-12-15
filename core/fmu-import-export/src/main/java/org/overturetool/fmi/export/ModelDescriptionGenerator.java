@@ -53,6 +53,7 @@ public class ModelDescriptionGenerator
 	public final static String INTERFACE_INSTANCE_NAME = "hwi";
 
 	private final ASystemClassDefinition system;
+	Date generationDate = new Date();
 
 	public static class ScalarInfo
 	{
@@ -91,6 +92,7 @@ public class ModelDescriptionGenerator
 			IProject project, ModelDescriptionConfig config, PrintStream out,
 			PrintStream err) throws AbortException, IOException
 	{
+		out.println("Setting generation date to: " + this.generationDate);
 		GeneratorInfo info = new GeneratorInfo();
 		boolean found = false;
 		for (PDefinition def : system.getDefinitions())
@@ -206,9 +208,8 @@ public class ModelDescriptionGenerator
 						+ java.util.UUID.randomUUID().toString() + "}");
 
 				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-				String date = sdf.format(new Date());
-				out.println("Setting generation date to: " + date);
-
+				String date = sdf.format(generationDate);
+				
 				modelDescription = modelDescription.replace("{generationDateAndTime}", date);
 
 				return modelDescription;
