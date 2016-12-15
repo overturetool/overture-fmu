@@ -2,7 +2,7 @@
 <feature
       id="org.overture.fmi.ide.features.fmuexport"
       label="Overture FMU Export"
-      version="0.1.5.qualifier">
+      version="0.1.6">
 
    <description>
       %description
