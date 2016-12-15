@@ -157,7 +157,7 @@ the manifests, though.
 		<repository>
 			<id>eclipse-luna</id>
 			<layout>p2</layout>
-			<url>http://download.eclipse.org/releases/neon</url>
+			<url>http://ftp.acc.umu.se/mirror/eclipse.org/releases/neon/</url>
 		</repository>
 
  <repository>
