@@ -76,6 +76,9 @@ public class CGenerator
 
 		libFiles = new LinkedList<>();
 		
+//		File tmp = new File("src/main/resources/jars/vdmclib.jar");
+//		boolean isThere = tmp.exists();
+		
 		try
 		{
 			jarfile = this.getClass().getClassLoader().getResourceAsStream("jars/vdmclib.jar");

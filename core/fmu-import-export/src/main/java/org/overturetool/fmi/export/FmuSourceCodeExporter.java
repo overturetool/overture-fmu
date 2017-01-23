@@ -22,6 +22,8 @@ import org.overture.ast.definitions.AValueDefinition;
 import org.overture.ast.definitions.PDefinition;
 import org.overture.ast.definitions.SClassDefinition;
 import org.overture.ast.expressions.AVariableExp;
+import org.overture.ast.patterns.AIdentifierPattern;
+import org.overture.ast.patterns.PPattern;
 import org.overture.ast.statements.APeriodicStm;
 import org.overture.ast.statements.AStartStm;
 import org.overture.ast.types.AClassType;
@@ -456,7 +458,28 @@ public class FmuSourceCodeExporter extends FmuExporter
 			{
 				for (PDefinition def : cdef.getDefinitions())
 				{
-					if ("run".equals(def.getName().getName()))
+					//Store name here based on what kind of definition it is, since values allow patterns.
+					PPattern pat;
+					String defName = null;
+					
+					if(def instanceof AValueDefinition)
+					{
+							pat = ((AValueDefinition)def).getPattern();
+							
+							if(pat instanceof AIdentifierPattern)
+							{
+								defName = ((AIdentifierPattern) pat).getName().getName();
+							}
+							else
+							{
+								//TODO:
+							}
+					}
+					else
+						defName = def.getName().getName();
+					
+					
+					if ("run".equals(defName))
 					{
 						def.apply(new DepthFirstAnalysisAdaptor()
 						{
