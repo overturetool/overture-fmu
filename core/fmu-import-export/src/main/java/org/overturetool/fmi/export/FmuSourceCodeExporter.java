@@ -2,6 +2,7 @@ package org.overturetool.fmi.export;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Vector;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.overture.ast.analysis.AnalysisException;
@@ -54,7 +56,7 @@ public class FmuSourceCodeExporter extends FmuExporter
 
 		return config;
 	}
-	
+
 	protected String getExportType()
 	{
 		return "c-code";
@@ -67,14 +69,18 @@ public class FmuSourceCodeExporter extends FmuExporter
 	{
 		final String systemName = system.getName().getName();
 		final String sources = "sources";
+		final String resourcesFolder = "resources";
 		List<File> emittedFiles, emittedFilesTmp;
+		LinkedList<File> resourceFiles;
+		String resourceFileExtensions[] = new String[]{"csv"};
+		InputStream is;
 
 		CGenerator generator = new CGenerator(project);
 
 		//Add just the generated files to the list of files first.
 		emittedFiles = new LinkedList<>(generator.generate(new File(project.getTempFolder(), sources), out, err));
 		emittedFilesTmp = new LinkedList<>();
-		
+
 		//Filter out non-source code files.		
 		for(int i = 0; i < emittedFiles.size(); i++)
 		{
@@ -86,11 +92,11 @@ public class FmuSourceCodeExporter extends FmuExporter
 				emittedFilesTmp.add(emittedFiles.get(i));
 			}
 		}
-		
+
 		if( ! emittedFilesTmp.isEmpty())
 			emittedFiles = emittedFilesTmp;
-		
-		
+
+
 		final List<PeriodicThreadDef> periodicDefs = extractPeriodicDefs(project);
 
 		String periodicDefinition = createPeriodicDefinitionString(periodicDefs);
@@ -160,12 +166,21 @@ public class FmuSourceCodeExporter extends FmuExporter
 
 		project.createProjectTempRelativeFile(sources + "/defines.def", new ByteArrayInputStream("CUSTOM_IO".getBytes("UTF-8")));
 		project.createProjectTempRelativeFile(sources + "/includes.txt", new ByteArrayInputStream("fmi\nvdmlib".getBytes("UTF-8")));
-		
+
 		//Populate list of source files in modelDescription.xml file.
 		for(int i = 0; i < emittedFiles.size(); i++)
 		{
 			modelDescriptionConfig.sourceFiles.add(
-						emittedFiles.get(i).toString());
+					emittedFiles.get(i).toString());
+		}
+
+		//Copy other files included with the model as resources.
+		resourceFiles = (LinkedList<File>)FileUtils.listFiles(project.getSourceRootPath(), resourceFileExtensions, true);
+
+		for(File resFile : resourceFiles)
+		{
+			is = new FileInputStream(resFile);
+			project.createProjectTempRelativeFile(resourcesFolder + "/" + resFile.getName(), is); 
 		}
 	}
 
@@ -461,24 +476,24 @@ public class FmuSourceCodeExporter extends FmuExporter
 					//Store name here based on what kind of definition it is, since values allow patterns.
 					PPattern pat;
 					String defName = null;
-					
+
 					if(def instanceof AValueDefinition)
 					{
-							pat = ((AValueDefinition)def).getPattern();
-							
-							if(pat instanceof AIdentifierPattern)
-							{
-								defName = ((AIdentifierPattern) pat).getName().getName();
-							}
-							else
-							{
-								//TODO:
-							}
+						pat = ((AValueDefinition)def).getPattern();
+
+						if(pat instanceof AIdentifierPattern)
+						{
+							defName = ((AIdentifierPattern) pat).getName().getName();
+						}
+						else
+						{
+							//TODO:
+						}
 					}
 					else
 						defName = def.getName().getName();
-					
-					
+
+
 					if ("run".equals(defName))
 					{
 						def.apply(new DepthFirstAnalysisAdaptor()
