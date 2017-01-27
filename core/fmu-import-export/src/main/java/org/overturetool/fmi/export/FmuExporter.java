@@ -2,15 +2,18 @@ package org.overturetool.fmi.export;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.intocps.java.fmi.shm.SharedMemory;
 import org.overture.ast.analysis.AnalysisException;
 import org.overture.ast.definitions.AInstanceVariableDefinition;
@@ -215,6 +218,8 @@ public class FmuExporter
 			throws IOException, AnalysisException
 	{
 		final String resourcesFolder = "resources";
+		LinkedList<File> resourceFiles;
+		String resourceFileExtensions[] = new String[]{"csv"};
 
 		InputStream is = null;
 		final String interpreterJarName = "fmi-interpreter-jar-with-dependencies.jar";
@@ -225,6 +230,7 @@ public class FmuExporter
 		project.createProjectTempRelativeFile(resourcesFolder + "/"
 				+ interpreterJarName, is);
 
+		
 		StringBuffer sb = new StringBuffer();
 		sb.append("false\n");
 		sb.append("java\n");
@@ -301,6 +307,15 @@ public class FmuExporter
 		{
 			project.createProjectTempRelativeFile(binaries + "/git-info-txt", is);
 		}
+		
+		//Copy other files included with the model as resources.
+		resourceFiles = (LinkedList<File>)FileUtils.listFiles(project.getSourceRootPath(), resourceFileExtensions, true);
+		
+		for(File resFile : resourceFiles)
+		{
+			is = new FileInputStream(resFile);
+			project.createProjectTempRelativeFile(resourcesFolder + "/" + resFile.getName(), is); 
+		}
+		 
 	}
-
 }
