@@ -165,7 +165,7 @@ public class FmuExporter
 									}
 								}
 
-								
+
 								project.cleanUp();
 							} catch (IOException e)
 							{
@@ -212,14 +212,28 @@ public class FmuExporter
 		return config;
 	}
 
+	protected void copyResourceFiles(IProject project, String resourcesFolder) throws IOException
+	{
+		InputStream is = null;
+		LinkedList<File> resourceFiles;
+		String resourceFileExtensions[] = new String[]{"csv"};  //include more as needed.
+
+		//Copy other resource files included with the model as resources.
+		resourceFiles = (LinkedList<File>)FileUtils.listFiles(project.getSourceRootPath(), resourceFileExtensions, true);
+
+		for(File resFile : resourceFiles)
+		{
+			is = new FileInputStream(resFile);
+			project.createProjectTempRelativeFile(resourcesFolder + "/" + resFile.getName(), is); 
+		}
+	}
+
 	protected void copyFmuResources(GeneratorInfo info, String name,
 			IProject project, ModelDescriptionConfig modelDescriptionConfig,
 			ASystemClassDefinition system, PrintStream out, PrintStream err)
-			throws IOException, AnalysisException
+					throws IOException, AnalysisException
 	{
 		final String resourcesFolder = "resources";
-		LinkedList<File> resourceFiles;
-		String resourceFileExtensions[] = new String[]{"csv"};
 
 		InputStream is = null;
 		final String interpreterJarName = "fmi-interpreter-jar-with-dependencies.jar";
@@ -230,7 +244,7 @@ public class FmuExporter
 		project.createProjectTempRelativeFile(resourcesFolder + "/"
 				+ interpreterJarName, is);
 
-		
+
 		StringBuffer sb = new StringBuffer();
 		sb.append("false\n");
 		sb.append("java\n");
@@ -308,14 +322,6 @@ public class FmuExporter
 			project.createProjectTempRelativeFile(binaries + "/git-info-txt", is);
 		}
 		
-		//Copy other files included with the model as resources.
-		resourceFiles = (LinkedList<File>)FileUtils.listFiles(project.getSourceRootPath(), resourceFileExtensions, true);
-		
-		for(File resFile : resourceFiles)
-		{
-			is = new FileInputStream(resFile);
-			project.createProjectTempRelativeFile(resourcesFolder + "/" + resFile.getName(), is); 
-		}
-		 
+		copyResourceFiles(project, resourcesFolder);
 	}
 }

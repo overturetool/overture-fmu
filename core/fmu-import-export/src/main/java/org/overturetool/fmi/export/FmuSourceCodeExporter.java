@@ -72,8 +72,6 @@ public class FmuSourceCodeExporter extends FmuExporter
 		final String resourcesFolder = "resources";
 		List<File> emittedFiles, emittedFilesTmp;
 		LinkedList<File> resourceFiles;
-		String resourceFileExtensions[] = new String[]{"csv"};
-		InputStream is;
 
 		CGenerator generator = new CGenerator(project);
 
@@ -174,14 +172,7 @@ public class FmuSourceCodeExporter extends FmuExporter
 					emittedFiles.get(i).toString());
 		}
 
-		//Copy other files included with the model as resources.
-		resourceFiles = (LinkedList<File>)FileUtils.listFiles(project.getSourceRootPath(), resourceFileExtensions, true);
-
-		for(File resFile : resourceFiles)
-		{
-			is = new FileInputStream(resFile);
-			project.createProjectTempRelativeFile(resourcesFolder + "/" + resFile.getName(), is); 
-		}
+		copyResourceFiles(project, resourcesFolder);
 	}
 
 	private void copySource(IProject project, String path, String sourcePath)
