@@ -234,10 +234,12 @@ extern "C" fmi2Status fmi2CancelStep(fmi2Component c)
 extern "C" fmi2Status fmi2DoStep(fmi2Component c, fmi2Real currentCommunicationPoint, fmi2Real communicationStepSize,
 		fmi2Boolean noSetFMUStatePriorToCurrentPoint)
 {
+	fmi2Status stepStatus;
+
 	syncInputsToModel();
-	vdmStep(currentCommunicationPoint, communicationStepSize);
+	stepStatus = vdmStep(currentCommunicationPoint, communicationStepSize);
 	syncOutputsToBuffers();
-	return fmi2OK;
+	return stepStatus;
 }
 
 extern "C" fmi2Status fmi2GetStatus(fmi2Component c, const fmi2StatusKind s, fmi2Status *value)
