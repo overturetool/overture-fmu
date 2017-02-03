@@ -172,7 +172,7 @@ public class FmuSourceCodeExporter extends FmuExporter
 					emittedFiles.get(i).toString());
 		}
 
-		copyResourceFiles(project, resourcesFolder);
+		copyResourceFiles(project, resourcesFolder, new String[]{"csv", "vdmrt"});
 	}
 
 	private void copySource(IProject project, String path, String sourcePath)
