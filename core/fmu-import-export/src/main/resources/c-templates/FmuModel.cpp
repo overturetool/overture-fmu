@@ -39,19 +39,45 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationSte
 	int i, j;
 	int threadRunCount;
 
-	//In this implementation we need the step size to be an integer multiple of the period of each thread.
+
+	//We want to be able to align synchronization on either step size or thread boundary.
 	for(i = 0;  i < PERIODIC_GENERATED_COUNT; i++)
 	{
-		if(((long int) communicationStepSize) % ((long int)threads[i].period) != 0)
+		if(
+			((communicationStepSize >= threads[i].period) &&
+			(((long int) communicationStepSize) % ((long int)threads[i].period) != 0))
+		{
+			return fmi2Discard;
+		}
+		else if(
+			((threads[i].period) >= communicationStepSize) &&
+			(((long int)threads[i].period) % ((long int) communicationStepSize) != 0))
 		{
 			return fmi2Discard;
 		}
 	}
 
+
 	//Call each thread the appropriate number of times.
 	for(i = 0;  i < PERIODIC_GENERATED_COUNT; i++)
 	{
-		threadRunCount = ((long int) communicationStepSize) / ((long int)threads[i].period);
+		if(communicationStepSize >= threads[i].period)
+		{
+			threadRunCount = ((long int) communicationStepSize) / ((long int)threads[i].period);
+		}
+		else
+		{
+			if(threads[i].lastExecuted == currentCommunicationPoint)
+			{
+				threadRunCount = 1;
+			}
+			else
+			{
+				threadRunCount = 0;
+			}
+		}
+
+		printf("THREAD COUNT:  %d\n", threadCount);
 
 		//Execute each thread the number of times that its period fits in the step size.
 		for(j = 0; j < threadRunCount; j++)
