@@ -31,7 +31,6 @@ TVP sys = NULL;
 */
 fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationStepSize)
 {
-
 	//convert seconds to nanoseconds
 	currentCommunicationPoint = currentCommunicationPoint*1E9;
 	communicationStepSize = communicationStepSize*1E9;
@@ -45,13 +44,13 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationSte
 	{
 		if(
 			(communicationStepSize >= threads[i].period) &&
-			(((long int) communicationStepSize) % ((long int)threads[i].period) != 0))
+			(((long long int) communicationStepSize) % ((long long int)threads[i].period) != 0))
 		{
 			return fmi2Discard;
 		}
 		else if(
 			(threads[i].period >= communicationStepSize) &&
-			(((long int)threads[i].period) % ((long int) communicationStepSize) != 0))
+			(((long long int)threads[i].period) % ((long long int) communicationStepSize) != 0))
 		{
 			return fmi2Discard;
 		}
@@ -63,11 +62,12 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationSte
 	{
 		if(communicationStepSize >= threads[i].period)
 		{
-			threadRunCount = ((long int) communicationStepSize) / ((long int)threads[i].period);
+			threadRunCount = ((long long int) communicationStepSize) / ((long long int)threads[i].period);
 		}
 		else
 		{
-			if(((long int)currentCommunicationPoint) - 2 <= ((long int)(threads[i].lastExecuted)) && ((long int)(threads[i].lastExecuted) <= ((long int)currentCommunicationPoint) + 2))
+			//Taking into account rounding errors.
+			if(((long long int)currentCommunicationPoint) - 2 <= ((long long int)(threads[i].lastExecuted)) && ((long long int)(threads[i].lastExecuted) <= ((long long int)currentCommunicationPoint) + 2))
 			{
 				threadRunCount = 1;
 			}
@@ -77,15 +77,15 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationSte
 			}
 		}
 
-//		printf("THREAD COUNT:  %d\nSTEP SIZE:  %lf\nCURRENT POINT:  %lf\nTHREAD PERIOD:  %lf\nLAST EXECUTED %lf\n", threadRunCount, communicationStepSize, currentCommunicationPoint, threads[i].period, threads[i].lastExecuted);
+//		printf("THREAD COUNT:  %d\nSTEP SIZE:  %lf\nCURRENT POINT:  %lf\nTHREAD PERIOD:  %llf\nLAST EXECUTED %llf\n", threadRunCount, communicationStepSize, currentCommunicationPoint, threads[i].period, threads[i].lastExecuted);
 
 		//Execute each thread the number of times that its period fits in the step size.
 		for(j = 0; j < threadRunCount; j++)
 		{
 			threads[i].call();
+//			printf("RUN THREAD AT %lf\n", currentCommunicationPoint / 1E9);
 
 			//Update the thread's last execution time.
-//			threads[i].lastExecuted = currentCommunicationPoint + communicationStepSize;
 			threads[i].lastExecuted += threads[i].period;
 		}
 	}
