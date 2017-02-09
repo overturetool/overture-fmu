@@ -27,9 +27,9 @@ struct FmiBuffer{
 
 struct PeriodicThreadStatus
 {
-	double period;
+	long double period;
 	void (*call)(void);
-	int lastExecuted;
+	long double lastExecuted;
 };
 
 extern struct FmiBuffer fmiBuffer;
