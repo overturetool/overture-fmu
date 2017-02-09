@@ -29,7 +29,7 @@ struct PeriodicThreadStatus
 {
 	double period;
 	void (*call)(void);
-	int lastExecuted;
+	double lastExecuted;
 };
 
 extern struct FmiBuffer fmiBuffer;

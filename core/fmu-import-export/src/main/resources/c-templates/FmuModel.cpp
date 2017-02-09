@@ -44,13 +44,13 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationSte
 	for(i = 0;  i < PERIODIC_GENERATED_COUNT; i++)
 	{
 		if(
-			((communicationStepSize >= threads[i].period) &&
+			(communicationStepSize >= threads[i].period) &&
 			(((long int) communicationStepSize) % ((long int)threads[i].period) != 0))
 		{
 			return fmi2Discard;
 		}
 		else if(
-			((threads[i].period) >= communicationStepSize) &&
+			(threads[i].period >= communicationStepSize) &&
 			(((long int)threads[i].period) % ((long int) communicationStepSize) != 0))
 		{
 			return fmi2Discard;
@@ -67,7 +67,7 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationSte
 		}
 		else
 		{
-			if(threads[i].lastExecuted == currentCommunicationPoint)
+			if(((long int)currentCommunicationPoint) - 2 <= ((long int)(threads[i].lastExecuted)) && ((long int)(threads[i].lastExecuted) <= ((long int)currentCommunicationPoint) + 2))
 			{
 				threadRunCount = 1;
 			}
@@ -77,16 +77,17 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationSte
 			}
 		}
 
-		printf("THREAD COUNT:  %d\n", threadCount);
+//		printf("THREAD COUNT:  %d\nSTEP SIZE:  %lf\nCURRENT POINT:  %lf\nTHREAD PERIOD:  %lf\nLAST EXECUTED %lf\n", threadRunCount, communicationStepSize, currentCommunicationPoint, threads[i].period, threads[i].lastExecuted);
 
 		//Execute each thread the number of times that its period fits in the step size.
 		for(j = 0; j < threadRunCount; j++)
 		{
 			threads[i].call();
-		}
 
-		//Update the thread's last execution time.
-		threads[i].lastExecuted = currentCommunicationPoint + communicationStepSize;
+			//Update the thread's last execution time.
+//			threads[i].lastExecuted = currentCommunicationPoint + communicationStepSize;
+			threads[i].lastExecuted += threads[i].period;
+		}
 	}
 
 	return fmi2OK;
