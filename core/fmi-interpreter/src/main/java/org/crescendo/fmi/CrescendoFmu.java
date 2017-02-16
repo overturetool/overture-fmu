@@ -111,7 +111,7 @@ public abstract class CrescendoFmu implements IServiceProtocol
 				{
 					message.substring(0, message.length() - 2);
 				}
-				logger.trace("Sending log message category: {}, data: {}",category.name,message);
+				logger.trace("Sending log message category: {}, data: {}", category.name, message);
 				logDriver.log(category.name, status, message);
 			} else
 			{
@@ -405,11 +405,12 @@ public abstract class CrescendoFmu implements IServiceProtocol
 		{
 			String callbackShmName = request.getCallbackShmName();
 			logger.debug("Connecting callback log driver with shm key: '{}'", callbackShmName);
-			try{
-			logDriver = new LogProtocolDriver(callbackShmName);
-			}catch(Throwable t)
+			try
 			{
-				logger.error("Faild to connect log protocol driver: {}",t.getMessage(),t);
+				logDriver = new LogProtocolDriver(callbackShmName);
+			} catch (Throwable t)
+			{
+				logger.error("Faild to connect log protocol driver: {}", t.getMessage(), t);
 			}
 		}
 
@@ -511,14 +512,25 @@ public abstract class CrescendoFmu implements IServiceProtocol
 			return error;
 		}
 
+		Fmi2StatusReply status = ok;
+
 		for (int i = 0; i < request.getValueReferenceCount(); i++)
 		{
 			int id = request.getValueReference(i);
 			state.markParameterPending(id);
 			logger.trace("Setting real[{}] = {}", id, request.getValues(i));
-			state.reals[id] = request.getValues(i);
+
+			if (Double.isNaN(request.getValues(i)))
+			{
+				status = discard;
+				fmiLog(LogCategory.LogError, "Cannot set real with id " + id
+						+ " invalid value: " + request.getValues(i));
+			} else
+			{
+				state.reals[id] = request.getValues(i);
+			}
 		}
-		return ok;
+		return status;
 	}
 
 	@Override
