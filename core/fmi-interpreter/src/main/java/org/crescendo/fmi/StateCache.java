@@ -264,7 +264,7 @@ public class StateCache
 
 			String causality = attributes.getNamedItem("causality").getNodeValue();
 
-			if ("output".equals(causality))
+			if ("output".equals(causality)|| "local".equals(causality))
 			{
 				outputs.add(valRef);
 			} else if ("input".equals(causality))

@@ -17,7 +17,7 @@ public WatertankSystem : () ==> WatertankSystem
 WatertankSystem () == 
 (
 	let levelSensor   = new LevelSensor(hwi.level),
-			valveActuator =  new ValveActuator(hwi.valveState ) 
+			valveActuator =  new ValveActuator(hwi.valveState,hwi.valveStateL ) 
 	in
 		controller := new Controller(levelSensor, valveActuator);
 

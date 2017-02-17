@@ -18,6 +18,9 @@ instance variables
 	-- @ interface: type = output, name="valve";
 	public valveState : BoolPort := new BoolPort(false);
 
+	-- @ interface: type = local, name="valve2";
+	public valveStateL : BoolPort := new BoolPort(false);
+
 
 end HardwareInterface
 

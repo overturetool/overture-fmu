@@ -270,6 +270,12 @@ public class ModelDescriptionGenerator
 				String type = getType(vDef.getType(), null);
 				return String.format(scalarVariableTemplate, name, valueReference, "output", "discrete", "calculated", type);
 
+			} else if (annotation.type.equals("local"))
+			{
+				AInstanceVariableDefinition vDef = (AInstanceVariableDefinition) definition;
+				String type = getType(vDef.getType(), null);
+				return String.format(scalarVariableTemplate, name, valueReference, "local", "discrete", "calculated", type);
+
 			} else if (annotation.type.equals("input"))
 			{
 
