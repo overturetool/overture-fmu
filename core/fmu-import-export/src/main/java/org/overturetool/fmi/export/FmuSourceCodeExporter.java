@@ -105,8 +105,8 @@ public class FmuSourceCodeExporter extends FmuExporter
 		//EMIT GUID HEADER FILE HERE.
 
 		// copy FMU files
-		copySource(project, sources + "/Fmu.cpp", "/c-templates/Fmu.cpp");
-		emittedFiles.add(new File("Fmu.cpp"));
+		copySource(project, sources + "/Fmu.c", "/c-templates/Fmu.c");
+		emittedFiles.add(new File("Fmu.c"));
 		copySource(project, sources + "/FmuIO.c", "/c-templates/FmuIO.c");
 		emittedFiles.add(new File("FmuIO.c"));
 
@@ -130,8 +130,8 @@ public class FmuSourceCodeExporter extends FmuExporter
 		copySource(project, sources + "/fmi/fmi2TypesPlatform.h", "/c-templates/fmi/fmi2TypesPlatform.h");
 		emittedFiles.add(new File("fmi/fmi2TypesPlatform.h"));
 
-		// copy FmuModel.cpp
-		String content = IOUtils.toString(this.getClass().getResourceAsStream("/c-templates/FmuModel.cpp"));
+		// copy FmuModel.c
+		String content = IOUtils.toString(this.getClass().getResourceAsStream("/c-templates/FmuModel.c"));
 
 		content = content.replace("//#GENERATED_DEFINES", "#define PERIODIC_GENERATED\n");
 		content = content.replace("//#GENERATED_INSERT", sb.toString());
@@ -150,8 +150,8 @@ public class FmuSourceCodeExporter extends FmuExporter
 
 		bytes = content.getBytes("UTF-8");
 		source = new ByteArrayInputStream(bytes);
-		project.createProjectTempRelativeFile(sources + "/FmuModel.cpp", source);
-		emittedFiles.add(new File("FmuModel.cpp"));
+		project.createProjectTempRelativeFile(sources + "/FmuModel.c", source);
+		emittedFiles.add(new File("FmuModel.c"));
 
 		// copy CMakeLists
 		content = IOUtils.toString(this.getClass().getResourceAsStream("/c-templates/CMakeLists.txt"));

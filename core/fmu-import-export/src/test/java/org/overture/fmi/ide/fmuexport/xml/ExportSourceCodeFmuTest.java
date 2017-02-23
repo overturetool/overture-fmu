@@ -52,10 +52,10 @@ public class ExportSourceCodeFmuTest
 				"sources/fmi/fmi2Functions.h",
 				"sources/fmi/fmi2FunctionTypes.h",
 				"sources/fmi/fmi2TypesPlatform.h",
-				"sources/Fmu.cpp",
+				"sources/Fmu.c",
 				"sources/Fmu.h",
 				"sources/FmuIO.c",
-				"sources/FmuModel.cpp",
+				"sources/FmuModel.c",
 				"sources/includes.txt",
 
 				// FMI FMU model sources
