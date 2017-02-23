@@ -8,14 +8,12 @@
 
 //#GENERATED_DEFINES
 
-extern "C"
-{
+
 #include <stdarg.h>
 #include "Fmu.h"
 #include "Vdm.h"
 
 //#GENERATED_MODEL_INCLUDE
-}
 
 TVP sys = NULL;
 
