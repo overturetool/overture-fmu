@@ -269,18 +269,18 @@ public class ExportFmuTest
 		Assert.assertEquals("", getStartValue(doc, xpath, "in_s_default"));
 
 		// outputs
-		Assert.assertNull(getStart(doc, xpath, "out_r"));
-		Assert.assertNull(getStart(doc, xpath, "out_r_default"));
+		Assert.assertEquals("1.0",getStartValue(doc, xpath, "out_r"));
+		Assert.assertEquals("0.0",getStartValue(doc, xpath, "out_r_default"));
 
-		Assert.assertNull(getStart(doc, xpath, "out_i"));
-		Assert.assertNull(getStart(doc, xpath, "out_i_default"));
+		Assert.assertEquals("1",getStartValue(doc, xpath, "out_i"));
+		Assert.assertEquals("0",getStartValue(doc, xpath, "out_i_default"));
 
-		Assert.assertNull(getStart(doc, xpath, "out_b"));
-		Assert.assertNull(getStart(doc, xpath, "out_b_default"));
+		Assert.assertEquals("true",getStartValue(doc, xpath, "out_b"));
+		Assert.assertEquals("false",getStartValue(doc, xpath, "out_b_default"));
 
-		Assert.assertNull(getStart(doc, xpath, "out_s"));
-		Assert.assertNull(getStart(doc, xpath, "out_s_empty"));
-		Assert.assertNull(getStart(doc, xpath, "out_s_default"));
+		Assert.assertEquals("some value",getStartValue(doc, xpath, "out_s"));
+		Assert.assertEquals("",getStartValue(doc, xpath, "out_s_empty"));
+		Assert.assertEquals("",getStartValue(doc, xpath, "out_s_default"));
 	}
 
 	String getStartValue(Document doc, XPath xpath, String name)
