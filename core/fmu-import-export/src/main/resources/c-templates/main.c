@@ -1,9 +1,8 @@
 #include <stdarg.h>
 #include "Fmu.h"
 #include "Vdm.h"
+#include "FmuModel.h"
 
-
-//#GENERATED_MODEL_INCLUDE
 
 
 void fmuLoggerCache(void *componentEnvironment, fmi2String instanceName, fmi2Status status, fmi2String category,
@@ -15,7 +14,6 @@ void fmuLoggerCache(void *componentEnvironment, fmi2String instanceName, fmi2Sta
     vprintf(message, args);
     va_end(args);
 }
-
 
 
 

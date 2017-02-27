@@ -3,6 +3,8 @@
 
 //#GENERATED_MODEL_INCLUDE
 
+//#GENERATED_PERIODIC_DEFINITION_COUNT
+
 void syncInputsToModel();
 void syncOutputsToBuffers();
 void systemInit();
@@ -10,4 +12,4 @@ void systemDeInit();
 
 extern struct PeriodicThreadStatus threads[];
 
-#endif FMU_MODEL_H_
+#endif /* FMU_MODEL_H_ */

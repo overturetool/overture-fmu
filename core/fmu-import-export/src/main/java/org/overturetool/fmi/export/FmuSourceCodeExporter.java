@@ -98,6 +98,7 @@ public class FmuSourceCodeExporter extends FmuExporter
 		final List<PeriodicThreadDef> periodicDefs = extractPeriodicDefs(project);
 
 		String periodicDefinition = createPeriodicDefinitionString(periodicDefs);
+		String periodicDefinitionCount = createPeriodicDefinitionCountString(periodicDefs);
 
 		StringBuffer sb = generateIOCacheSyncMethods(info, periodicDefinition, systemName);
 
@@ -109,6 +110,10 @@ public class FmuSourceCodeExporter extends FmuExporter
 		emittedFiles.add(new File("Fmu.c"));
 		copySource(project, sources + "/FmuIO.c", "/c-templates/FmuIO.c");
 		emittedFiles.add(new File("FmuIO.c"));
+		copySource(project, sources + "/main.c", "/c-templates/main.c");
+		emittedFiles.add(new File("main.c"));
+		copySource(project, sources + "/FmuModel.h", "/c-templates/FmuModel.h");
+		emittedFiles.add(new File("FmuModel.h"));
 
 		String contentFmuh = IOUtils.toString(this.getClass().getResourceAsStream("/c-templates/Fmu.h"));
 		contentFmuh = contentFmuh.replace("//#define BOOL_COUNT", "#define BOOL_COUNT "
@@ -152,6 +157,30 @@ public class FmuSourceCodeExporter extends FmuExporter
 		source = new ByteArrayInputStream(bytes);
 		project.createProjectTempRelativeFile(sources + "/FmuModel.c", source);
 		emittedFiles.add(new File("FmuModel.c"));
+		
+		
+		
+		//Copy FmuModel.h
+		content = IOUtils.toString(this.getClass().getResourceAsStream("/c-templates/FmuModel.h"));
+		content = content.replace("//#GENERATED_PERIODIC_DEFINITION_COUNT", periodicDefinitionCount);
+		content = content.replace("//#GENERATED_MODEL_INCLUDE", getJoinClassNames(project, new INameFormater()
+		{
+
+			@Override
+			public String format(String className)
+			{
+				return "#include \"" + className + ".h\"";
+			}
+		}));
+
+		bytes = content.getBytes("UTF-8");
+		source = new ByteArrayInputStream(bytes);
+		project.createProjectTempRelativeFile(sources + "/FmuModel.h", source);
+		emittedFiles.add(new File("FmuModel.h"));
+		
+		
+		
+		
 
 		// copy CMakeLists
 		content = IOUtils.toString(this.getClass().getResourceAsStream("/c-templates/CMakeLists.txt"));
@@ -368,6 +397,19 @@ public class FmuSourceCodeExporter extends FmuExporter
 		sb.append("\n");
 		return sb;
 	}
+	
+	
+	private String createPeriodicDefinitionCountString(List<PeriodicThreadDef> periodicDefs)
+	{
+		StringBuffer sb = new StringBuffer();
+		
+		sb.append("#define PERIODIC_GENERATED_COUNT ");
+		sb.append(periodicDefs.size());
+		sb.append("\n");
+		sb.append("\n");
+		
+		return sb.toString();
+	}
 
 	private String createPeriodicDefinitionString(
 			List<PeriodicThreadDef> periodicDefs)
@@ -389,10 +431,7 @@ public class FmuSourceCodeExporter extends FmuExporter
 		}
 
 		StringBuffer sb = new StringBuffer();
-		sb.append("#define PERIODIC_GENERATED_COUNT ");
-		sb.append(periodicDefs.size());
-		sb.append("\n");
-		sb.append("\n");
+		
 		sb.append(periodicTasks.toString());
 		sb.append("\n");
 		sb.append("\n");
