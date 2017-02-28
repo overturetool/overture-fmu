@@ -47,9 +47,14 @@ int main()
             if(fmi2OK !=fmi2DoStep(NULL,time,stepSize,fmi2False))
             {
                 printf("Step did not return ok\n");
+		systemDeInit();
                 return 1;
             }
+
+	vdm_gc();
     }
-    printf("Done\n");
-  
+
+    systemDeInit();
+
+    printf("Done\n"); 
 }

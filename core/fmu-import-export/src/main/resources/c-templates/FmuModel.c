@@ -76,8 +76,6 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationSte
 			}
 		}
 
-//		printf("THREAD COUNT:  %d\nSTEP SIZE:  %lf\nCURRENT POINT:  %lf\nTHREAD PERIOD:  %llf\nLAST EXECUTED %llf\n", threadRunCount, communicationStepSize, currentCommunicationPoint, threads[i].period, threads[i].lastExecuted);
-
 		//Execute each thread the number of times that its period fits in the step size.
 		for(j = 0; j < threadRunCount; j++)
 		{
@@ -87,6 +85,8 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationSte
 			//Update the thread's last execution time.
 			threads[i].lastExecuted += threads[i].period;
 		}
+
+		vdm_gc();
 	}
 
 	return fmi2OK;

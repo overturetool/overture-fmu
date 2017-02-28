@@ -39,6 +39,7 @@ public class CGenerator
 		nodes.addAll(project.getClasses());
 
 		// Generate user specified classes
+		vdm2c.getCGenSettings().setUseGarbageCollection(true);
 		GeneratedData data = vdm2c.generate(nodes);
 		
 		try {
