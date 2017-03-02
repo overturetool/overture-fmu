@@ -16,6 +16,7 @@ bool isTerminated = false;
 struct FmiBuffer fmiBuffer;
 const fmi2CallbackFunctions *g_fmiCallbackFunctions;
 const char* g_fmiInstanceName;
+extern char* resourcesLocation;
 
 
 // ---------------------------------------------------------------------------
@@ -32,6 +33,9 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
 	tmpInstanceName = (char*)malloc(strlen(instanceName) + 1);
 	strcpy(tmpInstanceName, instanceName);
 	g_fmiInstanceName = tmpInstanceName;
+
+	resourcesLocation = (char*)malloc(strlen(fmuResourceLocation) + 1);
+	strcpy(resourcesLocation, fmuResourceLocation);
 	
 	systemInit();
 
