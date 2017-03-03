@@ -65,7 +65,7 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationSte
 		}
 		else
 		{
-			//Taking into account rounding errors.
+			//Taking into account rounding errors.  Ideal condition is currentCommunicationPoint == threads[i].lastExecuted.
 			if(((long long int)currentCommunicationPoint) - 2 <= ((long long int)(threads[i].lastExecuted)) && ((long long int)(threads[i].lastExecuted) <= ((long long int)currentCommunicationPoint) + 2))
 			{
 				threadRunCount = 1;
