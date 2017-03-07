@@ -23,9 +23,6 @@ import org.xml.sax.SAXException;
 
 public class EclipseLinkedFilesProject
 {
-	public static void main(String[] args) throws XPathExpressionException, SAXException, IOException, ParserConfigurationException{
-		System.out.println(getFiles(new File(args[0])));
-	}
 	public static List<File> getFiles(File projectFile) throws SAXException, IOException, ParserConfigurationException, XPathExpressionException
 	{
 		

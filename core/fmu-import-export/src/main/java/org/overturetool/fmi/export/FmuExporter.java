@@ -70,6 +70,7 @@ public class FmuExporter
 				Map<PDefinition, FmuAnnotation> definitionAnnotation = new VdmAnnotationProcesser().collectAnnotatedDefinitions(project, out, err);
 
 				ASystemClassDefinition system = null;
+				boolean hasWorldRun= false;
 				for (SClassDefinition cDef : project.getClasses())
 				{
 					if (cDef instanceof ASystemClassDefinition)
@@ -77,7 +78,22 @@ public class FmuExporter
 						system = (ASystemClassDefinition) cDef;
 						out.println("Found system class: '"
 								+ cDef.getName().getName() + "'");
+					}else if(cDef.getName().getName().equals("World"))
+					{
+						for (PDefinition def : cDef.getDefinitions())
+						{
+							if(def.getName().getName().equals("run"))
+							{
+								hasWorldRun = true;
+							}
+						}
 					}
+				}
+				
+				if(!hasWorldRun)
+				{
+					err.println("Missing entry point: 'new World.run()'");
+					return null;
 				}
 
 				Map<String, FmuAnnotation> exportNames = new HashMap<>();
