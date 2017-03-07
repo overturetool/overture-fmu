@@ -71,6 +71,7 @@ public class Main
 		Option forceOpt = Option.builder("f").longOpt("force").desc("Force override of existing output files").build();
 		Option verboseOpt = Option.builder("v").longOpt("verbose").desc("Verbose mode or print diagnostic version info").build();
 		Option versionOpt = Option.builder("V").longOpt("version").desc("Show version").build();
+		Option tracabilityEnableOpt = Option.builder("t").longOpt("tracability").desc("Enable Tracability").build();
 		Option toolDebugOpt = Option.builder("debug").longOpt("Tool debug").hasArg(true).argName("port=y/n for auto suspend").desc("Generate tool debug config. Connect with 'localhost' port '4000'").build();
 
 		options.addOption(helpOpt);
@@ -85,6 +86,7 @@ public class Main
 		options.addOption(verboseOpt);
 		options.addOption(forceOpt);
 		options.addOption(versionOpt);
+		options.addOption(tracabilityEnableOpt);
 
 		CommandLineParser parser = new DefaultParser();
 		CommandLine cmd = null;
@@ -155,6 +157,8 @@ public class Main
 			{
 				return;
 			}
+		}else{
+			System.err.println("Missing options either "+exportOpt.getOpt() +" or "+ importModelDescriptionOpt.getOpt()+" must be specified.");
 		}
 
 		if (cmd.hasOption(releaseOpt.getOpt()))
@@ -184,6 +188,8 @@ public class Main
 			specFiles = FileUtils.listFiles(projectRoot, new String[] { "vdmrt" }, true);
 		}
 		ConsoleProject project = new ConsoleProject(projectName, projectRoot, outputFolder, specFiles);
+		
+		project.setEnableTracability(cmd.hasOption(tracabilityEnableOpt.getOpt()));
 
 		if (!exportToolFmu && cmd.hasOption(toolDebugOpt.getOpt()))
 		{
@@ -272,6 +278,7 @@ public class Main
 		private List<? extends SClassDefinition> classes;
 		private boolean outputDebugEnabled = false;
 		private String toolDebugConfig;
+		private boolean tracabilityEnabled = false;
 
 		public ConsoleProject(String name, File sourceRoot, File outputFolder,
 				Collection<File> specFiles)
@@ -465,6 +472,17 @@ public class Main
 		public String getToolDebugConfig()
 		{
 			return this.toolDebugConfig;
+		}
+
+		@Override
+		public boolean isTracabilityEnabled()
+		{
+			return this.tracabilityEnabled;
+		}
+		
+		public void setEnableTracability(boolean enabled)
+		{
+			this.tracabilityEnabled = enabled;
 		}
 
 	}

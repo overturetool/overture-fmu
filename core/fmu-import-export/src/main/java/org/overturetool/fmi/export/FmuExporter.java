@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.intocps.java.fmi.shm.SharedMemory;
 import org.overture.ast.analysis.AnalysisException;
 import org.overture.ast.definitions.AInstanceVariableDefinition;
@@ -34,16 +33,16 @@ public class FmuExporter
 {
 	private boolean HWInterfaceHasStatics(IProject project)
 	{
-		for(SClassDefinition c :  project.getClasses())
+		for (SClassDefinition c : project.getClasses())
 		{
-			if(c.getName().getName().equals("HardwareInterface"))
+			if (c.getName().getName().equals("HardwareInterface"))
 			{
 
-				for(PDefinition i : c.getDefinitions())
+				for (PDefinition i : c.getDefinitions())
 				{
-					if(i instanceof AInstanceVariableDefinition)
+					if (i instanceof AInstanceVariableDefinition)
 					{
-						if(((AInstanceVariableDefinition)i).getAccess().getStatic() != null)
+						if (((AInstanceVariableDefinition) i).getAccess().getStatic() != null)
 						{
 							return true;
 						}
@@ -62,7 +61,7 @@ public class FmuExporter
 		out.println("|             " + title + "             |");
 		out.println("---------------------------------------");
 		out.println("Starting FMU export for project: '" + project.getName()
-		+ "'");
+				+ "'");
 
 		if (project.typeCheck())
 		{
@@ -104,7 +103,7 @@ public class FmuExporter
 					return null;
 				}
 
-				if(HWInterfaceHasStatics(project))
+				if (HWInterfaceHasStatics(project))
 				{
 					err.println("The HardwareInterface class must not contain static definitions.");
 					return null;
@@ -131,9 +130,9 @@ public class FmuExporter
 				final File fmuArchieveName = new File(project.getOutputFolder(), project.getName()
 						+ ".fmu");
 
-				if(fmuArchieveName.exists())
-				{	
-					if(force)
+				if (fmuArchieveName.exists())
+				{
+					if (force)
 						fmuArchieveName.delete();
 				}
 
@@ -160,11 +159,13 @@ public class FmuExporter
 										File hwiFile = cDef.getLocation().getFile();
 										String data = FileUtils.readFileToString(hwiFile, Charset.forName("UTF-8"));
 										StringBuilder sb = new StringBuilder(data);
-										sb.insert(0, String.format("--##\tEXPORT\t%s\t%s\t%s\t%s\t%s\n",hash,fmuArchieveName.getName(),Tracability.getCurrentTimeStamp(),getExportType(),Tracability.getToolId()));
+										if (project.isTracabilityEnabled())
+										{
+											sb.insert(0, String.format("--##\tEXPORT\t%s\t%s\t%s\t%s\t%s\n", hash, fmuArchieveName.getName(), Tracability.getCurrentTimeStamp(), getExportType(), Tracability.getToolId()));
+										}
 										FileUtils.write(hwiFile, sb, Charset.forName("UTF-8"));
 									}
 								}
-
 
 								project.cleanUp();
 							} catch (IOException e)
@@ -212,42 +213,46 @@ public class FmuExporter
 		return config;
 	}
 
-	protected void copyResourceFiles(IProject project, String resourcesFolder) throws IOException
+	protected void copyResourceFiles(IProject project, String resourcesFolder)
+			throws IOException
 	{
 		InputStream is = null;
 		LinkedList<File> resourceFiles;
-		String resourceFileExtensions[] = new String[]{"csv"};  //include more as needed.
+		String resourceFileExtensions[] = new String[] { "csv" }; // include more as needed.
 
-		//Copy other resource files included with the model as resources.
-		resourceFiles = (LinkedList<File>)FileUtils.listFiles(project.getSourceRootPath(), resourceFileExtensions, true);
+		// Copy other resource files included with the model as resources.
+		resourceFiles = (LinkedList<File>) FileUtils.listFiles(project.getSourceRootPath(), resourceFileExtensions, true);
 
-		for(File resFile : resourceFiles)
+		for (File resFile : resourceFiles)
 		{
 			is = new FileInputStream(resFile);
-			project.createProjectTempRelativeFile(resourcesFolder + "/" + resFile.getName(), is); 
+			project.createProjectTempRelativeFile(resourcesFolder + "/"
+					+ resFile.getName(), is);
 		}
 	}
-	
-	protected void copyResourceFiles(IProject project, String resourcesFolder, String exts[]) throws IOException
+
+	protected void copyResourceFiles(IProject project, String resourcesFolder,
+			String exts[]) throws IOException
 	{
 		InputStream is = null;
 		LinkedList<File> resourceFiles;
 		String resourceFileExtensions[] = exts;
 
-		//Copy other resource files included with the model as resources.
-		resourceFiles = (LinkedList<File>)FileUtils.listFiles(project.getSourceRootPath(), resourceFileExtensions, true);
+		// Copy other resource files included with the model as resources.
+		resourceFiles = (LinkedList<File>) FileUtils.listFiles(project.getSourceRootPath(), resourceFileExtensions, true);
 
-		for(File resFile : resourceFiles)
+		for (File resFile : resourceFiles)
 		{
 			is = new FileInputStream(resFile);
-			project.createProjectTempRelativeFile(resourcesFolder + "/" + resFile.getName(), is); 
+			project.createProjectTempRelativeFile(resourcesFolder + "/"
+					+ resFile.getName(), is);
 		}
 	}
 
 	protected void copyFmuResources(GeneratorInfo info, String name,
 			IProject project, ModelDescriptionConfig modelDescriptionConfig,
 			ASystemClassDefinition system, PrintStream out, PrintStream err)
-					throws IOException, AnalysisException
+			throws IOException, AnalysisException
 	{
 		final String resourcesFolder = "resources";
 
@@ -260,7 +265,6 @@ public class FmuExporter
 		project.createProjectTempRelativeFile(resourcesFolder + "/"
 				+ interpreterJarName, is);
 
-
 		StringBuffer sb = new StringBuffer();
 		sb.append("false\n");
 		sb.append("java\n");
@@ -271,12 +275,13 @@ public class FmuExporter
 			int port = 4000;
 			String austouspend = "n";
 			String[] configs = project.getToolDebugConfig().split("=");
-			if(configs.length>1)
+			if (configs.length > 1)
 			{
 				port = Integer.parseInt(configs[0]);
-				austouspend = "y".equals((""+configs[1]).toLowerCase())?"y":"n";
+				austouspend = "y".equals(("" + configs[1]).toLowerCase()) ? "y"
+						: "n";
 			}
-			sb.append(String.format("-Xrunjdwp:server=y,transport=dt_socket,address=%d,suspend=%s\n",port,austouspend));
+			sb.append(String.format("-Xrunjdwp:server=y,transport=dt_socket,address=%d,suspend=%s\n", port, austouspend));
 		}
 
 		sb.append("-cp\n");
@@ -337,7 +342,7 @@ public class FmuExporter
 		{
 			project.createProjectTempRelativeFile(binaries + "/git-info-txt", is);
 		}
-		
+
 		copyResourceFiles(project, resourcesFolder);
 	}
 }

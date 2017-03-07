@@ -14,7 +14,6 @@ import java.util.jar.JarInputStream;
 import org.overture.ast.analysis.AnalysisException;
 import org.overture.ast.node.INode;
 import org.overture.codegen.utils.GeneratedData;
-import org.overture.codegen.utils.GeneratedModule;
 import org.overture.codegen.vdm2c.CGen;
 import org.overture.config.Settings;
 import org.overturetool.fmi.IProject;

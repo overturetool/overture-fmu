@@ -150,6 +150,15 @@
                  commandId="org.overture.fmi.ide.fmuexport.importModelDescription">
            </handler>
     </extension>
+    <extension
+          point="org.eclipse.ui.preferencePages">
+       <page
+             category="org.overture.ide.ui.vdm"
+             class="org.overture.fmi.ide.fmuexport.WorkbenchPreferencePageMain"
+             id="org.overture.fmi.ide.fmuexport.page-main"
+             name="FMU Import/Export">
+       </page>
+    </extension>
     <!--extension
           point="org.eclipse.ui.bindings">
        <key
