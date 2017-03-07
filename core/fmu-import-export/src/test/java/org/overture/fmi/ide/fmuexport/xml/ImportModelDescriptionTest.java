@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Vector;
 
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPathExpressionException;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
@@ -32,7 +33,7 @@ public class ImportModelDescriptionTest
 	@Test
 	public void testImportEmpty() throws AbortException, IOException,
 			InterruptedException, SAXException, ParserConfigurationException,
-			ParserException, LexException
+			ParserException, LexException, XPathExpressionException
 	{
 		String output = "target/" + this.getClass().getSimpleName()
 				+ "/testImportEmpty/";
@@ -43,7 +44,7 @@ public class ImportModelDescriptionTest
 	private void importSingleEmpty(String output, String modelDescriptionPath)
 			throws AbortException, IOException, InterruptedException,
 			SAXException, ParserConfigurationException, ParserException,
-			LexException
+			LexException, XPathExpressionException
 	{
 		Main.main(new String[] { "-name", "wt2", "-import",
 				modelDescriptionPath, "-root", output, "-v" });
@@ -78,7 +79,7 @@ public class ImportModelDescriptionTest
 	@Test
 	public void testReImport() throws ParserException, LexException,
 			AbortException, IOException, InterruptedException, SAXException,
-			ParserConfigurationException
+			ParserConfigurationException, XPathExpressionException
 	{
 		String output = "target/" + this.getClass().getSimpleName()
 				+ "/testReImport/";
@@ -89,7 +90,7 @@ public class ImportModelDescriptionTest
 	@Test
 	public void testImportImportMerge() throws ParserException, LexException,
 			AbortException, IOException, InterruptedException, SAXException,
-			ParserConfigurationException
+			ParserConfigurationException, XPathExpressionException
 	{
 		String output = "target/" + this.getClass().getSimpleName()
 				+ "/testImportImportMerge/";

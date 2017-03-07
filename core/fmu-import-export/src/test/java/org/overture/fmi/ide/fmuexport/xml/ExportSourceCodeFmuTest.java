@@ -14,6 +14,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPathExpressionException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -27,7 +28,7 @@ public class ExportSourceCodeFmuTest
 {
 	@Test
 	public void testExportSourceFmu() throws AbortException, IOException,
-			InterruptedException, SAXException, ParserConfigurationException
+			InterruptedException, SAXException, ParserConfigurationException, XPathExpressionException
 	{
 		String output = "target/" + this.getClass().getSimpleName() + "/";
 		FileUtils.copyDirectory(new File("src/test/resources/model"),new File( output));

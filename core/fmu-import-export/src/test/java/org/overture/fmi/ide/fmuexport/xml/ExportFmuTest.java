@@ -110,7 +110,7 @@ public class ExportFmuTest
 
 	@Test
 	public void testExportFmu() throws AbortException, IOException,
-			InterruptedException, SAXException, ParserConfigurationException
+			InterruptedException, SAXException, ParserConfigurationException, XPathExpressionException
 	{
 		String output = "target/" + this.getClass().getSimpleName() + "/"
 				+ getCurrentClassAndMethodNames() + "/";
@@ -153,7 +153,7 @@ public class ExportFmuTest
 
 	@Test
 	public void testExportFmuNoName() throws AbortException, IOException,
-			InterruptedException, SAXException, ParserConfigurationException
+			InterruptedException, SAXException, ParserConfigurationException, XPathExpressionException
 	{
 		String output = "target/" + this.getClass().getSimpleName() + "/"
 				+ getCurrentClassAndMethodNames() + "/";
