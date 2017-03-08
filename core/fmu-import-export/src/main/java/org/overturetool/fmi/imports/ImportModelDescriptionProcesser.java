@@ -278,7 +278,7 @@ public class ImportModelDescriptionProcesser
 					List<ScalarVariable> filter = filter(annotations, vars, out, err);
 					// VdmTypeCheckerUi.typeCheck(shell, project);
 					project.typeCheck();
-					updateHardwareInterface(project, filter, out,hash,file.getName().replace(" ", "%20"));
+					updateHardwareInterface(project, filter, out, hash, file.getName().replace(" ", "%20"));
 					out.println("");
 					out.println("Import comepleted.");
 				} else
@@ -296,8 +296,6 @@ public class ImportModelDescriptionProcesser
 			err.println("Aborting VDM model does not type check");
 		}
 	}
-
-	
 
 	private List<ScalarVariable> filter(
 			Map<PDefinition, FmuAnnotation> annotations,
@@ -332,7 +330,8 @@ public class ImportModelDescriptionProcesser
 	}
 
 	private void updateHardwareInterface(IProject project,
-			List<ScalarVariable> vars, PrintStream out, Object hash, Object importFileName) throws IOException
+			List<ScalarVariable> vars, PrintStream out, Object hash,
+			Object importFileName) throws IOException
 	{
 		out.println("");
 		SClassDefinition hwi = getClassByName(project.getClasses(), HARDWARE_INTERFACE);
@@ -344,9 +343,6 @@ public class ImportModelDescriptionProcesser
 		int endOffset = hwi.getName().getLocation().getEndOffset();
 
 		StringBuilder sb = new StringBuilder(data);
-		
-		
-		
 
 		StringBuilder sbValues = new StringBuilder();
 		StringBuilder sbOutputs = new StringBuilder();
@@ -402,7 +398,10 @@ public class ImportModelDescriptionProcesser
 		}
 
 		// insert at beginning but after all other inserts to preserve index offset
-		sb.insert(0, String.format("--##\tIMPORT\t%s\t%s\t%s\t%s\t%s\n",hash,importFileName,Tracability.getCurrentTimeStamp(),"FMI-ModelDescription",Tracability.getToolId()));
+		if (project.isTracabilityEnabled())
+		{
+			sb.insert(0, String.format("--##\tIMPORT\t%s\t%s\t%s\t%s\t%s\n", hash, importFileName, Tracability.getCurrentTimeStamp(), "FMI-ModelDescription", Tracability.getToolId()));
+		}
 		FileUtils.write(file, sb, Charset.forName("UTF-8"));
 	}
 

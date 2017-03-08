@@ -1,0 +1,95 @@
+class Port
+
+types
+	public String = seq of char;
+	public FmiPortType = bool | real | int | String;
+ 
+operations
+
+	public setValue : FmiPortType ==> ()
+	setValue(v) == is subclass responsibility;
+
+	public pure getValue : () ==> FmiPortType
+	getValue() == is subclass responsibility;
+
+/*	public static create: FmiPortType ==> IntPort | BoolPort | RealPort | StringPort
+	create(v) ==
+		if is_(v, String) then
+			return new StringPort(v)
+		elseif is_(v,bool) then
+			return new BoolPort(v)
+	 elseif is_(v,int) then
+			return new IntPort(v)
+	else
+			return new RealPort(v)
+	*/		
+end Port
+
+class IntPort is subclass of Port
+
+instance variables
+	value: int:=0;
+
+operations
+	public IntPort: int ==> IntPort
+	IntPort(v)==setValue(v);
+
+	public setValue : int ==> ()
+	setValue(v) ==value :=v;
+
+	public pure getValue : () ==> int
+	getValue() == return value;
+
+end IntPort
+
+class BoolPort is subclass of Port
+
+instance variables
+	value: bool:=false;
+
+operations
+	public BoolPort: bool ==> BoolPort
+	BoolPort(v)==setValue(v);
+
+	public setValue : bool ==> ()
+	setValue(v) ==value :=v;
+
+	public pure getValue : () ==> bool
+	getValue() == return value;
+
+end BoolPort
+
+class RealPort is subclass of Port
+
+instance variables
+	value: real:=0.0;
+
+operations
+	public RealPort: real ==> RealPort
+	RealPort(v)==setValue(v);
+
+	public setValue : real ==> ()
+	setValue(v) ==value :=v;
+
+	public pure getValue : () ==> real
+	getValue() == return value;
+
+end RealPort
+
+class StringPort is subclass of Port
+
+instance variables
+	value: String:="";
+
+operations
+	public StringPort: String ==> StringPort
+	StringPort(v)==setValue(v);
+
+	public setValue : String ==> ()
+	setValue(v) ==value :=v;
+
+	public pure getValue : () ==> String
+	getValue() == return value;
+
+end StringPort
+

@@ -2,7 +2,6 @@ package org.overturetool.fmi.export;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -12,7 +11,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Vector;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.overture.ast.analysis.AnalysisException;
@@ -71,7 +69,6 @@ public class FmuSourceCodeExporter extends FmuExporter
 		final String sources = "sources";
 		final String resourcesFolder = "resources";
 		List<File> emittedFiles, emittedFilesTmp;
-		LinkedList<File> resourceFiles;
 
 		CGenerator generator = new CGenerator(project);
 

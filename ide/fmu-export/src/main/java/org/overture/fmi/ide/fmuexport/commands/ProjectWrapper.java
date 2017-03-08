@@ -20,6 +20,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.swt.widgets.Shell;
 import org.overture.ast.definitions.SClassDefinition;
 import org.overture.ast.lex.Dialect;
@@ -39,6 +40,7 @@ public class ProjectWrapper implements org.overturetool.fmi.IProject
 
 	final IVdmProject vdmProject;
 	final private Shell shell;
+	final IPreferenceStore preferences;
 
 	private File tempFolder = null;
 	private List<? extends SClassDefinition> classes;
@@ -49,6 +51,7 @@ public class ProjectWrapper implements org.overturetool.fmi.IProject
 		this.shell = shell;
 		this.project = project;
 		this.vdmProject = vdmProject;
+		this.preferences  = FmuExportPlugin.getDefault().getPreferenceStore();
 	}
 
 	@Override
@@ -289,5 +292,11 @@ public class ProjectWrapper implements org.overturetool.fmi.IProject
 	public String getToolDebugConfig()
 	{
 		return null;
+	}
+
+	@Override
+	public boolean isTracabilityEnabled()
+	{
+		return this.preferences.getBoolean(IFmuExport.ENABLE_TRACABILITY);
 	}
 }

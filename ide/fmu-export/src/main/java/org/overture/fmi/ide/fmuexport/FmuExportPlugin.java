@@ -23,6 +23,7 @@ package org.overture.fmi.ide.fmuexport;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
@@ -82,6 +83,21 @@ public class FmuExportPlugin extends AbstractUIPlugin
 	public static void log(String message, Exception exception)
 	{
 		getDefault().getLog().log(new Status(IStatus.ERROR, IFmuExport.PLUGIN_ID, message, exception));
+	}
+	
+	/**
+	 * Initializes a preference store with default preference values for this plug-in.
+	 */
+	@Override
+	protected void initializeDefaultPreferences(IPreferenceStore store)
+	{
+		initializeDefaultMainPreferences(store);
+	}
+
+	public static void initializeDefaultMainPreferences(IPreferenceStore store)
+	{
+		store.setDefault(IFmuExport.ENABLE_TRACABILITY, true);
+		
 	}
 
 }
