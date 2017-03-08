@@ -316,7 +316,16 @@ public class FmuExporter
 
 		for (File unit : project.getSpecFiles())
 		{
-			String path = unit.getAbsolutePath().substring(project.getSourceRootPath().getAbsolutePath().length() + 1);
+			String path =null;
+			if(unit.getAbsolutePath().startsWith(project.getSourceRootPath().getAbsolutePath())){
+				path=	unit.getAbsolutePath().substring(project.getSourceRootPath().getAbsolutePath().length() + 1);
+			}else
+			{
+				int index = unit.getAbsolutePath().indexOf(File.separatorChar);
+				path = unit.getAbsolutePath().substring(index+1);
+			}
+			
+			
 			project.createProjectTempRelativeFile(resourcesFolder + "/model/"
 					+ path, FileUtils.openInputStream(unit));
 		}

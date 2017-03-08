@@ -46,7 +46,7 @@ public class EclipseLinkedFilesProject
 			}
 			
 			File f = new File(projectFile.getParentFile(),path.replace('/', File.separatorChar));
-			links.add(f);
+			links.add(f.getCanonicalFile());
 		}
 		
 		return links;
