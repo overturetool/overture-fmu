@@ -10,6 +10,7 @@ import javax.xml.xpath.XPathExpressionException;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.overture.ast.definitions.AInstanceVariableDefinition;
 import org.overture.ast.definitions.AValueDefinition;
@@ -30,6 +31,13 @@ import org.xml.sax.SAXException;
 
 public class ImportModelDescriptionTest
 {
+	
+	@BeforeClass
+	public static void configureMain()
+	{
+		Main.useExitCode = false;
+	}
+	
 	@Test
 	public void testImportEmpty() throws AbortException, IOException,
 			InterruptedException, SAXException, ParserConfigurationException,

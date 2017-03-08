@@ -22,6 +22,7 @@ import javax.xml.xpath.XPathFactory;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.overturetool.fmi.AbortException;
 import org.overturetool.fmi.Main;
@@ -33,6 +34,12 @@ import org.xml.sax.SAXException;
 
 public class ExportFmuTest
 {
+	@BeforeClass
+	public static void configureMain()
+	{
+		Main.useExitCode = false;
+	}
+
 	public static String getCurrentClassAndMethodNames()
 	{
 		final StackTraceElement e = Thread.currentThread().getStackTrace()[2];
@@ -295,8 +302,45 @@ public class ExportFmuTest
 
 		FileUtils.copyDirectory(new File("src/test/resources/missingWorldRun"), new File(output));
 
-		Main.main(new String[] { "-name", "wt2", "-export", "tool", "-root",
-				output, "-output", output, "-v" });
+		AbortException ex = null;
+		try
+		{
+			Main.main(new String[] { "-name", "wt2", "-export", "tool",
+					"-root", output, "-output", output, "-v" });
+
+		} catch (AbortException e)
+		{
+			ex = e;
+		}
+
+		Assert.assertNotNull("Expected test to fail", ex);
+
+		File outputZip = new File(output + "/wt2.fmu");
+
+		Assert.assertFalse("Did not expect an FMU", outputZip.exists());
+	}
+
+	@Test
+	public void testExpInitValExportFmu() throws AbortException, IOException,
+			InterruptedException, SAXException, ParserConfigurationException,
+			XPathExpressionException
+	{
+		String output = "target/" + this.getClass().getSimpleName() + "/"
+				+ getCurrentClassAndMethodNames() + "/";
+
+		FileUtils.copyDirectory(new File("src/test/resources/modelVarExpInit"), new File(output));
+
+		AbortException ex = null;
+		try
+		{
+			Main.main(new String[] { "-name", "wt2", "-export", "tool",
+					"-root", output, "-output", output, "-v" });
+		} catch (AbortException e)
+		{
+			ex = e;
+		}
+
+		Assert.assertNotNull("Expected test to fail", ex);
 
 		File outputZip = new File(output + "/wt2.fmu");
 

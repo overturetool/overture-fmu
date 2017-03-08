@@ -1,0 +1,57 @@
+-- DESTECS (Design Support and Tooling for Embedded Control Software)
+-- Grant Agreement Number: INFSO-ICT-248134
+-- Seventh Framework Programme
+-- WaterTank project: introductory project to the DESTECS tool.
+-- More details can be found at DESTECS User Manual, chapter 6.
+class Controller
+
+values
+
+public myInitVal : bool = true;
+
+  
+instance variables
+
+  levelSensor   : LevelSensor;
+  valveActuator : ValveActuator;
+
+operations
+
+public Controller : LevelSensor * ValveActuator  ==> Controller
+Controller(l,v)==
+ (levelSensor   := l;
+  valveActuator := v;
+  );
+  
+values
+open : bool = true;
+close: bool = false;
+
+operations
+
+public loop : () ==>()
+loop()==
+	cycles(2)
+   (-- retrieve the first value from Co-SIM
+   
+   
+   
+    let level : real = levelSensor.getLevel()
+    in
+    (
+    IO`print("Level is: ");IO`print(level); IO`print("\n");
+    
+    if( level >= HardwareInterface`maxlevel.getValue())
+    then valveActuator.setValve(open);
+    
+    if( level <= HardwareInterface`minlevel.getValue())
+    then valveActuator.setValve(close);
+    );
+			
+    
+   );
+
+thread
+periodic(50E6,0,0,0)(loop);	 
+		 
+end Controller
