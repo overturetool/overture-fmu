@@ -71,10 +71,12 @@ public class ModelDescriptionGenerator
 
 	public static class GeneratorInfo
 	{
-		public static interface ModelDescriptionStringGenerator{
+		public static interface ModelDescriptionStringGenerator
+		{
 			String getModelDescription();
 		}
-		//public String modelDescription;
+
+		// public String modelDescription;
 		public ModelDescriptionStringGenerator modelDescriptionStringGenerator;
 		public final Map<PDefinition, ScalarInfo> context = new HashMap<>();
 		public int maxVariableReference;
@@ -136,7 +138,7 @@ public class ModelDescriptionGenerator
 				int vr = variableReference++;
 
 				info.context.put(link.getKey(), new ScalarInfo(link.getKey(), vr, link.getValue()));
-				String scalarVariable = createScalarVariable(vr, link.getKey(), link.getValue(), sbLinks);
+				String scalarVariable = createScalarVariable(err,vr, link.getKey(), link.getValue(), sbLinks);
 				scalarVariables.add(scalarVariable);
 				if (link.getValue().type.equals("output"))
 				{
@@ -167,13 +169,12 @@ public class ModelDescriptionGenerator
 			}
 			sbOutputs.append("\n\t</Outputs>\n");
 		}
-		
+
 		final String modelDescriptionTemplate = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("modelDescriptionTemplate.xml"));// PluginFolderInclude.readFile(IFmuExport.PLUGIN_ID,
 
-		
 		info.modelDescriptionStringGenerator = new GeneratorInfo.ModelDescriptionStringGenerator()
 		{
-			
+
 			@Override
 			public String getModelDescription()
 			{
@@ -186,7 +187,7 @@ public class ModelDescriptionGenerator
 
 				modelDescription = modelDescription.replace("{modelName}", project.getName());
 				modelDescription = modelDescription.replace("{modelIdentifier}", project.getName());
-				
+
 				try
 				{
 					Properties prop = new Properties();
@@ -209,14 +210,13 @@ public class ModelDescriptionGenerator
 
 				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 				String date = sdf.format(generationDate);
-				
+
 				modelDescription = modelDescription.replace("{generationDateAndTime}", date);
 
 				return modelDescription;
 			}
 		};
 
-		
 		info.maxVariableReference = variableReference;
 		return info;
 	}
@@ -233,9 +233,9 @@ public class ModelDescriptionGenerator
 		return sbSourceFiles;
 	}
 
-	private String createScalarVariable(int valueReference,
+	private String createScalarVariable(PrintStream err, int valueReference,
 			PDefinition definition, FmuAnnotation annotation,
-			StringBuffer sbLinks)
+			StringBuffer sbLinks) throws AbortException
 	{
 
 		if (definition instanceof AValueDefinition)
@@ -251,7 +251,7 @@ public class ModelDescriptionGenerator
 			sbLinks.append(String.format(linkTemplate, valueReference, definition.getLocation().getModule()
 					+ "." + vDef.getPattern()));
 
-			String type = getType(vDef.getType(), vDef.getExpression());
+			String type = getType(err,vDef.getType(), vDef.getExpression());
 			return String.format(scalarVariableTemplate, name, valueReference, "parameter", "fixed", "exact", type);
 		} else if (definition instanceof AInstanceVariableDefinition)
 		{
@@ -267,13 +267,13 @@ public class ModelDescriptionGenerator
 			if (annotation.type.equals("output"))
 			{
 				AInstanceVariableDefinition vDef = (AInstanceVariableDefinition) definition;
-				String type = getType(vDef.getType(), vDef.getExpression());
+				String type = getType(err,vDef.getType(), vDef.getExpression());
 				return String.format(scalarVariableTemplate, name, valueReference, "output", "discrete", "approx", type);
 
 			} else if (annotation.type.equals("local"))
 			{
 				AInstanceVariableDefinition vDef = (AInstanceVariableDefinition) definition;
-				String type = getType(vDef.getType(), null);
+				String type = getType(err,vDef.getType(), null);
 				return String.format(scalarVariableTemplate, name, valueReference, "local", "discrete", "calculated", type);
 
 			} else if (annotation.type.equals("input"))
@@ -281,7 +281,7 @@ public class ModelDescriptionGenerator
 
 				AInstanceVariableDefinition vDef = (AInstanceVariableDefinition) definition;
 				PType rawType = vDef.getType();
-				String type = getType(rawType, vDef.getExpression());
+				String type = getType(err,rawType, vDef.getExpression());
 				return String.format(scalarVariableTemplateInput, name, valueReference, "input", rawType instanceof ARealNumericBasicType ? "continuous"
 						: "discrete", type);
 
@@ -291,7 +291,7 @@ public class ModelDescriptionGenerator
 		return null;
 	}
 
-	private String getType(PType type, PExp initialExp)
+	private String getType(PrintStream err, PType type, PExp initialExp) throws AbortException
 	{
 		String typeTemplate = null;
 		String initial = null;
@@ -329,6 +329,9 @@ public class ModelDescriptionGenerator
 							initial = (int) Double.parseDouble(initial) + "";
 						} catch (NumberFormatException e2)
 						{
+							String msg = "Unable to decode initial value for IntPort: '"+initial+"'";
+							err.println(msg);
+							throw new AbortException(msg);
 						}
 					}
 				} else
@@ -345,6 +348,16 @@ public class ModelDescriptionGenerator
 					{
 						initial += ".0";
 					}
+
+					try
+					{
+						Double.parseDouble(initial);
+					} catch (NumberFormatException e2)
+					{
+						String msg = "Unable to decode initial value for RealPort: '"+initial+"'";
+						err.println(msg);
+						throw new AbortException(msg);
+					}
 				} else
 				{
 					initial = "0.0";
@@ -356,6 +369,14 @@ public class ModelDescriptionGenerator
 				if (initial == null)
 				{
 					initial = "false";
+				} else
+				{
+					if (!("true".equals(initial) || "false".equals(initial)))
+					{
+						String msg = "Unable to decode initial value for BoolPort: '"+initial+"'";
+						err.println(msg);
+						throw new AbortException(msg);
+					}
 				}
 			}
 			if (name.equals("StringPort"))
@@ -390,7 +411,7 @@ public class ModelDescriptionGenerator
 				typeTemplate = scalarVariableStringTypeTemplate;
 			}
 		}
-		String start = initial != null && initialExp!=null ? String.format(scalarVariableStartTemplate, initial.replaceAll("\"", "&quot;").replaceAll("\'", "&apos;"))
+		String start = initial != null && initialExp != null ? String.format(scalarVariableStartTemplate, initial.replaceAll("\"", "&quot;").replaceAll("\'", "&apos;"))
 				: "";
 		return String.format(typeTemplate, start);
 	}

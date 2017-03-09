@@ -6,9 +6,11 @@ import java.util.List;
 import java.util.Vector;
 
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPathExpressionException;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.overture.ast.definitions.AInstanceVariableDefinition;
 import org.overture.ast.definitions.AValueDefinition;
@@ -29,10 +31,17 @@ import org.xml.sax.SAXException;
 
 public class ImportModelDescriptionTest
 {
+
+	@BeforeClass
+	public static void configureMain()
+	{
+		Main.useExitCode = false;
+	}
+
 	@Test
 	public void testImportEmpty() throws AbortException, IOException,
 			InterruptedException, SAXException, ParserConfigurationException,
-			ParserException, LexException
+			ParserException, LexException, XPathExpressionException
 	{
 		String output = "target/" + this.getClass().getSimpleName()
 				+ "/testImportEmpty/";
@@ -43,7 +52,7 @@ public class ImportModelDescriptionTest
 	private void importSingleEmpty(String output, String modelDescriptionPath)
 			throws AbortException, IOException, InterruptedException,
 			SAXException, ParserConfigurationException, ParserException,
-			LexException
+			LexException, XPathExpressionException
 	{
 		Main.main(new String[] { "-name", "wt2", "-import",
 				modelDescriptionPath, "-root", output, "-v" });
@@ -78,7 +87,7 @@ public class ImportModelDescriptionTest
 	@Test
 	public void testReImport() throws ParserException, LexException,
 			AbortException, IOException, InterruptedException, SAXException,
-			ParserConfigurationException
+			ParserConfigurationException, XPathExpressionException
 	{
 		String output = "target/" + this.getClass().getSimpleName()
 				+ "/testReImport/";
@@ -89,12 +98,34 @@ public class ImportModelDescriptionTest
 	@Test
 	public void testImportImportMerge() throws ParserException, LexException,
 			AbortException, IOException, InterruptedException, SAXException,
-			ParserConfigurationException
+			ParserConfigurationException, XPathExpressionException
 	{
 		String output = "target/" + this.getClass().getSimpleName()
 				+ "/testImportImportMerge/";
 		importSingleEmpty(output, "src/test/resources/modelDescription.xml");
 		importSingleEmpty(output, "src/test/resources/modelDescription2.xml");
+	}
+
+	@Test
+	public void testImportMissingTypes() throws ParserException, LexException,
+			AbortException, IOException, InterruptedException, SAXException,
+			ParserConfigurationException, XPathExpressionException
+	{
+		String output = "target/" + this.getClass().getSimpleName()
+				+ "/testImportMissingTypes/";
+
+		AbortException ex = null;
+
+		try
+		{
+			importSingleEmpty(output, "src/test/resources/modelDescriptionMissingTypes.xml");
+		} catch (AbortException e)
+		{
+			ex=e;
+		}
+		
+		Assert.assertNotNull("Expected test to fail",ex);
+		Assert.assertTrue("Expected missing type", ex.getMessage().contains("Missing type"));
 	}
 
 	private void checkDef(List<PDefinition> defs, String name,

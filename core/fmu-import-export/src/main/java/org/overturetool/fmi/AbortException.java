@@ -12,4 +12,9 @@ public class AbortException extends Exception
 	{
 		super(message);
 	}
+
+	public AbortException(String message, Exception e)
+	{
+		super(message, e);
+	}
 }

@@ -55,5 +55,7 @@ public interface IProject
 
 	boolean isOutputDebugEnabled();
 	
+	boolean isTracabilityEnabled();
+	
 	String getToolDebugConfig();
 }
