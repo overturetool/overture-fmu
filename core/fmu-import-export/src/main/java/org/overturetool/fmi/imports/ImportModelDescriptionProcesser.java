@@ -168,7 +168,7 @@ public class ImportModelDescriptionProcesser
 	}
 
 	public void importFromXml(IProject project, File file) throws SAXException,
-			IOException, ParserConfigurationException
+			IOException, ParserConfigurationException, AbortException
 	{
 
 		out.println("\n---------------------------------------");
@@ -179,17 +179,6 @@ public class ImportModelDescriptionProcesser
 
 		String hash = Tracability.calculateGitHash(file);
 		out.println(file.getName() + "\t" + hash);
-		// final IVdmModel model = project.getModel();
-		// if (model.isParseCorrect())
-		// {
-		//
-		// if (model == null || !model.isTypeCorrect())
-		// {
-		// VdmTypeCheckerUi.typeCheck(shell, project);
-		// }
-		//
-		// if (model.isTypeCorrect() && project.getDialect() == Dialect.VDM_RT)
-		// {
 		if (project.typeCheck())
 		{
 			try
@@ -232,8 +221,9 @@ public class ImportModelDescriptionProcesser
 
 					if (child == null)
 					{
-						err.println("Missing type for: " + sc.name);
-						return;
+						String msg = "Missing type for: " + sc.name;
+						err.println(msg);
+						throw new AbortException(msg);
 					}
 
 					sc.type = new Type();
@@ -289,11 +279,13 @@ public class ImportModelDescriptionProcesser
 
 			} catch (Exception e)
 			{
-				project.log(e);
+				throw new AbortException(e.getMessage(),e);
 			}
 		} else
 		{
-			err.println("Aborting VDM model does not type check");
+			String msg = "Aborting VDM model does not type check";
+			err.println(msg);
+			throw new AbortException(msg);
 		}
 	}
 
@@ -495,29 +487,12 @@ public class ImportModelDescriptionProcesser
 		return name.replaceAll("[^A-Za-z0-9()\\[\\]]", "");
 	}
 
-	// void copyVdmSourceTemplateToProject(IProject project, String path)
-	// {
-	// IContainer src0 = project.getModelBuildPath().getModelSrcPaths().get(0);
-	//
-	// InputStream in = AddVdmFmiLibraryHandler.class.getClassLoader().getResourceAsStream(path);
-	//
-	// String name = path.substring(path.lastIndexOf('/') + 1);
-	//
-	// src0.getFile(new Path(name)).create(in, true, null);
-	// }
 
 	void copyVdmSourceTemplateToProject(IProject project, String classPathPath,
 			String projectPath) throws IOException
 	{
 		InputStream is = this.getClass().getClassLoader().getResourceAsStream(classPathPath);
 		project.createSpecFileProjectRelative(projectPath, is);
-		// IContainer src0 = project.getModelBuildPath().getModelSrcPaths().get(0);
-		//
-		// InputStream in = AddVdmFmiLibraryHandler.class.getClassLoader().getResourceAsStream(path);
-		//
-		// String name = path.substring(path.lastIndexOf('/') + 1);
-		//
-		// src0.getFile(new Path(name)).create(in, true, null);
 	}
 
 	private void checkAndCreateStructure(IProject project)

@@ -231,57 +231,61 @@ public class Main
 
 		project.setEnableTracability(cmd.hasOption(tracabilityEnableOpt.getOpt()));
 
-		if (!exportToolFmu && cmd.hasOption(toolDebugOpt.getOpt()))
-		{
-			String msg = "Tool debug can only be used with the tool export option.";
-			exitError(msg);
-		}
-
-		if (cmd.hasOption(toolDebugOpt.getOpt()))
-		{
-			project.enableOutputDebug(cmd.getOptionValue(toolDebugOpt.getOpt()));
-		}
-
-		PrintStream out = verbose ? System.out
-				: new PrintStream(new NullOutputStream());
-
-		if (cmd.hasOption(exportOpt.getOpt()))
+		try
 		{
 
-			File fmuFile = null;
-
-			if (exportToolFmu)
+			if (!exportToolFmu && cmd.hasOption(toolDebugOpt.getOpt()))
 			{
-				fmuFile = new FmuExporter().exportFmu(project, projectName, out, System.err, force);
-			} else if (exportSourceFmu)
-			{
-				fmuFile = new FmuSourceCodeExporter().exportFmu(project, projectName, out, System.err, force);
+				String msg = "Tool debug can only be used with the tool export option.";
+				exitError(msg);
 			}
 
-			if (fmuFile == null)
+			if (cmd.hasOption(toolDebugOpt.getOpt()))
 			{
-				exitError("Generation failed.");
+				project.enableOutputDebug(cmd.getOptionValue(toolDebugOpt.getOpt()));
 			}
 
-			// Process p = Runtime.getRuntime().exec("unzip -l "
-			// + fmuFile.getAbsolutePath());
-			// System.err.println(IOUtils.toString(p.getErrorStream()));
-			// System.out.println(IOUtils.toString(p.getInputStream()));
-			// p.waitFor();
+			PrintStream out = verbose ? System.out
+					: new PrintStream(new NullOutputStream());
 
-			out.println("The zip contains: ");
-			try (ZipFile zipFile = new ZipFile(fmuFile);)
+			if (cmd.hasOption(exportOpt.getOpt()))
 			{
-				zipFile.stream().map(ZipEntry::getName).forEach(out::println);
+
+				File fmuFile = null;
+
+				if (exportToolFmu)
+				{
+					fmuFile = new FmuExporter().exportFmu(project, projectName, out, System.err, force);
+				} else if (exportSourceFmu)
+				{
+					fmuFile = new FmuSourceCodeExporter().exportFmu(project, projectName, out, System.err, force);
+				}
+
+				if (fmuFile == null)
+				{
+					exitError("Generation failed.");
+				}
+
+				// Process p = Runtime.getRuntime().exec("unzip -l "
+				// + fmuFile.getAbsolutePath());
+				// System.err.println(IOUtils.toString(p.getErrorStream()));
+				// System.out.println(IOUtils.toString(p.getInputStream()));
+				// p.waitFor();
+
+				out.println("The zip contains: ");
+				try (ZipFile zipFile = new ZipFile(fmuFile);)
+				{
+					zipFile.stream().map(ZipEntry::getName).forEach(out::println);
+				}
+			} else if (cmd.hasOption(importModelDescriptionOpt.getOpt()))
+			{
+				File md = new File(cmd.getOptionValue(importModelDescriptionOpt.getOpt()));
+				new ImportModelDescriptionProcesser(out, System.err).importFromXml(project, md);
 			}
-		} else if (cmd.hasOption(importModelDescriptionOpt.getOpt()))
+		} finally
 		{
-			File md = new File(cmd.getOptionValue(importModelDescriptionOpt.getOpt()));
-			new ImportModelDescriptionProcesser(out, System.err).importFromXml(project, md);
+			project.cleanUp();
 		}
-
-		project.cleanUp();
-
 	}
 
 	private static void showVersion()
