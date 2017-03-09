@@ -19,6 +19,7 @@ import org.overture.ast.definitions.AInstanceVariableDefinition;
 import org.overture.ast.definitions.ASystemClassDefinition;
 import org.overture.ast.definitions.PDefinition;
 import org.overture.ast.definitions.SClassDefinition;
+import org.overture.ast.definitions.SOperationDefinitionBase;
 import org.overture.ast.util.definitions.ClassList;
 import org.overture.fmi.annotation.FmuAnnotation;
 import org.overturetool.fmi.AbortException;
@@ -82,7 +83,7 @@ public class FmuExporter
 					{
 						for (PDefinition def : cDef.getDefinitions())
 						{
-							if(def.getName().getName().equals("run"))
+							if(def instanceof SOperationDefinitionBase && def.getName().getName().equals("run"))
 							{
 								hasWorldRun = true;
 							}
