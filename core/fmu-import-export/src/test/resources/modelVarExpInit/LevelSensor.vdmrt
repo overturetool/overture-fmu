@@ -1,0 +1,19 @@
+class LevelSensor
+
+instance variables
+
+port : RealPort;
+
+operations
+
+public LevelSensor : RealPort ==>LevelSensor
+LevelSensor(p)==port :=p;
+
+public getLevel: () ==> real
+getLevel()==(
+
+return port.getValue();
+
+)
+
+end LevelSensor

@@ -19,6 +19,7 @@ import javax.xml.xpath.XPathExpressionException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.overturetool.fmi.AbortException;
 import org.overturetool.fmi.Main;
@@ -26,14 +27,22 @@ import org.xml.sax.SAXException;
 
 public class ExportSourceCodeFmuTest
 {
+	
+	@BeforeClass
+	public static void configureMain()
+	{
+		Main.useExitCode = false;
+	}
+	
 	@Test
 	public void testExportSourceFmu() throws AbortException, IOException,
 			InterruptedException, SAXException, ParserConfigurationException, XPathExpressionException
 	{
-		String output = "target/" + this.getClass().getSimpleName() + "/";
-		FileUtils.copyDirectory(new File("src/test/resources/model"),new File( output));
+		String output = ("target/" + this.getClass().getSimpleName() ).replace('/', File.separatorChar);
+		File inputDir = new File( new File(output),"input");
+		FileUtils.copyDirectory(new File("src/test/resources/model".replace('/', File.separatorChar)),inputDir);
 		Main.main(new String[] { "-name", "wt2", "-export", "source", "-root",
-				output, "-output", output, "-v" });
+				inputDir.getAbsolutePath(), "-output", output, "-v" });
 		
 
 		File outputZip = new File(output + "/wt2.fmu");
@@ -112,7 +121,7 @@ public class ExportSourceCodeFmuTest
 			while (entries.hasMoreElements())
 			{
 				ZipEntry entry = entries.nextElement();
-				File entryDestination = new File(outputZip.getParentFile(), entry.getName());
+				File entryDestination = new File(new File(outputZip.getParentFile(),"zip"), entry.getName());
 				if (entry.isDirectory())
 				{
 					entryDestination.mkdirs();

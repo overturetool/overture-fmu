@@ -42,6 +42,19 @@ import org.xml.sax.SAXException;
 
 public class Main
 {
+	public static boolean useExitCode = true;
+
+	static void exitError(String msg) throws AbortException
+	{
+		System.err.println(msg);
+		if (useExitCode)
+		{
+			System.exit(-1);
+		} else
+		{
+			throw new AbortException(msg);
+		}
+	}
 
 	static boolean checkRequiredOptions(CommandLine cmd, Option... opt)
 	{
@@ -100,9 +113,10 @@ public class Main
 			cmd = parser.parse(options, args);
 		} catch (ParseException e1)
 		{
-			System.err.println("Parsing failed. Reason: " + e1.getMessage());
+			String msg = "Parsing failed. Reason: " + e1.getMessage();
+			System.err.println(msg);
 			showHelp(options);
-			return;
+			exitError(msg);
 		}
 
 		if (cmd.hasOption(helpOpt.getOpt()))
@@ -131,18 +145,19 @@ public class Main
 		if (!cmd.hasOption(projectRootOpt.getOpt())
 				|| cmd.getOptionValue(projectRootOpt.getOpt()) == null)
 		{
-			System.err.println("Parsing failed. Reason: "
-					+ "Missing required option: " + projectRootOpt.getOpt());
+			String msg = "Parsing failed. Reason: "
+					+ "Missing required option: " + projectRootOpt.getOpt();
+			System.err.println(msg);
 
 			showHelp(options);
-			return;
+			exitError(msg);
 		}
 
 		if (cmd.hasOption(exportOpt.getOpt()))
 		{
 			if (!checkRequiredOptions(cmd, outputFolderOpt, projectRootOpt, projectNameOpt))
 			{
-				return;
+				exitError("Required option missing");
 			}
 
 			String exportType = cmd.getOptionValue(exportOpt.getOpt());
@@ -152,21 +167,22 @@ public class Main
 
 			if (!(exportSourceFmu || exportToolFmu))
 			{
-				System.err.println("The -" + exportOpt.getOpt()
-						+ " argument only accepts <source> or <tool>");
-				return;
+				String msg = "The -" + exportOpt.getOpt()
+						+ " argument only accepts <source> or <tool>";
+				exitError(msg);
 			}
 		} else if (cmd.hasOption(importModelDescriptionOpt.getOpt()))
 		{
 			if (!checkRequiredOptions(cmd, projectRootOpt))
 			{
-				return;
+				exitError("Required option missing");
 			}
 		} else
 		{
-			System.err.println("Missing options either " + exportOpt.getOpt()
+			String msg = "Missing options either " + exportOpt.getOpt()
 					+ " or " + importModelDescriptionOpt.getOpt()
-					+ " must be specified.");
+					+ " must be specified.";
+			exitError(msg);
 		}
 
 		if (cmd.hasOption(releaseOpt.getOpt()))
@@ -215,58 +231,61 @@ public class Main
 
 		project.setEnableTracability(cmd.hasOption(tracabilityEnableOpt.getOpt()));
 
-		if (!exportToolFmu && cmd.hasOption(toolDebugOpt.getOpt()))
-		{
-			System.err.println("Tool debug can only be used with the tool export option.");
-			return;
-		}
-
-		if (cmd.hasOption(toolDebugOpt.getOpt()))
-		{
-			project.enableOutputDebug(cmd.getOptionValue(toolDebugOpt.getOpt()));
-		}
-
-		PrintStream out = verbose ? System.out
-				: new PrintStream(new NullOutputStream());
-
-		if (cmd.hasOption(exportOpt.getOpt()))
+		try
 		{
 
-			File fmuFile = null;
-
-			if (exportToolFmu)
+			if (!exportToolFmu && cmd.hasOption(toolDebugOpt.getOpt()))
 			{
-				fmuFile = new FmuExporter().exportFmu(project, projectName, out, System.err, force);
-			} else if (exportSourceFmu)
-			{
-				fmuFile = new FmuSourceCodeExporter().exportFmu(project, projectName, out, System.err, force);
+				String msg = "Tool debug can only be used with the tool export option.";
+				exitError(msg);
 			}
 
-			if (fmuFile == null)
+			if (cmd.hasOption(toolDebugOpt.getOpt()))
 			{
-				System.err.println("Generation failed.");
-				return;
+				project.enableOutputDebug(cmd.getOptionValue(toolDebugOpt.getOpt()));
 			}
 
-			// Process p = Runtime.getRuntime().exec("unzip -l "
-			// + fmuFile.getAbsolutePath());
-			// System.err.println(IOUtils.toString(p.getErrorStream()));
-			// System.out.println(IOUtils.toString(p.getInputStream()));
-			// p.waitFor();
+			PrintStream out = verbose ? System.out
+					: new PrintStream(new NullOutputStream());
 
-			out.println("The zip contains: ");
-			try (ZipFile zipFile = new ZipFile(fmuFile);)
+			if (cmd.hasOption(exportOpt.getOpt()))
 			{
-				zipFile.stream().map(ZipEntry::getName).forEach(out::println);
+
+				File fmuFile = null;
+
+				if (exportToolFmu)
+				{
+					fmuFile = new FmuExporter().exportFmu(project, projectName, out, System.err, force);
+				} else if (exportSourceFmu)
+				{
+					fmuFile = new FmuSourceCodeExporter().exportFmu(project, projectName, out, System.err, force);
+				}
+
+				if (fmuFile == null)
+				{
+					exitError("Generation failed.");
+				}
+
+				// Process p = Runtime.getRuntime().exec("unzip -l "
+				// + fmuFile.getAbsolutePath());
+				// System.err.println(IOUtils.toString(p.getErrorStream()));
+				// System.out.println(IOUtils.toString(p.getInputStream()));
+				// p.waitFor();
+
+				out.println("The zip contains: ");
+				try (ZipFile zipFile = new ZipFile(fmuFile);)
+				{
+					zipFile.stream().map(ZipEntry::getName).forEach(out::println);
+				}
+			} else if (cmd.hasOption(importModelDescriptionOpt.getOpt()))
+			{
+				File md = new File(cmd.getOptionValue(importModelDescriptionOpt.getOpt()));
+				new ImportModelDescriptionProcesser(out, System.err).importFromXml(project, md);
 			}
-		} else if (cmd.hasOption(importModelDescriptionOpt.getOpt()))
+		} finally
 		{
-			File md = new File(cmd.getOptionValue(importModelDescriptionOpt.getOpt()));
-			new ImportModelDescriptionProcesser(out, System.err).importFromXml(project, md);
+			project.cleanUp();
 		}
-
-		project.cleanUp();
-
 	}
 
 	private static void showVersion()
