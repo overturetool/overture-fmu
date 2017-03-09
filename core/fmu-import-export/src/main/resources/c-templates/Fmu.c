@@ -39,6 +39,9 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
 	
 	systemInit();
 
+	if(strcmp(fmuGUID, _FMU_GUID))
+		return
+
 	return (void*) 1;
 }
 
