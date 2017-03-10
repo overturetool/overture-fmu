@@ -65,6 +65,7 @@ public class ExportSourceCodeFmuTest
 				"sources/main.c",
 				"sources/Fmu.c",
 				"sources/Fmu.h",
+				"sources/FmuGUID.h",
 				"sources/FmuIO.c",
 				"sources/FmuModel.c",
 				"sources/includes.txt",
