@@ -176,7 +176,14 @@ public class FmuSourceCodeExporter extends FmuExporter
 		emittedFiles.add(new File("FmuModel.h"));
 		
 		
-		
+		//copy FmuGUID.h
+		content = IOUtils.toString(this.getClass().getResourceAsStream("/c-templates/FmuGUID.h"));
+		//FINISH THIS content = content.replace("//#GENERATED_FMU_GUID", "#define _FMU_GUID %");
+
+		bytes = content.getBytes("UTF-8");
+		source = new ByteArrayInputStream(bytes);
+		project.createProjectTempRelativeFile(sources + "/FmuGUID.h", source);
+		emittedFiles.add(new File("FmuGUID.h"));
 		
 
 		// copy CMakeLists

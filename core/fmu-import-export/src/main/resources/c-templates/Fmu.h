@@ -13,7 +13,7 @@
 //#define INT_COUNT
 
 #include "fmi2Functions.h"
-#include "FmuGuid.h"
+#include "FmuGUID.h"
 
 #include <stdbool.h>
 #include <stdio.h>
