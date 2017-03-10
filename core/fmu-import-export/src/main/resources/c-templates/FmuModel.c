@@ -45,14 +45,14 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationSte
 			(communicationStepSize >= threads[i].period) &&
 			(((long long int) communicationStepSize) % ((long long int)threads[i].period) != 0))
 		{
-			g_fmiCallbackFunctions->logger((void*) 1,g_fmiInstanceName,fmi2OK,"logAll","%s\n", "Discarding step:  step size not integer multiple of thread period.");
+			g_fmiCallbackFunctions->logger((void*) 1,g_fmiInstanceName,fmi2Discard,"logError","%s\n", "Discarding step:  step size not integer multiple of thread period.");
 			return fmi2Discard;
 		}
 		else if(
 			(threads[i].period >= communicationStepSize) &&
 			(((long long int)threads[i].period) % ((long long int) communicationStepSize) != 0))
 		{
-			g_fmiCallbackFunctions->logger((void*) 1,g_fmiInstanceName,fmi2OK,"logAll","%s\n", "Discarding step:  thread period not integer multiple of step size.");
+			g_fmiCallbackFunctions->logger((void*) 1,g_fmiInstanceName,fmi2Discard,"logError","%s\n", "Discarding step:  thread period not integer multiple of step size.");
 			return fmi2Discard;
 		}
 	}

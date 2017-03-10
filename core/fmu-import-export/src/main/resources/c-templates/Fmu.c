@@ -27,12 +27,15 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
 		fmi2Boolean loggingOn)
 {
 	char *tmpInstanceName;
-
-	if(strcmp(fmuGUID, _FMU_GUID) != 0)
-		return NULL;
 	
 	g_fmiCallbackFunctions = functions;
 	
+	if(strcmp(fmuGUID, _FMU_GUID) != 0)
+	{
+		g_fmiCallbackFunctions->logger((void*) 1,g_fmiInstanceName,fmi2Error,"logError","%s\n", "GUID mismatch.");
+		return NULL;
+	}
+
 	tmpInstanceName = (char*)malloc(strlen(instanceName) + 1);
 	strcpy(tmpInstanceName, instanceName);
 	g_fmiInstanceName = tmpInstanceName;
