@@ -22,6 +22,7 @@ import org.eclipse.ui.handlers.HandlerUtil;
 import org.overture.fmi.ide.fmuexport.FmuExportPlugin;
 import org.overture.fmi.ide.fmuexport.IFmuExport;
 import org.overture.ide.core.resources.IVdmProject;
+import org.overturetool.fmi.AbortException;
 import org.overturetool.fmi.imports.ImportModelDescriptionProcesser;
 import org.xml.sax.SAXException;
 
@@ -62,8 +63,11 @@ public class ImportModelDescriptionHandler extends
 							ProjectWrapper projectWrapper = new ProjectWrapper(activeShell, (IProject) a.getAdapter(IProject.class), project);
 
 							new ImportModelDescriptionProcesser(new PrintStream(out), new PrintStream(err)).importFromXml(projectWrapper, new File(result));
-							
+
 							projectWrapper.cleanUp();
+						} catch (AbortException e)
+						{
+							err.println(e.getMessage());
 						} catch (SAXException e)
 						{
 							FmuExportPlugin.log(e);
@@ -75,7 +79,7 @@ public class ImportModelDescriptionHandler extends
 							FmuExportPlugin.log(e);
 						}
 					}
-//					AddVdmFmiLibraryHandler.addVdmFmiLibrary(project);
+					// AddVdmFmiLibraryHandler.addVdmFmiLibrary(project);
 				}
 			}
 		}
