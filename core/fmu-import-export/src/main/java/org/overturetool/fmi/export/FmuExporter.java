@@ -220,6 +220,7 @@ public class FmuExporter
 		ModelDescriptionConfig config = new ModelDescriptionConfig();
 		config.canBeInstantiatedOnlyOncePerProcess = false;
 		config.needsExecutionTool = true;
+		config.fmuGUID = java.util.UUID.randomUUID().toString();
 
 		for (File source : project.getSpecFiles())
 		{

@@ -204,9 +204,8 @@ public class ModelDescriptionGenerator
 						+ "");
 
 				modelDescription = modelDescription.replace("{description}", "");
-				modelDescription = modelDescription.replace("{author}", "");
-				modelDescription = modelDescription.replace("{guid}", "{"
-						+ java.util.UUID.randomUUID().toString() + "}");
+				modelDescription = modelDescription.replace("{author}", "");				
+				modelDescription = modelDescription.replace("{guid}", "{" + config.fmuGUID + "}");
 
 				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 				String date = sdf.format(generationDate);

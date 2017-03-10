@@ -8,4 +8,5 @@ public class ModelDescriptionConfig
 	boolean canBeInstantiatedOnlyOncePerProcess;
 	boolean needsExecutionTool;
 	final List<String> sourceFiles = new Vector<>();
+	String fmuGUID;
 }

@@ -51,6 +51,7 @@ public class FmuSourceCodeExporter extends FmuExporter
 		ModelDescriptionConfig config = new ModelDescriptionConfig();
 		config.canBeInstantiatedOnlyOncePerProcess = true;
 		config.needsExecutionTool = false;
+		config.fmuGUID = java.util.UUID.randomUUID().toString();
 
 		return config;
 	}
@@ -98,9 +99,6 @@ public class FmuSourceCodeExporter extends FmuExporter
 		String periodicDefinitionCount = createPeriodicDefinitionCountString(periodicDefs);
 
 		StringBuffer sb = generateIOCacheSyncMethods(info, periodicDefinition, systemName);
-
-
-		//EMIT GUID HEADER FILE HERE.
 
 		// copy FMU files
 		copySource(project, sources + "/Fmu.c", "/c-templates/Fmu.c");
@@ -178,7 +176,7 @@ public class FmuSourceCodeExporter extends FmuExporter
 		
 		//copy FmuGUID.h
 		content = IOUtils.toString(this.getClass().getResourceAsStream("/c-templates/FmuGUID.h"));
-		//FINISH THIS content = content.replace("//#GENERATED_FMU_GUID", "#define _FMU_GUID %");
+		content = content.replace("//#GENERATED_FMU_GUID", String.format("#define _FMU_GUID \"{%s}\"", modelDescriptionConfig.fmuGUID));
 
 		bytes = content.getBytes("UTF-8");
 		source = new ByteArrayInputStream(bytes);

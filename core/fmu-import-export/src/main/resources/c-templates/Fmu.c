@@ -27,6 +27,9 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
 		fmi2Boolean loggingOn)
 {
 	char *tmpInstanceName;
+
+	if(strcmp(fmuGUID, _FMU_GUID) != 0)
+		return NULL;
 	
 	g_fmiCallbackFunctions = functions;
 	
@@ -38,9 +41,6 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
 	strcpy(resourcesLocation, fmuResourceLocation);
 	
 	systemInit();
-
-	if(strcmp(fmuGUID, _FMU_GUID))
-		return
 
 	return (void*) 1;
 }
