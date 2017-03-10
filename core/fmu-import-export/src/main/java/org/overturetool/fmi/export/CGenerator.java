@@ -38,10 +38,12 @@ public class CGenerator
 		nodes.addAll(project.getClasses());
 
 		// Generate user specified classes
+		vdm2c.getCGenSettings().setUseGarbageCollection(true);
 		GeneratedData data = vdm2c.generate(nodes);
 		
 		try {
 			vdm2c.genCSourceFiles(outputDir, data.getClasses());
+			vdm2c.emitFeatureFile(outputDir,  CGen.FEATURE_FILE_NAME);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

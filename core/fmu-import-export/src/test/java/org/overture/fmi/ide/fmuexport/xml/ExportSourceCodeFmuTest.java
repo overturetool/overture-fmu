@@ -62,6 +62,7 @@ public class ExportSourceCodeFmuTest
 				"sources/fmi/fmi2Functions.h",
 				"sources/fmi/fmi2FunctionTypes.h",
 				"sources/fmi/fmi2TypesPlatform.h",
+				"sources/main.c",
 				"sources/Fmu.c",
 				"sources/Fmu.h",
 				"sources/FmuIO.c",
@@ -103,7 +104,7 @@ public class ExportSourceCodeFmuTest
 				"sources/WatertankSystem.c", "sources/WatertankSystem.h",
 				"sources/World.c", "sources/World.h",
 				"sources/HardwareInterface.c", "sources/HardwareInterface.h",
-				"sources/Controller.c", "sources/Controller.h"
+				"sources/Controller.c", "sources/Controller.h", "sources/VdmModelFeatures.h"
 
 		};
 

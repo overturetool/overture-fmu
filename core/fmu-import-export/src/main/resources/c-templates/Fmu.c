@@ -34,7 +34,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
 	strcpy(tmpInstanceName, instanceName);
 	g_fmiInstanceName = tmpInstanceName;
 
-	resourcesLocation = (char*)malloc(strlen(fmuResourceLocation) + 1);
+	resourcesLocation = (char*)calloc(strlen(fmuResourceLocation) + 1, sizeof(char));
 	strcpy(resourcesLocation, fmuResourceLocation);
 	
 	systemInit();

@@ -224,6 +224,8 @@ public class FmuSourceCodeExporter extends FmuExporter
 			String systemName)
 	{
 		StringBuilder sb = new StringBuilder();
+		
+		sb.append("\tvdm_gc_init();\n\n");
 
 		sb.append(getJoinClassNames(project, new INameFormater()
 		{
@@ -289,6 +291,10 @@ public class FmuSourceCodeExporter extends FmuExporter
 		sb.append("\n");
 
 		sb.append("\tvdmFree(sys);\n");
+		
+		sb.append("\n");
+		
+		sb.append("\tvdm_gc_shutdown();");
 
 		return String.format("void systemDeInit()\n{\n%s\n}\n", sb.toString());
 	}
