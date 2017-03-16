@@ -97,7 +97,8 @@ public class CGenerator
 					continue;
 				}
 
-				String tmpFileName = filejarentry.getName().replace("src" + File.separator + "main"	+ File.separator, "");
+//				String tmpFileName = filejarentry.getName().replace("src" + File.separator + "main"	+ File.separator, "");
+				String tmpFileName = filejarentry.getName().replace("src", "");
 				
 				outputFile = new File(outfolder.toString()
 						+ File.separator
