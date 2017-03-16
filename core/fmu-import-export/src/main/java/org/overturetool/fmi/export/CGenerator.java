@@ -90,15 +90,14 @@ public class CGenerator
 			// These are copied to the source output folder.
 			while (filejarentry != null)
 			{
-				if (!filejarentry.getName().contains("src/main")
+				if (!filejarentry.getName().contains("src" + File.separator + "main")
 						|| filejarentry.getName().contains("META"))
 				{
 					filejarentry = jarstream.getNextJarEntry();
 					continue;
 				}
 
-				String tmpFileName = filejarentry.getName().replace("src/main"
-						+ File.separator, "");
+				String tmpFileName = filejarentry.getName().replace("src" + File.separator + "main"	+ File.separator, "");
 				
 				outputFile = new File(outfolder.toString()
 						+ File.separator
