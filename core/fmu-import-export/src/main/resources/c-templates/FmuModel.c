@@ -16,9 +16,10 @@
 
 //#GENERATED_MODEL_INCLUDE
 
-//#GENERATED_INSERT
-
 TVP sys = NULL;
+fmi2Boolean syncOutAllowed = fmi2True;
+
+//#GENERATED_INSERT
 
 //#GENERATED_SYSTEM_INIT
 

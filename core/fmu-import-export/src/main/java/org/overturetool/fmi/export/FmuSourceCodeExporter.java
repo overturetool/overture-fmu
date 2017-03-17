@@ -36,7 +36,7 @@ import org.overturetool.fmi.export.ModelDescriptionGenerator.ScalarInfo;
 public class FmuSourceCodeExporter extends FmuExporter
 {
 	private static final String SYNC_INPUT_TO_MODEL = "void syncInputsToModel(){\n\t%s\n}";
-	private static final String SYNC_OUTPUT_TO_BUFFER = "void syncOutputsToBuffers(){\n\t%s\n}";
+	private static final String SYNC_OUTPUT_TO_BUFFER = "void syncOutputsToBuffers(){\n\tif(syncOutAllowed == fmi2False) return;\n\n\t%s\n}";
 
 	static final String GET_PORT = "TVP p = GET_FIELD(HardwareInterface,HardwareInterface,g_%s_hwi,%s);";
 	static final String GET_PORT_VALUE = "TVP v = GET_FIELD(%s,%s,p,value);";
