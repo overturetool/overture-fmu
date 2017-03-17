@@ -38,47 +38,55 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationSte
 	int i, j;
 	int threadRunCount;
 
-
-	//We want to be able to align synchronization on either step size or thread boundary.
-	for(i = 0;  i < PERIODIC_GENERATED_COUNT; i++)
-	{
-		if(
-			(communicationStepSize >= threads[i].period) &&
-			(((long long int) communicationStepSize) % ((long long int)threads[i].period) != 0))
-		{
-			g_fmiCallbackFunctions->logger((void*) 1,g_fmiInstanceName,fmi2Discard,"logError","%s\n", "Discarding step:  step size not integer multiple of thread period.");
-			return fmi2Discard;
-		}
-		else if(
-			(threads[i].period >= communicationStepSize) &&
-			(((long long int)threads[i].period) % ((long long int) communicationStepSize) != 0))
-		{
-			g_fmiCallbackFunctions->logger((void*) 1,g_fmiInstanceName,fmi2Discard,"logError","%s\n", "Discarding step:  thread period not integer multiple of step size.");
-			return fmi2Discard;
-		}
-	}
-
-
 	//Call each thread the appropriate number of times.
 	for(i = 0;  i < PERIODIC_GENERATED_COUNT; i++)
 	{
-		if(communicationStepSize >= threads[i].period)
+
+		//First the ideal cases without rounding errors:
+
+
+		//Times align, sync took place last time.
+		if(threads[i].lastExecuted >= currentCommunicationPoint)
 		{
-			threadRunCount = ((long long int) communicationStepSize) / ((long long int)threads[i].period);
-		}
-		else
-		{
-			//Taking into account rounding errors.  Ideal condition is currentCommunicationPoint == threads[i].lastExecuted.
-			if(((long long int)currentCommunicationPoint) - 2 <= ((long long int)(threads[i].lastExecuted)) && ((long long int)(threads[i].lastExecuted) <= ((long long int)currentCommunicationPoint) + 2))
-			{
-				threadRunCount = 1;
-			}
-			else
+			//Can not do anything, still waiting for the last step's turn to come.
+			if(threads[i].lastExecuted >= currentCommunicationPoint + communicationStepSize)
 			{
 				threadRunCount = 0;
+				syncOutAllowed = fmi2False;
+			}
+			//Previous step will finish inside this step.
+			//At least one execution can be fit inside this step.
+			else if(threads[i].lastExecuted + threads[i].period <= currentCommunicationPoint + communicationStepSize)
+			{
+				//Find number of executions to fit inside of step, allow sync.
+				threadRunCount = ((long long int)((long long int)currentCommunicationPoint + (long long int)communicationStepSize - (long long int)threads[i].lastExecuted)) / ((long long int)threads[i].period);
+				syncOutAllowed = fmi2True;
+			}
+			//Can execute once, but can not sync.
+			else 
+			{
+				threadRunCount = 1;
+				syncOutAllowed = fmi2False;
+			}
+		}
+		//
+		else
+		{
+			//Find number of executions to fit inside of step, allow sync.
+			threadRunCount = ((long long int)((long long int)currentCommunicationPoint + (long long int)communicationStepSize - (long long int)threads[i].lastExecuted)) / ((long long int)threads[i].period);
+			syncOutAllowed = fmi2True;
+
+			//It is possible that one execution will overshoot the step.
+			if(threadRunCount == 0)
+			{
+				threadRunCount = 1;
+				syncOutAllowed = fmi2False;
 			}
 		}
 
+		//Rounding calculation
+		//if(((long long int)currentCommunicationPoint) - 2 <= ((long long int)(threads[i].lastExecuted)) && ((long long int)(threads[i].lastExecuted) <= ((long long int)currentCommunicationPoint) + 2))
+			
 		//Execute each thread the number of times that its period fits in the step size.
 		for(j = 0; j < threadRunCount; j++)
 		{
