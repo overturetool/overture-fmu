@@ -64,7 +64,7 @@ public class FmiSimulationManager extends SimulationManager
 		}
 
 		doInternalStep(outputTime, null);// no events
-
+		
 		List<NamedValue> outputs = new Vector<NamedValue>();
 		outputs.add(new NamedValue("time", new RealValue(nextSchedulableActionTime), -1));
 
