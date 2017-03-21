@@ -69,12 +69,20 @@ public class FmuSourceCodeExporter extends FmuExporter
 		final String systemName = system.getName().getName();
 		final String sources = "sources";
 		final String resourcesFolder = "resources";
-		List<File> emittedFiles, emittedFilesTmp;
+		List<File> emittedFiles = null, emittedFilesTmp = null;
 
 		CGenerator generator = new CGenerator(project);
 
 		//Add just the generated files to the list of files first.
-		emittedFiles = new LinkedList<>(generator.generate(new File(project.getTempFolder(), sources), out, err));
+		try
+		{
+			emittedFiles = new LinkedList<>(generator.generate(new File(project.getTempFolder(), sources), out, err));
+		}catch(Exception e)
+		{
+			err.println("FAILURE:  The code generator encountered an error.");
+			e.printStackTrace(err);
+		}
+		
 		emittedFilesTmp = new LinkedList<>();
 
 		//Filter out non-source code files.		
