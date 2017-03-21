@@ -44,7 +44,10 @@ public class CGenerator
 		try {
 			vdm2c.genCSourceFiles(outputDir, data.getClasses());
 			vdm2c.emitFeatureFile(outputDir,  CGen.FEATURE_FILE_NAME);
-		} catch (IOException e) {
+		}catch (AnalysisException e) {
+			out.println("Analysis exception");
+		}
+		catch (IOException e) {
 			e.printStackTrace();
 		} catch (Exception e) {
 			e.printStackTrace();

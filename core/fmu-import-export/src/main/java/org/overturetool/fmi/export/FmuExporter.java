@@ -204,7 +204,6 @@ public class FmuExporter
 				project.log(e);
 			} catch (AnalysisException e)
 			{
-				out.println("Analysis exception");
 				project.log(e);
 			}
 		}
