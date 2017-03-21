@@ -207,6 +207,10 @@ public class FmuExporter
 				project.log(e);
 			}
 		}
+		else
+		{
+			out.println("FAILURE:  Model contains type errors.");
+		}
 		return null;
 	}
 
