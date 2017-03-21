@@ -41,16 +41,11 @@ public class CGenerator
 		vdm2c.getCGenSettings().setUseGarbageCollection(true);
 				
 		try {
-			out.println("generating");
 			GeneratedData data = vdm2c.generate(nodes);
-			out.println("finished generating");
 			vdm2c.genCSourceFiles(outputDir, data.getClasses());
 			vdm2c.emitFeatureFile(outputDir,  CGen.FEATURE_FILE_NAME);
-		}catch (AnalysisException e) {
-			out.println("Analysis exception");
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (Exception e) {
+		}  catch (Exception e) {
+			out.println("FAILURE:  the code generator encountered an error.");
 			e.printStackTrace();
 		}
 		out.println("Project dialect: " + Settings.dialect);
