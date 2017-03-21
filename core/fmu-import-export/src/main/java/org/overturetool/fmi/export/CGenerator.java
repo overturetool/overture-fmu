@@ -45,10 +45,9 @@ public class CGenerator
 			vdm2c.genCSourceFiles(outputDir, data.getClasses());
 			vdm2c.emitFeatureFile(outputDir,  CGen.FEATURE_FILE_NAME);
 		} catch (IOException e) {
-			project.log("Error while generating VDM model." , e);
+			e.printStackTrace();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			project.log("Error while generating VDM model.", e);
+			e.printStackTrace();
 		}
 		out.println("Project dialect: " + Settings.dialect);
 
