@@ -62,11 +62,11 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationSte
 				threadRunCount = ((long long int)((long long int)currentCommunicationPoint + (long long int)communicationStepSize - (long long int)threads[i].lastExecuted)) / ((long long int)threads[i].period);
 				syncOutAllowed = fmi2True;
 			}
-			//Can execute once, but can not sync.
+			//Can not execute, but can sync existing values at the end of this step.
 			else 
 			{
-				threadRunCount = 1;
-				syncOutAllowed = fmi2False;
+				threadRunCount = 0;
+				syncOutAllowed = fmi2True;
 			}
 		}
 		//
