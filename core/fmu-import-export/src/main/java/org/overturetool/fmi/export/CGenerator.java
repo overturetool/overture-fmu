@@ -45,8 +45,8 @@ public class CGenerator
 			vdm2c.genCSourceFiles(outputDir, data.getClasses());
 			vdm2c.emitFeatureFile(outputDir,  CGen.FEATURE_FILE_NAME);
 		}  catch (Exception e) {
-			out.println("FAILURE:  the code generator encountered an error.");
-			e.printStackTrace();
+			err.println("FAILURE:  the code generator encountered an error.");
+			e.printStackTrace(err);
 		}
 		out.println("Project dialect: " + Settings.dialect);
 
