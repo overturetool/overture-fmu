@@ -278,10 +278,13 @@ fmi2Status fmi2GetStringStatus(fmi2Component c, const fmi2StatusKind s, fmi2Stri
 }
 
 /* INTO cps specific*/
+
+/*  Excluding until a valid implementation can be provided.
 fmi2Status fmi2GetMaxStepsize(fmi2Component c, fmi2Real* size)
 {
 	return fmi2OK;
 }
+*/
 
 // ---------------------------------------------------------------------------
 // Functions for FMI2 for Model Exchange
