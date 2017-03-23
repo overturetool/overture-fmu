@@ -62,35 +62,30 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint_p, fmi2Real communicationS
 			//Can not execute, but can sync existing values at the end of this step.
 			else 
 			{
+				//printf("ELSE CLAUSE AT:  NOW:  %Lf, TP: %Lf, LE:  %Lf, STEP:  %Lf, SYNC:  %d, RUNS:  %d\n", currentCommunicationPoint / 1E9, threads[i].period / 1E9, threads[i].lastExecuted / 1E9, communicationStepSize / 1E9, syncOutAllowed, threadRunCount);
+
 				threadRunCount = 0;
 				syncOutAllowed = fmi2True;
 			}
 		}
-		//
 		else
 		{
-			//Find number of executions to fit inside of step, allow sync.
+			//Find number of executions to fit inside of step, allow sync because need to update regardless.
 			threadRunCount = ((long long int)((long long int)currentCommunicationPoint +
 						(long long int)communicationStepSize -
-							(long long int)threads[i].lastExecuted)) / ((long long int)threads[i].period);
+							(long long int)threads[i].lastExecuted)) / ((long long int)threads[i].period) ;
 			syncOutAllowed = fmi2True;
-
-			//It is possible that one execution will overshoot the step.
-			if(threadRunCount == 0)
-			{
-				threadRunCount = 1;
-				syncOutAllowed = fmi2False;
-			}
 		}
 
 		//Rounding calculation
 		//if(((long long int)currentCommunicationPoint) - 2 <= ((long long int)(threads[i].lastExecuted)) && ((long long int)(threads[i].lastExecuted) <= ((long long int)currentCommunicationPoint) + 2))
 			
+		//printf("NOW:  %Lf, TP: %Lf, LE:  %Lf, STEP:  %Lf, SYNC:  %d, RUNS:  %d\n", currentCommunicationPoint / 1E9, threads[i].period / 1E9, threads[i].lastExecuted / 1E9, communicationStepSize / 1E9, syncOutAllowed, threadRunCount);
+
 		//Execute each thread the number of times that its period fits in the step size.
 		for(j = 0; j < threadRunCount; j++)
 		{
 			threads[i].call();
-			printf("NOW:  %Lf, TP: %Lf, LE:  %Lf, STEP:  %Lf, SYNC:  %d\n", currentCommunicationPoint / 1E9, threads[i].period / 1E9, threads[i].lastExecuted / 1E9, communicationStepSize / 1E9, syncOutAllowed);
 
 			//Update the thread's last execution time.
 			threads[i].lastExecuted += threads[i].period;
