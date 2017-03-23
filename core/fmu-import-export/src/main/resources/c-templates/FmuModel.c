@@ -29,11 +29,11 @@ fmi2Boolean syncOutAllowed = fmi2True;
 /*
 * Both time value are given in seconds
 */
-fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationStepSize)
+fmi2Status vdmStep(fmi2Real currentCommunicationPoint_p, fmi2Real communicationStepSize_p)
 {
 	//convert seconds to nanoseconds
-	currentCommunicationPoint = currentCommunicationPoint*1E9;
-	communicationStepSize = communicationStepSize*1E9;
+	long double currentCommunicationPoint = currentCommunicationPoint_p * 1E9;
+	long double communicationStepSize = communicationStepSize_p * 1E9;
 
 	int i, j;
 	int threadRunCount;
@@ -41,10 +41,6 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationSte
 	//Call each thread the appropriate number of times.
 	for(i = 0;  i < PERIODIC_GENERATED_COUNT; i++)
 	{
-
-		//First the ideal cases without rounding errors:
-
-
 		//Times align, sync took place last time.
 		if(threads[i].lastExecuted >= currentCommunicationPoint)
 		{
@@ -59,7 +55,8 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationSte
 			else if(threads[i].lastExecuted + threads[i].period <= currentCommunicationPoint + communicationStepSize)
 			{
 				//Find number of executions to fit inside of step, allow sync.
-				threadRunCount = ((long long int)((long long int)currentCommunicationPoint + (long long int)communicationStepSize - (long long int)threads[i].lastExecuted)) / ((long long int)threads[i].period);
+				threadRunCount = ((long long int)((long long int)currentCommunicationPoint + 
+							(long long int)communicationStepSize - (long long int)threads[i].lastExecuted)) / ((long long int)threads[i].period);
 				syncOutAllowed = fmi2True;
 			}
 			//Can not execute, but can sync existing values at the end of this step.
@@ -73,7 +70,9 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationSte
 		else
 		{
 			//Find number of executions to fit inside of step, allow sync.
-			threadRunCount = ((long long int)((long long int)currentCommunicationPoint + (long long int)communicationStepSize - (long long int)threads[i].lastExecuted)) / ((long long int)threads[i].period);
+			threadRunCount = ((long long int)((long long int)currentCommunicationPoint +
+						(long long int)communicationStepSize -
+							(long long int)threads[i].lastExecuted)) / ((long long int)threads[i].period);
 			syncOutAllowed = fmi2True;
 
 			//It is possible that one execution will overshoot the step.
@@ -91,7 +90,7 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationSte
 		for(j = 0; j < threadRunCount; j++)
 		{
 			threads[i].call();
-//			printf("RUN THREAD AT %lf\n", currentCommunicationPoint / 1E9);
+			printf("NOW:  %Lf, TP: %Lf, LE:  %Lf, STEP:  %Lf, SYNC:  %d\n", currentCommunicationPoint / 1E9, threads[i].period / 1E9, threads[i].lastExecuted / 1E9, communicationStepSize / 1E9, syncOutAllowed);
 
 			//Update the thread's last execution time.
 			threads[i].lastExecuted += threads[i].period;
