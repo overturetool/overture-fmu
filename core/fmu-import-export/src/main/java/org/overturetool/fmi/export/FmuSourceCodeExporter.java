@@ -232,6 +232,8 @@ public class FmuSourceCodeExporter extends FmuExporter
 		StringBuilder sb = new StringBuilder();
 		
 		sb.append("\tvdm_gc_init();\n\n");
+		sb.append("\tint i;\n\n");
+		sb.append("\tfor(i = 0; i < PERIODIC_GENERATED_COUNT; i++) threads[i].period = threads[i].period / 1.0E9;\n\n");
 
 		sb.append(getJoinClassNames(project, new INameFormater()
 		{
