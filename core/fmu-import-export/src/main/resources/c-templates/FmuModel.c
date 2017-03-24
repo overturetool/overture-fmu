@@ -32,8 +32,8 @@ fmi2Boolean syncOutAllowed = fmi2True;
 fmi2Status vdmStep(fmi2Real currentCommunicationPoint_p, fmi2Real communicationStepSize_p)
 {
 	//convert seconds to nanoseconds
-	long double currentCommunicationPoint = currentCommunicationPoint_p * 1E9;
-	long double communicationStepSize = communicationStepSize_p * 1E9;
+	long int currentCommunicationPoint = ((long double)currentCommunicationPoint_p) * 1.0E9;
+	long int communicationStepSize = ((long double)communicationStepSize_p) * 1.0E9;
 
 	int i, j;
 	int threadRunCount;
@@ -42,28 +42,25 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint_p, fmi2Real communicationS
 	for(i = 0;  i < PERIODIC_GENERATED_COUNT; i++)
 	{
 		//Times align, sync took place last time.
-		if(threads[i].lastExecuted >= currentCommunicationPoint)
+		if((long int)((long double)(threads[i].lastExecuted)) >= currentCommunicationPoint)
 		{
 			//Can not do anything, still waiting for the last step's turn to come.
-			if(threads[i].lastExecuted >= currentCommunicationPoint + communicationStepSize)
+			if((long int)threads[i].lastExecuted >= currentCommunicationPoint + communicationStepSize)
 			{
 				threadRunCount = 0;
 				syncOutAllowed = fmi2False;
 			}
 			//Previous step will finish inside this step.
 			//At least one execution can be fit inside this step.
-			else if(threads[i].lastExecuted + threads[i].period <= currentCommunicationPoint + communicationStepSize)
+			else if((long int)(threads[i].lastExecuted) + (long int)(threads[i].period) <= currentCommunicationPoint + communicationStepSize)
 			{
 				//Find number of executions to fit inside of step, allow sync.
-				threadRunCount = ((long long int)((long long int)currentCommunicationPoint + 
-							(long long int)communicationStepSize - (long long int)threads[i].lastExecuted)) / ((long long int)threads[i].period);
+				threadRunCount = ((long int)(currentCommunicationPoint + communicationStepSize - (long int)(threads[i].lastExecuted))) / ((long int)(threads[i].period));
 				syncOutAllowed = fmi2True;
 			}
 			//Can not execute, but can sync existing values at the end of this step.
 			else 
 			{
-				//printf("ELSE CLAUSE AT:  NOW:  %Lf, TP: %Lf, LE:  %Lf, STEP:  %Lf, SYNC:  %d, RUNS:  %d\n", currentCommunicationPoint / 1E9, threads[i].period / 1E9, threads[i].lastExecuted / 1E9, communicationStepSize / 1E9, syncOutAllowed, threadRunCount);
-
 				threadRunCount = 0;
 				syncOutAllowed = fmi2True;
 			}
@@ -71,16 +68,19 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint_p, fmi2Real communicationS
 		else
 		{
 			//Find number of executions to fit inside of step, allow sync because need to update regardless.
-			threadRunCount = ((long long int)((long long int)currentCommunicationPoint +
-						(long long int)communicationStepSize -
-							(long long int)threads[i].lastExecuted)) / ((long long int)threads[i].period) ;
+			threadRunCount = (currentCommunicationPoint + communicationStepSize - (long int)(threads[i].lastExecuted)) / ((long int)(threads[i].period)) ;
 			syncOutAllowed = fmi2True;
+
+			//Period too long for this step so postpone until next step.
+			if(threadRunCount == 0)
+			{
+				syncOutAllowed = fmi2False;
+			}
 		}
 
-		//Rounding calculation
-		//if(((long long int)currentCommunicationPoint) - 2 <= ((long long int)(threads[i].lastExecuted)) && ((long long int)(threads[i].lastExecuted) <= ((long long int)currentCommunicationPoint) + 2))
 			
 		//printf("NOW:  %Lf, TP: %Lf, LE:  %Lf, STEP:  %Lf, SYNC:  %d, RUNS:  %d\n", currentCommunicationPoint / 1E9, threads[i].period / 1E9, threads[i].lastExecuted / 1E9, communicationStepSize / 1E9, syncOutAllowed, threadRunCount);
+		printf("NOW:  %ld, TP: %f, LE:  %f, STEP:  %ld, SYNC:  %d, RUNS:  %d\n", currentCommunicationPoint, threads[i].period, threads[i].lastExecuted, communicationStepSize, syncOutAllowed, threadRunCount);
 
 		//Execute each thread the number of times that its period fits in the step size.
 		for(j = 0; j < threadRunCount; j++)
