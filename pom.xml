@@ -16,7 +16,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<crescendo.version>2.1.1-SNAPSHOT</crescendo.version>
+		<crescendo.version>2.2.0</crescendo.version>
 		<intocps.shm.version>0.1.6</intocps.shm.version>
 	</properties>
 
