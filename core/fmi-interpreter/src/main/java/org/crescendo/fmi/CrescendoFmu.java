@@ -79,7 +79,7 @@ public abstract class CrescendoFmu implements IServiceProtocol
 	Double time = (double) 0;
 	final String sessionName;
 	CrescendoStateType protocolState = CrescendoStateType.None;
-	private boolean loggingOn = true;
+	private boolean loggingOn = false;
 
 	double lastCommunicationPoint = 0;
 	double lastStepSize = 0;
@@ -203,7 +203,22 @@ public abstract class CrescendoFmu implements IServiceProtocol
 
 			log(LogCategory.LogAll, Fmi2LogReply.Status.Ok, "DoStep VDM time: "
 					+ internalVdmClockTime);
-			List<NamedValue> res = FmiSimulationManager.getInstance().step(internalVdmClockTime, inputs);
+			List<NamedValue> res = null;
+
+			try
+			{
+
+				res = FmiSimulationManager.getInstance().step(internalVdmClockTime, inputs);
+			} catch (RemoteSimulationException e)
+			{
+//				if (e.getCause() != null)
+//				{
+//					fmiLog(LogCategory.LogVdmErr, e.getCause().getMessage());
+//				}
+				logger.warn("Error in doStep",e);
+				fmiLog(LogCategory.LogError, e.getMessage());
+				return fatal;
+			}
 			log(LogCategory.LogAll, Fmi2LogReply.Status.Ok, "DoStep VDM time: "
 					+ internalVdmClockTime + " - completed");
 			NamedValue timeValue = null;
@@ -230,7 +245,7 @@ public abstract class CrescendoFmu implements IServiceProtocol
 
 		} catch (Exception e)
 		{
-			e.printStackTrace();
+			logger.error("Error in doStep",e);
 			fmiLog(LogCategory.LogError, "Error in DoStep: " + e.getMessage());
 			return fatal;
 		}
@@ -314,9 +329,8 @@ public abstract class CrescendoFmu implements IServiceProtocol
 			protocolState = CrescendoStateType.Initialized;
 		} catch (RemoteSimulationException e)
 		{
-			e.printStackTrace();
-			fmiLog(LogCategory.LogError, "Error in ExitInitializationMode (setDesignParameters, start): "
-					+ e.getMessage());
+			logger.warn("Error in initialization",e);
+			fmiLog(LogCategory.LogError,  e.getMessage());
 			return fatal;
 		}
 		log(LogCategory.LogAll, Fmi2LogReply.Status.Ok, "exit init");
@@ -403,6 +417,7 @@ public abstract class CrescendoFmu implements IServiceProtocol
 
 		if (request.getLogginOn())
 		{
+			loggingOn = request.getLogginOn();
 			String callbackShmName = request.getCallbackShmName();
 			logger.debug("Connecting callback log driver with shm key: '{}'", callbackShmName);
 			try

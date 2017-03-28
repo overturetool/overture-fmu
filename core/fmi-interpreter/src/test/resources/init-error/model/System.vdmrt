@@ -1,0 +1,21 @@
+system System
+
+instance variables
+
+-- Hardware interface variable required by FMU Import/Export
+public static hwi: HardwareInterface := new HardwareInterface();
+  
+  public static controller:Controller  := new Controller();  
+  
+  	cpu1 : CPU := new CPU(<FP>, 20);
+
+operations
+
+public System : () ==> System
+System () == 
+(
+		let b = 1/0 in skip;
+	skip;
+);
+
+end System

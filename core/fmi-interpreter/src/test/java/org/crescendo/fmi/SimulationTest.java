@@ -27,13 +27,15 @@ public class SimulationTest
 		new SharedMemory().setDebug(logger.isDebugEnabled());
 		SharedMemoryServer.setServerDebug(logger.isDebugEnabled());
 
-		CrescendoFmu fmu = new CrescendoFmu("test-in-out-session-test"){
+		CrescendoFmu fmu = new CrescendoFmu("test-in-out-session-test")
+		{
 
 			@Override
 			public void close()
 			{
-				
-			}};
+
+			}
+		};
 
 		String resourcePath = new File(".").toURI().resolve("src/test/resources/var-transfer-in-out-test/").toString();
 		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.Instantiate(Fmi2InstantiateRequest.newBuilder().setFmuResourceLocation(resourcePath).build()).getStatus());
@@ -49,12 +51,12 @@ public class SimulationTest
 
 		final int s_in = 7;
 		final int s_out = 6;
-		
+
 		final int p_s = 8;
-		
+
 		final int p2_out = 10;
-//		final int p2_s=11;
-		final int p_out=9;
+		// final int p2_s=11;
+		final int p_out = 9;
 
 		// do step 1.
 		fmu.state.booleans[b_in] = true;
@@ -62,12 +64,11 @@ public class SimulationTest
 		fmu.state.reals[r_in] = 9.9;
 		fmu.state.strings[s_in] = "my value";
 
-		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.SetString(Fmi2SetStringRequest.newBuilder().addValueReference( p_s).addValues( "parameter").build()).getStatus());
-		
+		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.SetString(Fmi2SetStringRequest.newBuilder().addValueReference(p_s).addValues("parameter").build()).getStatus());
+
 		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.EnterInitializationMode(empty).getStatus());
 		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.ExitInitializationMode(empty).getStatus());
 
-		
 		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.DoStep(Fmi2DoStepRequest.newBuilder().setCurrentCommunicationPoint(0).setCommunicationStepSize(4).build()).getStatus());
 
 		Assert.assertEquals(true, fmu.state.booleans[b_out]);
@@ -90,5 +91,53 @@ public class SimulationTest
 		Assert.assertEquals(10.10, fmu.state.reals[r_out], 0.001);
 		Assert.assertEquals("my value 2", fmu.state.strings[s_out]);
 
+	}
+
+	@Test
+	public void testInitError()
+	{
+		Logger logger = LoggerFactory.getLogger(ShmServer.class);
+		new SharedMemory().setDebug(logger.isDebugEnabled());
+		SharedMemoryServer.setServerDebug(logger.isDebugEnabled());
+
+		CrescendoFmu fmu = new CrescendoFmu("test-in-out-session-test")
+		{
+
+			@Override
+			public void close()
+			{
+
+			}
+		};
+
+		String resourcePath = new File(".").toURI().resolve("src/test/resources/init-error/").toString();
+		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.Instantiate(Fmi2InstantiateRequest.newBuilder().setFmuResourceLocation(resourcePath).setLogginOn(true).build()).getStatus());
+		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.EnterInitializationMode(empty).getStatus());
+		Assert.assertEquals(Fmi2StatusReply.Status.Fatal, fmu.ExitInitializationMode(empty).getStatus());
+		Assert.assertEquals(Fmi2StatusReply.Status.Fatal, fmu.DoStep(Fmi2DoStepRequest.newBuilder().setCurrentCommunicationPoint(0).setCommunicationStepSize(4).build()).getStatus());
+	}
+
+	@Test
+	public void testDtcError()
+	{
+		Logger logger = LoggerFactory.getLogger(ShmServer.class);
+		new SharedMemory().setDebug(logger.isDebugEnabled());
+		SharedMemoryServer.setServerDebug(logger.isDebugEnabled());
+
+		CrescendoFmu fmu = new CrescendoFmu("test-in-out-session-test")
+		{
+
+			@Override
+			public void close()
+			{
+
+			}
+		};
+
+		String resourcePath = new File(".").toURI().resolve("src/test/resources/dtc-error/").toString();
+		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.Instantiate(Fmi2InstantiateRequest.newBuilder().setFmuResourceLocation(resourcePath).setLogginOn(true).build()).getStatus());
+		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.EnterInitializationMode(empty).getStatus());
+		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.ExitInitializationMode(empty).getStatus());
+		Assert.assertEquals(Fmi2StatusReply.Status.Fatal, fmu.DoStep(Fmi2DoStepRequest.newBuilder().setCurrentCommunicationPoint(0).setCommunicationStepSize(4).build()).getStatus());
 	}
 }

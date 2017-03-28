@@ -1,0 +1,40 @@
+-- Generated class
+class HardwareInterface
+values
+	-- @ interface: type = parameter, name="p_s";
+	public p_s : StringPort = new StringPort("");
+
+	-- @ interface: type = parameter, name="p2_s";
+	public p2_s : StringPort = new StringPort("p2-default");
+
+instance variables
+	-- @ interface: type = input, name="i_in";
+	public i_in : IntPort := new IntPort(0);
+	-- @ interface: type = input, name="r_in";
+	public r_in : RealPort := new RealPort(0.0);
+	-- @ interface: type = input, name="b_in";
+	public b_in : BoolPort := new BoolPort(true);
+	-- @ interface: type = input, name="s_in";
+	public s_in : StringPort := new StringPort("");
+
+
+instance variables
+	-- @ interface: type = output, name="i_out";
+	public i_out : IntPort := new IntPort(0);
+	-- @ interface: type = output, name="r_out";
+	public r_out : RealPort := new RealPort(0.0);
+	-- @ interface: type = output, name="b_out";
+	public b_out : BoolPort := new BoolPort(true);
+	-- @ interface: type = output, name="s_out";
+	public s_out : StringPort := new StringPort("");
+	
+	-- @ interface: type = output, name="p_out";
+	public p_out : StringPort := new StringPort("");
+
+	-- @ interface: type = output, name="p2_out";
+	public p2_out : StringPort := new StringPort("");
+
+  
+  
+end HardwareInterface
+

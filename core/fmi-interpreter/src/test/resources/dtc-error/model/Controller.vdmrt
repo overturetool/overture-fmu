@@ -1,0 +1,26 @@
+class Controller
+ 
+
+operations
+
+public loop : () ==>()
+loop()==
+	cycles(2)
+   (-- retrieve the first value from Co-SIM
+   
+
+System`hwi.i_out.setValue( System`hwi.i_in.getValue());
+System`hwi.r_out.setValue( System`hwi.r_in.getValue());
+System`hwi.b_out.setValue( System`hwi.b_in.getValue());
+System`hwi.s_out.setValue( System`hwi.s_in.getValue());  
+System`hwi.p_out.setValue( System`hwi.p_s.getValue());  
+System`hwi.p2_out.setValue( System`hwi.p2_s.getValue());   
+
+	let v : bool = if true then 1+1 else false in skip;
+    
+   );
+
+thread
+periodic(10E6,0,0,0)(loop);	 
+		 
+end Controller
