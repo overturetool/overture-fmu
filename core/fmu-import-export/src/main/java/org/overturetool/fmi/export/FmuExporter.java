@@ -235,23 +235,6 @@ public class FmuExporter
 		return config;
 	}
 
-	protected void copyResourceFiles(IProject project, String resourcesFolder)
-			throws IOException
-	{
-		InputStream is = null;
-		LinkedList<File> resourceFiles;
-		String resourceFileExtensions[] = new String[] { "csv" }; // include more as needed.
-
-		// Copy other resource files included with the model as resources.
-		resourceFiles = (LinkedList<File>) FileUtils.listFiles(project.getSourceRootPath(), resourceFileExtensions, true);
-
-		for (File resFile : resourceFiles)
-		{
-			is = new FileInputStream(resFile);
-			project.createProjectTempRelativeFile(resourcesFolder + "/"
-					+ resFile.getName(), is);
-		}
-	}
 
 	protected void copyResourceFiles(IProject project, String resourcesFolder,
 			String exts[]) throws IOException
@@ -374,6 +357,6 @@ public class FmuExporter
 			project.createProjectTempRelativeFile(binaries + "/git-info-txt", is);
 		}
 
-		copyResourceFiles(project, resourcesFolder);
+		copyResourceFiles(project,resourcesFolder,new String[] { "csv" ,"jar","class","properties"});
 	}
 }
