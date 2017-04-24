@@ -27,7 +27,6 @@ import org.overture.interpreter.values.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.lausdahl.examples.Service.Fmi2BooleanStatusReply;
 import com.lausdahl.examples.Service.Fmi2DoStepRequest;
@@ -384,7 +383,7 @@ public abstract class CrescendoFmu implements IServiceProtocol
 	}
 
 	@Override
-	public GeneratedMessage GetString(Fmi2GetRequest request)
+	public Fmi2GetStringReply GetString(Fmi2GetRequest request)
 	{
 		Fmi2GetStringReply.Builder reply = Fmi2GetStringReply.newBuilder();
 
@@ -394,6 +393,7 @@ public abstract class CrescendoFmu implements IServiceProtocol
 			logger.trace("GetString index: {}", id);
 			reply.addValues(state.strings[new Long(id).intValue()]);
 		}
+		reply.setValid(true);
 		return reply.build();
 	}
 
