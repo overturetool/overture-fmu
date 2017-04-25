@@ -107,7 +107,9 @@ fmi2Status fmi2SetDebugLogging(fmi2Component c, fmi2Boolean loggingOn, size_t nC
 
 fmi2Status fmi2GetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Real value[])
 {
-for (int i = 0; i < nvr; i++)
+	int i;
+
+	for (i = 0; i < nvr; i++)
 	{
 		fmi2ValueReference vRef = vr[i];
 		value[i] = fmiBuffer.realBuffer[vRef];
@@ -117,7 +119,9 @@ for (int i = 0; i < nvr; i++)
 
 fmi2Status fmi2GetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Integer value[])
 {
-for (int i = 0; i < nvr; i++)
+	int i;
+
+	for (i = 0; i < nvr; i++)
 	{
 		fmi2ValueReference vRef = vr[i];
 		value[i] = fmiBuffer.intBuffer[vRef];
@@ -127,7 +131,9 @@ for (int i = 0; i < nvr; i++)
 
 fmi2Status fmi2GetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Boolean value[])
 {
-	for (int i = 0; i < nvr; i++)
+	int i;
+
+	for (i = 0; i < nvr; i++)
 	{
 		fmi2ValueReference vRef = vr[i];
 		value[i] = fmiBuffer.booleanBuffer[vRef];
@@ -143,7 +149,9 @@ fmi2Status fmi2GetString(fmi2Component c, const fmi2ValueReference vr[], size_t 
 
 fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Real value[])
 {
-	for (int i = 0; i < nvr; i++)
+	int i;
+
+	for (i = 0; i < nvr; i++)
 	{
 		fmi2ValueReference vRef = vr[i];
 		fmiBuffer.realBuffer[vRef] = value[i];
@@ -156,8 +164,9 @@ fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 fmi2Status fmi2SetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t nvr,
 		const fmi2Integer value[])
 {
+	int i;
 
-	for (int i = 0; i < nvr; i++)
+	for (i = 0; i < nvr; i++)
 	{
 		fmi2ValueReference vRef = vr[i];
 		fmiBuffer.intBuffer[vRef] = value[i];
@@ -170,7 +179,9 @@ fmi2Status fmi2SetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
 fmi2Status fmi2SetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t nvr,
 		const fmi2Boolean value[])
 {
-for (int i = 0; i < nvr; i++)
+	int i;
+
+	for (i = 0; i < nvr; i++)
 	{
 		fmi2ValueReference vRef = vr[i];
 		fmiBuffer.booleanBuffer[vRef] = value[i];

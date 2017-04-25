@@ -19,6 +19,9 @@ void fmuLoggerCache(void *componentEnvironment, fmi2String instanceName, fmi2Sta
 
 int main()
 {
+    int i;
+    double time;
+
     fmi2CallbackFunctions callback={&fmuLoggerCache,NULL,NULL,NULL,NULL};
     
     fmi2Instantiate("this system",fmi2CoSimulation,"","",&callback,fmi2True,fmi2True);
@@ -29,7 +32,7 @@ int main()
     double totalTime = 10E9;
     
     
-    for(int i = 0;  i < PERIODIC_GENERATED_COUNT; i++)
+    for(i = 0;  i < PERIODIC_GENERATED_COUNT; i++)
     {
         if(stepSize < threads[i].period)
         {
@@ -42,7 +45,7 @@ int main()
     
     printf("Stepsize is: %f seconds.\n",stepSize);
     
-    for (double time =0; time < totalTime; time=time+stepSize) {
+    for (time =0; time < totalTime; time=time+stepSize) {
         
             if(fmi2OK !=fmi2DoStep(NULL,time,stepSize,fmi2False))
             {
