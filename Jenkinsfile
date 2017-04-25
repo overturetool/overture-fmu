@@ -30,6 +30,12 @@ node {
         //step([$class: 'TasksPublisher', canComputeNew: false, defaultEncoding: '', excludePattern: '', healthy: '', high: 'FIXME', ignoreCase: true, low: '', normal: 'TODO', pattern: '', unHealthy: ''])
       }}
 
+			stage ('Integration test'){
+				dir('testing') {
+					sh "integration-test.sh"
+				}
+			}
+
 		stage ('Copy CLI to repo'){
 
 			sh "echo Detecting current version"
