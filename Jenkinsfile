@@ -16,18 +16,18 @@ node {
       withMaven(mavenLocalRepo: '.repository', mavenSettingsFilePath: "${env.MVN_SETTINGS_PATH}") {
 
         // Run the maven build
-				//	sh "mvn clean install -U -PWith-IDE -Pcodesigning"
+				sh "mvn clean install -U -PWith-IDE -Pcodesigning"
       }}
 
     stage ('Build'){
       withMaven(mavenLocalRepo: '.repository', mavenSettingsFilePath: "${env.MVN_SETTINGS_PATH}") {
 
         // Run the maven build
-				//	sh "mvn install -Pall-platforms -PWith-IDE"
-				//	step([$class: 'ArtifactArchiver', artifacts: '**/target/*.jar', fingerprint: true])
-        //step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
-        //step([$class: 'JacocoPublisher'])
-        //step([$class: 'TasksPublisher', canComputeNew: false, defaultEncoding: '', excludePattern: '', healthy: '', high: 'FIXME', ignoreCase: true, low: '', normal: 'TODO', pattern: '', unHealthy: ''])
+				sh "mvn install -Pall-platforms -PWith-IDE"
+				step([$class: 'ArtifactArchiver', artifacts: '**/target/*.jar', fingerprint: true])
+        step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
+        step([$class: 'JacocoPublisher'])
+        step([$class: 'TasksPublisher', canComputeNew: false, defaultEncoding: '', excludePattern: '', healthy: '', high: 'FIXME', ignoreCase: true, low: '', normal: 'TODO', pattern: '', unHealthy: ''])
       }}
 
 		stage ('Integration test'){
