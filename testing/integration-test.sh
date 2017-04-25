@@ -38,7 +38,7 @@ echo "Checking for platform..."
 case "$OSTYPE" in
   solaris*) echo "SOLARIS" ;;
   darwin*)  echo "OSX"; LIB=`readlink -f output/binaries/darwin64/$NAME.dylib`;; 
-  linux*)   echo "LINUX" ;;
+  linux*)   echo "LINUX" LIB=`readlink -f output/binaries/linux64/$NAME.so`;; 
   bsd*)     echo "BSD" ;;
   *)        echo "unknown: $OSTYPE" ;;
 esac
