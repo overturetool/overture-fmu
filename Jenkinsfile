@@ -46,7 +46,7 @@ node {
 
 			if (env.BRANCH_NAME == 'development') {
 			
-				def server = Artifactory.server "-844406945@1404457436085"
+				def server = Artifactory.server "-225816141@1439286524510"
 				def buildInfo = Artifactory.newBuildInfo()
 				buildInfo.env.capture = true
 				//buildInfo.env.filter.addExclude("org/destecs/ide/**")
