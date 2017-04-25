@@ -36,7 +36,7 @@ node {
 
 					version = sh script: "mvn -N org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version -DDmaven.repo.local=.repository/ | grep -v '\\['" , returnStdout:true
 
-			sh "echo Version '${version}'"
+			sh "echo Version K${version}K"
 
 			sh "cp core/fmu-import-export/target/fmu-import-export-${version}-jar-with-dependencies.jar ide/repository/target/repository/fmu-import-export.jar"
 
