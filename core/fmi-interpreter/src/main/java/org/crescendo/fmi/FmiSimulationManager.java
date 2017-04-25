@@ -83,7 +83,7 @@ public class FmiSimulationManager extends SimulationManager
 				}
 			} catch (ValueException e)
 			{
-				debugErr(e);
+				logger.error(e.getMessage(),e);
 				throw new RemoteSimulationException("Faild to get output parameter", e);
 			}
 		}
@@ -172,7 +172,7 @@ public class FmiSimulationManager extends SimulationManager
 
 			if (!links.getSharedDesignParameters().keySet().contains(parameterName))
 			{
-				debugErr("Tried to set unlinked shared design parameter: "
+				logger.error("Tried to set unlinked shared design parameter: "
 						+ parameterName);
 				throw new RemoteSimulationException("Tried to set unlinked shared design parameter: "
 						+ parameterName);
@@ -231,7 +231,7 @@ public class FmiSimulationManager extends SimulationManager
 				}
 				if (!found)
 				{
-					debugErr("Tried to set unlinked shared design parameter: "
+					logger.error("Tried to set unlinked shared design parameter: "
 							+ parameterName);
 					throw new RemoteSimulationException("Tried to set unlinked shared design parameter: "
 							+ parameterName);
@@ -242,7 +242,7 @@ public class FmiSimulationManager extends SimulationManager
 			throw e;
 		} catch (Exception e)
 		{
-			debugErr(e);
+			logger.error(e.getMessage(),e);
 			if (e instanceof RemoteSimulationException)
 			{
 				throw (RemoteSimulationException) e;
