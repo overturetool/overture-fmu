@@ -32,6 +32,8 @@ import org.overturetool.fmi.util.VdmAnnotationProcesser;
 
 public class FmuExporter
 {
+	public static final String[] RESOURCE_EXTENSIONS = new String[] { "csv" ,"jar","class","properties"};
+
 	private boolean HWInterfaceHasStatics(IProject project)
 	{
 		for (SClassDefinition c : project.getClasses())
@@ -357,6 +359,6 @@ public class FmuExporter
 			project.createProjectTempRelativeFile(binaries + "/git-info-txt", is);
 		}
 
-		copyResourceFiles(project,resourcesFolder,new String[] { "csv" ,"jar","class","properties"});
+		copyResourceFiles(project,resourcesFolder,RESOURCE_EXTENSIONS);
 	}
 }

@@ -4,9 +4,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.util.Collection;
+import java.util.Enumeration;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Vector;
@@ -42,6 +45,24 @@ import org.xml.sax.SAXException;
 
 public class Main
 {
+
+	final static Option helpOpt = Option.builder("h").longOpt("help").desc("Show this description").build();
+
+	final static Option releaseOpt = Option.builder("r").longOpt("release").desc("Overture release version").hasArg().build();
+	final static Option exportOpt = Option.builder("export").desc("Export").hasArg().numberOfArgs(1).argName("source> or <tool").build();
+	final static Option importModelDescriptionOpt = Option.builder("import").longOpt("modeldescrption").desc("Import modelDescription.xml").hasArg().build();
+	final static Option upgradeOpt = Option.builder("upgrade").desc("Upgrade the FMU with latest tooling").hasArg().numberOfArgs(1).argName("path").build();
+
+	final static Option projectNameOpt = Option.builder("name").desc("Project name / FMU name").hasArg().build();
+	final static Option projectRootOpt = Option.builder("root").desc("Project root directory").hasArg().build();
+	final static Option outputFolderOpt = Option.builder("output").desc("Outout location").hasArg().build();
+	final static Option forceOpt = Option.builder("f").longOpt("force").desc("Force override of existing output files").build();
+	final static Option verboseOpt = Option.builder("v").longOpt("verbose").desc("Verbose mode or print diagnostic version info").build();
+	final static Option versionOpt = Option.builder("V").longOpt("version").desc("Show version").build();
+	final static Option tracabilityEnableOpt = Option.builder("t").longOpt("tracability").desc("Enable Tracability").build();
+	final static Option followEclipseLinks = Option.builder("follow").longOpt("follow-eclipse-links").desc("Follow eclipse links in the .project file").build();
+	final static Option toolDebugOpt = Option.builder("debug").longOpt("Tool debug").hasArg(true).argName("port=y/n for auto suspend").desc("Generate tool debug config. Connect with 'localhost' port '4000'").build();
+
 	public static boolean useExitCode = true;
 
 	static void exitError(String msg) throws AbortException
@@ -75,21 +96,6 @@ public class Main
 			XPathExpressionException
 	{
 		Options options = new Options();
-		Option helpOpt = Option.builder("h").longOpt("help").desc("Show this description").build();
-
-		Option releaseOpt = Option.builder("r").longOpt("release").desc("Overture release version").hasArg().build();
-		Option exportOpt = Option.builder("export").desc("Export").hasArg().numberOfArgs(1).argName("source> or <tool").build();
-		Option importModelDescriptionOpt = Option.builder("import").longOpt("modeldescrption").desc("Import modelDescription.xml").hasArg().build();
-
-		Option projectNameOpt = Option.builder("name").desc("Project name / FMU name").hasArg().build();
-		Option projectRootOpt = Option.builder("root").desc("Project root directory").hasArg().build();
-		Option outputFolderOpt = Option.builder("output").desc("Outout location").hasArg().build();
-		Option forceOpt = Option.builder("f").longOpt("force").desc("Force override of existing output files").build();
-		Option verboseOpt = Option.builder("v").longOpt("verbose").desc("Verbose mode or print diagnostic version info").build();
-		Option versionOpt = Option.builder("V").longOpt("version").desc("Show version").build();
-		Option tracabilityEnableOpt = Option.builder("t").longOpt("tracability").desc("Enable Tracability").build();
-		Option followEclipseLinks = Option.builder("follow").longOpt("follow-eclipse-links").desc("Follow eclipse links in the .project file").build();
-		Option toolDebugOpt = Option.builder("debug").longOpt("Tool debug").hasArg(true).argName("port=y/n for auto suspend").desc("Generate tool debug config. Connect with 'localhost' port '4000'").build();
 
 		options.addOption(helpOpt);
 		options.addOption(releaseOpt);
@@ -97,6 +103,7 @@ public class Main
 		options.addOption(importModelDescriptionOpt);
 		options.addOption(toolDebugOpt);
 		options.addOption(followEclipseLinks);
+		options.addOption(upgradeOpt);
 
 		options.addOption(projectNameOpt);
 		options.addOption(projectRootOpt);
@@ -106,23 +113,25 @@ public class Main
 		options.addOption(versionOpt);
 		options.addOption(tracabilityEnableOpt);
 
-		CommandLineParser parser = new DefaultParser();
-		CommandLine cmd = null;
-		try
-		{
-			cmd = parser.parse(options, args);
-		} catch (ParseException e1)
-		{
-			String msg = "Parsing failed. Reason: " + e1.getMessage();
-			System.err.println(msg);
-			showHelp(options);
-			exitError(msg);
-		}
+		File upgradeFolder = null;
+
+		CommandLine cmd = parseArguments(args, options);
 
 		if (cmd.hasOption(helpOpt.getOpt()))
 		{
 			showHelp(options);
 			return;
+		}
+
+		if (cmd.hasOption(upgradeOpt.getOpt()))
+		{
+			upgradeFolder = Files.createTempDirectory("overture-fmu").toFile();
+			String[] newArgs = prepareUpgrade(cmd.getOptionValue(upgradeOpt.getOpt()), upgradeFolder);
+			if (newArgs == null)
+			{
+				exitError("Failed to unpack existing FMU");
+			}
+			cmd = parseArguments(newArgs, options);
 		}
 
 		// check option combinations
@@ -285,7 +294,114 @@ public class Main
 		} finally
 		{
 			project.cleanUp();
+			if (upgradeFolder != null)
+			{
+				FileUtils.deleteDirectory(upgradeFolder);
+			}
 		}
+	}
+
+	protected static CommandLine parseArguments(String[] args, Options options)
+			throws AbortException
+	{
+		CommandLine cmd = null;
+		try
+		{
+			CommandLineParser parser = new DefaultParser();
+			cmd = parser.parse(options, args);
+		} catch (ParseException e1)
+		{
+			String msg = "Parsing failed. Reason: " + e1.getMessage();
+			System.err.println(msg);
+			showHelp(options);
+			exitError(msg);
+		}
+		return cmd;
+	}
+
+	static public void unzip(File file, File outputDir) throws IOException
+	{
+		ZipFile zipFile = new ZipFile(file);
+		try
+		{
+			Enumeration<? extends ZipEntry> entries = zipFile.entries();
+			while (entries.hasMoreElements())
+			{
+				ZipEntry entry = entries.nextElement();
+				File entryDestination = new File(outputDir, entry.getName());
+				if (entry.isDirectory())
+				{
+					entryDestination.mkdirs();
+				} else
+				{
+					entryDestination.getParentFile().mkdirs();
+					InputStream in = zipFile.getInputStream(entry);
+					OutputStream out = new FileOutputStream(entryDestination);
+					IOUtils.copy(in, out);
+					IOUtils.closeQuietly(in);
+					out.close();
+				}
+			}
+		} finally
+		{
+			zipFile.close();
+		}
+	}
+
+	private static String[] prepareUpgrade(String fmuPath, File folder)
+			throws AbortException
+	{
+		try
+		{
+			File fmu = new File(fmuPath);
+
+			if (!fmu.getName().endsWith(".fmu"))
+			{
+				exitError("A fmu must be specified as argument to "
+						+ upgradeOpt.getOpt());
+			}
+
+			unzip(fmu, folder);
+
+			File modelPath = new File(new File(folder, "resources"), "model");
+
+			if (!modelPath.exists())
+			{
+				exitError("Can only upgrade tool FMUs");
+			}
+
+			// copy over resources
+			LinkedList<File> resourceFiles = (LinkedList<File>) FileUtils.listFiles(modelPath.getParentFile(), FmuExporter.RESOURCE_EXTENSIONS, true);
+
+			for (File resFile : resourceFiles)
+			{
+				if(resFile.getName().startsWith("fmi-interpreter") || resFile.getName().equals("config.txt"))
+					continue;
+				String relativePath = modelPath.getParentFile().toURI().relativize(resFile.toURI()).getPath();
+				File fout = new File(modelPath, relativePath);
+				fout.getParentFile().mkdirs();
+				FileUtils.copyFile(resFile, fout);
+			}
+
+			String[] args = new String[] { "-" + exportOpt.getOpt(), "tool",
+					"-" + outputFolderOpt.getOpt(), ".",
+					"-" + projectNameOpt.getOpt(),
+					fmu.getName().substring(0, fmu.getName().indexOf(".fmu")),
+					"-" + projectRootOpt.getOpt(), modelPath.getAbsolutePath() };
+
+			System.out.print("Proceding with arguments: '");
+			for (String string : args)
+			{
+				System.out.print(string + " ");
+			}
+			System.out.print("\n");
+			return args;
+		} catch (IOException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	private static void showVersion()
