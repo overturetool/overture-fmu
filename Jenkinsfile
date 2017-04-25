@@ -16,25 +16,25 @@ node {
       withMaven(mavenLocalRepo: '.repository', mavenSettingsFilePath: "${env.MVN_SETTINGS_PATH}") {
 
         // Run the maven build
-				sh "mvn clean install -U -PWith-IDE -Pcodesigning"
+				//	sh "mvn clean install -U -PWith-IDE -Pcodesigning"
       }}
 
     stage ('Build'){
       withMaven(mavenLocalRepo: '.repository', mavenSettingsFilePath: "${env.MVN_SETTINGS_PATH}") {
 
         // Run the maven build
-				sh "mvn install -Pall-platforms -PWith-IDE"
-				step([$class: 'ArtifactArchiver', artifacts: '**/target/*.jar', fingerprint: true])
-        step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
-        step([$class: 'JacocoPublisher', exclusionPattern: '**/org/overture/ast/analysis/**/*.*, **/org/overture/ast/expressions/**/*.*, **/org/overture/ast/modules/**/*.*, **/org/overture/ast/node/**/*.*,**/org/overture/ast/patterns/**/*.*, **/org/overture/ast/statements/**/*.*, **/org/overture/ast/types/**/*.*, **/org/overture/codegen/ir/**/*, **/org/overture/ide/**/*'])
-        step([$class: 'TasksPublisher', canComputeNew: false, defaultEncoding: '', excludePattern: '', healthy: '', high: 'FIXME', ignoreCase: true, low: '', normal: 'TODO', pattern: '', unHealthy: ''])
+				//	sh "mvn install -Pall-platforms -PWith-IDE"
+				//	step([$class: 'ArtifactArchiver', artifacts: '**/target/*.jar', fingerprint: true])
+        //step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
+        //step([$class: 'JacocoPublisher'])
+        //step([$class: 'TasksPublisher', canComputeNew: false, defaultEncoding: '', excludePattern: '', healthy: '', high: 'FIXME', ignoreCase: true, low: '', normal: 'TODO', pattern: '', unHealthy: ''])
       }}
 
 		stage ('Copy CLI to repo'){
 
 			sh "echo Detecting current version"
 
-			version= DEST = sh script: "mvn -N org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version -DDmaven.repo.local=.repository/ | grep -v '\\['" , returnStdout:true
+			version= DEST = sh script: "mvn -N org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version -DDmaven.repo.local=.repository/ | grep -v '\\\['" , returnStdout:true
 
 
 			sh "cp core/fmu-import-export/target/fmu-import-export-${version}-jar-with-dependencies.jar ide/repository/target/repository/fmu-import-export.jar"
