@@ -16,7 +16,7 @@ node {
       withMaven(mavenLocalRepo: '.repository', mavenSettingsFilePath: "${env.MVN_SETTINGS_PATH}") {
 
         // Run the maven build
-				sh "clean install -U -PWith-IDE -Pcodesigning"
+				sh "mvn clean install -U -PWith-IDE -Pcodesigning"
       }}
 
     stage ('Build'){
