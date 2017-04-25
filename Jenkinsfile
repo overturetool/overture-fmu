@@ -32,7 +32,7 @@ node {
 
 			stage ('Integration test'){
 				dir('testing') {
-					sh "integration-test.sh"
+					sh "./integration-test.sh"
 				}
 			}
 
