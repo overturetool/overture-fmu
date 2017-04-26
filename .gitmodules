@@ -2,3 +2,6 @@
 	path = testing/fmu-tester
 	url = git@gitlab.au.dk:into-cps/fmu-tester.git
   ignore = dirty
+[submodule "testing/FMUComplianceChecker"]
+	path = testing/FMUComplianceChecker
+	url = https://github.com/modelica-tools/FMUComplianceChecker.git

@@ -108,3 +108,4 @@ core/fmi-interpreter/src/main/resources/fmu-shm-api/
 
 repository
 testing/output/**
+testing/fmuchecker/
