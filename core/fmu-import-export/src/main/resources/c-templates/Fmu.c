@@ -20,9 +20,10 @@ extern char* resourcesLocation;
 extern fmi2Real maxStepSize;
 
 
-// ---------------------------------------------------------------------------
-// FMI functions
-// ---------------------------------------------------------------------------
+/* ---------------------------------------------------------------------------
+*  FMI functions
+*  ---------------------------------------------------------------------------
+*/
 fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2String fmuGUID,
 		fmi2String fmuResourceLocation, const fmi2CallbackFunctions *functions, fmi2Boolean visible,
 		fmi2Boolean loggingOn)
@@ -80,9 +81,10 @@ void fmi2FreeInstance(fmi2Component c)
 	systemDeInit();
 }
 
-// ---------------------------------------------------------------------------
-// FMI functions: class methods not depending of a specific model instance
-// ---------------------------------------------------------------------------
+/* ---------------------------------------------------------------------------
+*  FMI functions: class methods not depending of a specific model instance
+*  ---------------------------------------------------------------------------
+*/
 
 const char* fmi2GetVersion()
 {
@@ -94,10 +96,11 @@ const char* fmi2GetTypesPlatform()
 	return fmi2TypesPlatform;
 }
 
-// ---------------------------------------------------------------------------
-// FMI functions: logging control, setters and getters for Real, Integer,
-// Boolean, String
-// ---------------------------------------------------------------------------
+/* ---------------------------------------------------------------------------
+*  FMI functions: logging control, setters and getters for Real, Integer,
+*  Boolean, String
+*  ---------------------------------------------------------------------------
+*/
 
 fmi2Status fmi2SetDebugLogging(fmi2Component c, fmi2Boolean loggingOn, size_t nCategories,
 		const fmi2String categories[])
@@ -155,7 +158,7 @@ fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 	{
 		fmi2ValueReference vRef = vr[i];
 		fmiBuffer.realBuffer[vRef] = value[i];
-//		printf("FMI real id=%d set to: %f\n", vRef, fmiBuffer.realBuffer[vRef]);
+		/*  printf("FMI real id=%d set to: %f\n", vRef, fmiBuffer.realBuffer[vRef]);  */
 	}
 
 	return fmi2OK;
@@ -170,7 +173,7 @@ fmi2Status fmi2SetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
 	{
 		fmi2ValueReference vRef = vr[i];
 		fmiBuffer.intBuffer[vRef] = value[i];
-//		printf("FMI real id=%d set to: %f\n", vRef, fmiBuffer.intBuffer[vRef]);
+		/*  printf("FMI real id=%d set to: %f\n", vRef, fmiBuffer.intBuffer[vRef]);  */
 	}
 
 	return fmi2OK;
@@ -185,7 +188,7 @@ fmi2Status fmi2SetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
 	{
 		fmi2ValueReference vRef = vr[i];
 		fmiBuffer.booleanBuffer[vRef] = value[i];
-//		printf("FMI real id=%d set to: %f\n", vRef, fmiBuffer.boolBuffer[vRef]);
+		/*  printf("FMI real id=%d set to: %f\n", vRef, fmiBuffer.boolBuffer[vRef]);  */
 	}
 
 	return fmi2OK;
@@ -231,9 +234,10 @@ fmi2Status fmi2GetDirectionalDerivative(fmi2Component c, const fmi2ValueReferenc
 	return fmi2OK;
 }
 
-// ---------------------------------------------------------------------------
-// Functions for FMI for Co-Simulation
-// ---------------------------------------------------------------------------
+/* ---------------------------------------------------------------------------
+*  Functions for FMI for Co-Simulation
+*  ---------------------------------------------------------------------------
+*/
 #ifdef FMI_COSIMULATION
 /* Simulating the slave */
 fmi2Status fmi2SetRealInputDerivatives(fmi2Component c, const fmi2ValueReference vr[], size_t nvr,
@@ -298,9 +302,10 @@ fmi2Status fmi2GetMaxStepsize(fmi2Component c, fmi2Real* size)
 
 
 
-// ---------------------------------------------------------------------------
-// Functions for FMI2 for Model Exchange
-// ---------------------------------------------------------------------------
+/* ---------------------------------------------------------------------------
+*  Functions for FMI2 for Model Exchange
+*  ---------------------------------------------------------------------------
+*/
 #else
 /* Enter and exit the different modes */
 fmi2Status fmi2EnterEventMode(fmi2Component c)
@@ -355,4 +360,4 @@ fmi2Status fmi2GetNominalsOfContinuousStates(fmi2Component c, fmi2Real x_nominal
 {
 	return fmi2Error;
 }
-#endif // Model Exchange
+#endif /*  Model Exchange  */

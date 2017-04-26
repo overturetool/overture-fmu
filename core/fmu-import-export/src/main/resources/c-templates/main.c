@@ -40,7 +40,7 @@ int main()
         }
     }
     
-    //convert to seconds
+    /*  convert to seconds  */
     stepSize = stepSize / 1E9;
     
     printf("Stepsize is: %f seconds.\n",stepSize);
