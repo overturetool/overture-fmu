@@ -36,6 +36,12 @@ node {
 				
 		}
 
+		stage ('FMI Compliance Test'){
+
+      sh "cd testing && ./validate.sh"
+
+    }
+
 		stage ('Copy CLI to repo'){
 
 			sh "echo Detecting current version"
