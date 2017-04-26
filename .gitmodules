@@ -5,3 +5,4 @@
 [submodule "testing/FMUComplianceChecker"]
 	path = testing/FMUComplianceChecker
 	url = https://github.com/modelica-tools/FMUComplianceChecker.git
+	ignore = dirty
