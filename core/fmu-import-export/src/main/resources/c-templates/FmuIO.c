@@ -94,12 +94,12 @@ void vdm_IO_println(TVP arg)
 		}
 		else
 		{
-			str = printVdmBasicValue(arg);
+			str = toString(arg);
 		}
 	}
 	else
 	{
-		str = printVdmBasicValue(arg);
+		str = toString(arg);
 	}
 	/*  comp, instancename, status, category  */
 	/*  fmi2ComponentEnvironment, fmi2String, fmi2Status, fmi2String, fmi2String, ...  */
@@ -145,12 +145,12 @@ void vdm_IO_print(TVP arg)
 		}
 		else
 		{
-			str = printVdmBasicValue(arg);
+			str = toString(arg);
 		}
 	}
 	else
 	{
-		str = printVdmBasicValue(arg);
+		str = toString(arg);
 	}
 
 	if(g_fmiCallbackFunctions!=NULL)
