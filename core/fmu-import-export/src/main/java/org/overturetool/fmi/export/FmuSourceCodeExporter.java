@@ -207,6 +207,9 @@ public class FmuSourceCodeExporter extends FmuExporter
 		//Populate list of source files in modelDescription.xml file.
 		for(int i = 0; i < emittedFiles.size(); i++)
 		{
+			if(emittedFiles.get(i).toString().endsWith(".h"))
+				continue;
+			
 			modelDescriptionConfig.sourceFiles.add(
 					emittedFiles.get(i).toString());
 		}
