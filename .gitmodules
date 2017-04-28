@@ -1,7 +1,7 @@
 [submodule "testing/fmu-tester"]
 	path = testing/fmu-tester
 	url = git@gitlab.au.dk:into-cps/fmu-tester.git
-	branch = 1aa35b1bb9e7fb4c8ffb1360e1805df400ef689f
+	branch = HEAD
   ignore = dirty
 [submodule "testing/FMUComplianceChecker"]
 	path = testing/FMUComplianceChecker
