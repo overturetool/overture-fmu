@@ -7,7 +7,7 @@
 		<version>0.2.3-SNAPSHOT</version>
 	</parent>
 	<properties>
-	<vdm2c.version>0.1.4</vdm2c.version>
+	<vdm2c.version>0.1.6</vdm2c.version>
 	</properties>
 
 	<groupId>org.overturetool.fmi.core</groupId>
