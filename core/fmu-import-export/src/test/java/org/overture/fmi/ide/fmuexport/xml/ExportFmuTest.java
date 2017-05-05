@@ -359,4 +359,20 @@ public class ExportFmuTest
 	{
 		return lookupSingle(doc, xpath, String.format("/fmiModelDescription/ModelVariables/ScalarVariable[@name='%s']", name), "Real[1] | Boolean[1] | String[1] | Integer[1] | Enumeration[1]", "@start");
 	}
+	
+	
+	@Test
+	public void testExportModelStartValues() throws AbortException, IOException,
+			InterruptedException, SAXException, ParserConfigurationException,
+			DOMException, XPathExpressionException
+	{
+		String output = "target/" + this.getClass().getSimpleName() + "/"
+				+ getCurrentClassAndMethodNames() + "/";
+
+		FileUtils.copyDirectory(new File("src/test/resources/model-start-values"), new File(output));
+
+		Main.main(new String[] { "-name", "model-start-values", "-export", "tool", "-root",
+				output, "-output", output, "-v" });
+
+	}
 }

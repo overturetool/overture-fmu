@@ -1,0 +1,25 @@
+system WatertankSystem
+
+instance variables
+
+-- Hardware interface variable required by FMU Import/Export
+public static hwi: HardwareInterface := new HardwareInterface();
+    
+
+instance variables
+
+  public static controller : [Controller] := nil;
+
+	cpu1 : CPU := new CPU(<FP>, 5E3);
+operations
+
+public WatertankSystem : () ==> WatertankSystem
+WatertankSystem () == 
+(
+
+		controller := new Controller(hwi);
+
+	cpu1.deploy(controller,"Controller");
+);
+
+end WatertankSystem

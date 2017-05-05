@@ -1,0 +1,13 @@
+--##	EXPORT	f70b54f1b83870de5d530f99401d5dca81ffac79	wt2.fmu	2016-25-11 14:27:43	tool-wrapper	{"name":"fmu-import-export","version":"0.1.5-SNAPSHOT"}
+-- Generated class
+class HardwareInterface
+
+instance variables
+	
+	
+	-- @ interface: type = output, name="SingleRoom1_SetSetPoint";
+public sr1_spOut : RealPort := new RealPort(296.16);
+
+
+end HardwareInterface
+
