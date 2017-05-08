@@ -111,8 +111,6 @@ public class FmuSourceCodeExporter extends FmuExporter
 		// copy FMU files
 		copySource(project, sources + "/Fmu.c", "/c-templates/Fmu.c");
 		emittedFiles.add(new File("Fmu.c"));
-		copySource(project, sources + "/FmuIO.c", "/c-templates/FmuIO.c");
-		emittedFiles.add(new File("FmuIO.c"));
 		copySource(project, sources + "/main.c", "/c-templates/main.c");
 		emittedFiles.add(new File("main.c"));
 		copySource(project, sources + "/FmuModel.h", "/c-templates/FmuModel.h");
