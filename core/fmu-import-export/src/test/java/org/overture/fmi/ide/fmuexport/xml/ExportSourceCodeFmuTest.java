@@ -58,7 +58,7 @@ public class ExportSourceCodeFmuTest
 				// base FMU sources
 				"modelDescription.xml",
 				"sources/CMakeLists.txt",
-				"sources/defines.def",
+				//"sources/defines.def",
 				"sources/fmi/fmi2Functions.h",
 				"sources/fmi/fmi2FunctionTypes.h",
 				"sources/fmi/fmi2TypesPlatform.h",
