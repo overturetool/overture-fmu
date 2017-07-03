@@ -23,7 +23,7 @@ node {
       withMaven(mavenLocalRepo: '.repository', mavenSettingsFilePath: "${env.MVN_SETTINGS_PATH}") {
 
         // Run the maven build
-				sh "mvn install -Pall-platforms -PWith-IDE"
+				sh "mvn install -Pall-platforms -PWith-IDE -Pcodesigning"
 				step([$class: 'ArtifactArchiver', artifacts: '**/target/*.jar', fingerprint: true])
         step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
         step([$class: 'JacocoPublisher'])
@@ -67,7 +67,7 @@ node {
 				rtMaven.opts = "-Xmx1024m -XX:MaxPermSize=256M"
 				rtMaven.deployer releaseRepo:'overture-fmu', snapshotRepo:'overture-fmu', server: server
 				
-				rtMaven.run pom: 'pom.xml', goals: 'install', buildInfo: buildInfo
+				rtMaven.run pom: 'pom.xml', goals: 'install -Pcodesigning', buildInfo: buildInfo
 
 				//get rid of old snapshots only keep then for a short amount of time
 				buildInfo.retention maxBuilds: 5, maxDays: 7, deleteBuildArtifacts: true
