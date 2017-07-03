@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,6 +14,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.Vector;
 
 import org.apache.commons.io.IOUtils;
@@ -122,7 +125,19 @@ public class ModelDescriptionGenerator
 		StringBuffer sbLinks = new StringBuffer();
 		if (system != null)
 		{
-			for (Entry<PDefinition, FmuAnnotation> link : definitionAnnotation.entrySet())
+
+			Comparator<PDefinition> defAnnotationComporator = new Comparator<PDefinition>()
+			{
+				@Override
+				public int compare(PDefinition d1, PDefinition d2)
+				{
+					return getDefName(d1).compareTo(getDefName(d2));
+				}
+			};
+
+			SortedMap<PDefinition, FmuAnnotation> sortedDefAnn = new TreeMap<PDefinition, FmuAnnotation>(defAnnotationComporator);
+			sortedDefAnn.putAll(definitionAnnotation);
+			for (Entry<PDefinition, FmuAnnotation> link : sortedDefAnn.entrySet())
 			{
 				// filter to system and HardwareInterface
 
@@ -138,7 +153,7 @@ public class ModelDescriptionGenerator
 				int vr = variableReference++;
 
 				info.context.put(link.getKey(), new ScalarInfo(link.getKey(), vr, link.getValue()));
-				String scalarVariable = createScalarVariable(err,vr, link.getKey(), link.getValue(), sbLinks);
+				String scalarVariable = createScalarVariable(err, vr, link.getKey(), link.getValue(), sbLinks);
 				scalarVariables.add(scalarVariable);
 				if (link.getValue().type.equals("output"))
 				{
@@ -204,8 +219,9 @@ public class ModelDescriptionGenerator
 						+ "");
 
 				modelDescription = modelDescription.replace("{description}", "");
-				modelDescription = modelDescription.replace("{author}", "");				
-				modelDescription = modelDescription.replace("{guid}", "{" + config.fmuGUID + "}");
+				modelDescription = modelDescription.replace("{author}", "");
+				modelDescription = modelDescription.replace("{guid}", "{"
+						+ config.fmuGUID + "}");
 
 				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 				String date = sdf.format(generationDate);
@@ -232,6 +248,26 @@ public class ModelDescriptionGenerator
 		return sbSourceFiles;
 	}
 
+	private String getDefName(PDefinition def)
+	{
+		if (def instanceof AValueDefinition)
+		{
+
+			// parameter generation
+			AValueDefinition vDef = (AValueDefinition) def;
+
+			String name = def.getLocation().getModule() + "."
+					+ vDef.getPattern();
+			return name;
+		} else if (def instanceof AInstanceVariableDefinition)
+		{
+			String name = def.getLocation().getModule() + "."
+					+ def.getName().getFullName();
+			return name;
+		}
+		return def.toString();
+	}
+
 	private String createScalarVariable(PrintStream err, int valueReference,
 			PDefinition definition, FmuAnnotation annotation,
 			StringBuffer sbLinks) throws AbortException
@@ -250,7 +286,7 @@ public class ModelDescriptionGenerator
 			sbLinks.append(String.format(linkTemplate, valueReference, definition.getLocation().getModule()
 					+ "." + vDef.getPattern()));
 
-			String type = getType(err,vDef.getType(), vDef.getExpression());
+			String type = getType(err, vDef.getType(), vDef.getExpression());
 			return String.format(scalarVariableTemplate, name, valueReference, "parameter", "fixed", "exact", type);
 		} else if (definition instanceof AInstanceVariableDefinition)
 		{
@@ -266,13 +302,13 @@ public class ModelDescriptionGenerator
 			if (annotation.type.equals("output"))
 			{
 				AInstanceVariableDefinition vDef = (AInstanceVariableDefinition) definition;
-				String type = getType(err,vDef.getType(), vDef.getExpression());
+				String type = getType(err, vDef.getType(), vDef.getExpression());
 				return String.format(scalarVariableTemplate, name, valueReference, "output", "discrete", "approx", type);
 
 			} else if (annotation.type.equals("local"))
 			{
 				AInstanceVariableDefinition vDef = (AInstanceVariableDefinition) definition;
-				String type = getType(err,vDef.getType(), null);
+				String type = getType(err, vDef.getType(), null);
 				return String.format(scalarVariableTemplate, name, valueReference, "local", "discrete", "calculated", type);
 
 			} else if (annotation.type.equals("input"))
@@ -280,7 +316,7 @@ public class ModelDescriptionGenerator
 
 				AInstanceVariableDefinition vDef = (AInstanceVariableDefinition) definition;
 				PType rawType = vDef.getType();
-				String type = getType(err,rawType, vDef.getExpression());
+				String type = getType(err, rawType, vDef.getExpression());
 				return String.format(scalarVariableTemplateInput, name, valueReference, "input", rawType instanceof ARealNumericBasicType ? "continuous"
 						: "discrete", type);
 
@@ -290,7 +326,8 @@ public class ModelDescriptionGenerator
 		return null;
 	}
 
-	private String getType(PrintStream err, PType type, PExp initialExp) throws AbortException
+	private String getType(PrintStream err, PType type, PExp initialExp)
+			throws AbortException
 	{
 		String typeTemplate = null;
 		String initial = null;
@@ -328,7 +365,8 @@ public class ModelDescriptionGenerator
 							initial = (int) Double.parseDouble(initial) + "";
 						} catch (NumberFormatException e2)
 						{
-							String msg = "Unable to decode initial value for IntPort: '"+initial+"'";
+							String msg = "Unable to decode initial value for IntPort: '"
+									+ initial + "'";
 							err.println(msg);
 							throw new AbortException(msg);
 						}
@@ -353,7 +391,8 @@ public class ModelDescriptionGenerator
 						Double.parseDouble(initial);
 					} catch (NumberFormatException e2)
 					{
-						String msg = "Unable to decode initial value for RealPort: '"+initial+"'";
+						String msg = "Unable to decode initial value for RealPort: '"
+								+ initial + "'";
 						err.println(msg);
 						throw new AbortException(msg);
 					}
@@ -372,7 +411,8 @@ public class ModelDescriptionGenerator
 				{
 					if (!("true".equals(initial) || "false".equals(initial)))
 					{
-						String msg = "Unable to decode initial value for BoolPort: '"+initial+"'";
+						String msg = "Unable to decode initial value for BoolPort: '"
+								+ initial + "'";
 						err.println(msg);
 						throw new AbortException(msg);
 					}
