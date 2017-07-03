@@ -24,7 +24,7 @@ int main()
 
     fmi2CallbackFunctions callback={&fmuLoggerCache,NULL,NULL,NULL,NULL};
     
-    fmi2Instantiate("this system",fmi2CoSimulation,"","",&callback,fmi2True,fmi2True);
+    fmi2Instantiate("this system",fmi2CoSimulation, _FMU_GUID,"",&callback,fmi2True,fmi2True);
     systemInit();
     syncInputsToModel();
     
