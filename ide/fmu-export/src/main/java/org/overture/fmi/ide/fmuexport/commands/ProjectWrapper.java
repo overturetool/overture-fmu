@@ -227,6 +227,8 @@ public class ProjectWrapper implements org.overturetool.fmi.IProject
 					monitor.beginTask("Compressing", IProgressMonitor.UNKNOWN);
 					j.run();
 					monitor.done();
+					
+					project.refreshLocal(IResource.DEPTH_INFINITE, null);
 				} catch (Exception e)
 				{
 					return new Status(Status.ERROR, IFmuExport.PLUGIN_ID, "Error compressing fmu", e);
