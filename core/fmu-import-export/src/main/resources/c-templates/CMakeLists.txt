@@ -92,3 +92,11 @@ set_target_properties(${PROJECT_NAME}
 add_executable(${PROJECT_NAME}-standalone ${C_FILES} ${CPP_FILES})
 target_link_libraries(${PROJECT_NAME}-standalone ${PTHREAD_LIBRARY})
 target_link_libraries(${PROJECT_NAME}-standalone ${STDCPP_LIBRARY})
+
+if (UNIX)
+	if(APPLE)
+	else()
+		# link against libm to provide the math library function implementation
+		target_link_libraries(${PROJECT_NAME}-standalone m)
+	endif()
+endif()
