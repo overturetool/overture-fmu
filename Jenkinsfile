@@ -67,7 +67,7 @@ node {
 				rtMaven.opts = "-Xmx1024m -XX:MaxPermSize=256M"
 				rtMaven.deployer releaseRepo:'overture-fmu', snapshotRepo:'overture-fmu', server: server
 				
-				rtMaven.run pom: 'pom.xml', goals: 'install -Pcodesigning', buildInfo: buildInfo
+				rtMaven.run pom: 'pom.xml', goals: 'install', buildInfo: buildInfo
 
 				//get rid of old snapshots only keep then for a short amount of time
 				buildInfo.retention maxBuilds: 5, maxDays: 7, deleteBuildArtifacts: true
