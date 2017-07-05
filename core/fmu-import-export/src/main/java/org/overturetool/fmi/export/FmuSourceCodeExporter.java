@@ -111,6 +111,8 @@ public class FmuSourceCodeExporter extends FmuExporter
 		// copy FMU files
 		copySource(project, sources + "/Fmu.c", "/c-templates/Fmu.c");
 		emittedFiles.add(new File("Fmu.c"));
+		copySource(project, sources + "/FmuIO.c", "/c-templates/FmuIO.c");
+		emittedFiles.add(new File("FmuIO.c"));
 		copySource(project, sources + "/main.c", "/c-templates/main.c");
 		emittedFiles.add(new File("main.c"));
 		copySource(project, sources + "/FmuModel.h", "/c-templates/FmuModel.h");
@@ -199,7 +201,7 @@ public class FmuSourceCodeExporter extends FmuExporter
 		source = new ByteArrayInputStream(bytes);
 		project.createProjectTempRelativeFile(sources + "/CMakeLists.txt", source);
 
-		//project.createProjectTempRelativeFile(sources + "/defines.def", new ByteArrayInputStream("CUSTOM_IO".getBytes("UTF-8")));
+		project.createProjectTempRelativeFile(sources + "/defines.def", new ByteArrayInputStream("CUSTOM_IO".getBytes("UTF-8")));
 		project.createProjectTempRelativeFile(sources + "/includes.txt", new ByteArrayInputStream("fmi\nvdmlib".getBytes("UTF-8")));
 
 		//Populate list of source files in modelDescription.xml file.

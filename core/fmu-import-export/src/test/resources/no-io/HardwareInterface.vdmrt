@@ -1,0 +1,26 @@
+--##	EXPORT	f70b54f1b83870de5d530f99401d5dca81ffac79	wt2.fmu	2016-25-11 14:27:43	tool-wrapper	{"name":"fmu-import-export","version":"0.1.5-SNAPSHOT"}
+-- Generated class
+class HardwareInterface
+
+values
+	-- @ interface: type = parameter, name="minlevel";
+	public minlevel : RealPort = new RealPort(1.0);
+	-- @ interface: type = parameter, name="maxlevel";
+	public maxlevel : RealPort = new RealPort(2.0);
+
+
+instance variables
+	-- @ interface: type = input, name="level";
+	public level : RealPort := new RealPort(0.0);
+
+
+instance variables
+	-- @ interface: type = output, name="valve";
+	public valveState : BoolPort := new BoolPort(false);
+
+	-- @ interface: type = local, name="valve2";
+	public valveStateL : BoolPort := new BoolPort(false);
+
+
+end HardwareInterface
+

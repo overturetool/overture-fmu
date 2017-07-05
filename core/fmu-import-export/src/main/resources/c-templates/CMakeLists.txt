@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 2.8.5)
 project (##PROJECT_NAME## C CXX)
 
 
-add_definitions(-DPERIODIC_GENERATED -DFMI_COSIMULATION)
+add_definitions(-DCUSTOM_IO -DPERIODIC_GENERATED -DFMI_COSIMULATION)
 
 
 set(CMAKE_INCLUDE_CURRENT_DIR on)

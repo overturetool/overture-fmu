@@ -1,0 +1,20 @@
+class ValveActuator
+
+instance variables
+
+port : BoolPort;
+portL : BoolPort;
+
+
+operations
+
+public ValveActuator : BoolPort*BoolPort==>ValveActuator
+ValveActuator(p,pl)==(port:=p;portL:=pl;);
+
+public setValve: bool ==> ()
+setValve(value)==(
+	
+		port.setValue(value);
+		portL.setValue(not value);
+)
+end ValveActuator
