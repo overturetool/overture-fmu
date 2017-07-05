@@ -2,6 +2,7 @@
 #include "Fmu.h"
 #include "Vdm.h"
 #include "FmuModel.h"
+#include "float.h"
 
 
 
@@ -49,12 +50,18 @@ int main()
         
             if(fmi2OK !=fmi2DoStep(NULL,time,stepSize,fmi2False))
             {
-                printf("Step did not return ok\n");
-		systemDeInit();
+                printf("Step did not return ok at time: %f\n", time);
+				systemDeInit();
                 return 1;
             }
 
-	vdm_gc();
+		vdm_gc();
+	
+		//adjust for overflow it will overflow at 10E29 years if time is stepped in seconds as required
+		if(time + stepSize > DBL_MAX -stepSize)
+		{
+			time = 0;
+		}
     }
 
     systemDeInit();
