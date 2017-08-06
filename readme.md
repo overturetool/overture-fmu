@@ -23,6 +23,8 @@ git add ReleaseNotes_* && git commit -m "updated release note" && git push
 
 4. Perform the release
 
+The prefered way is to update `overture.release.properties` and run the release scipt using jenkins and the release job. Otherwise this works for the core plugins.
+
 ```bash
 mvn -Dmaven.repo.local=repository release:clean
 mvn -Dmaven.repo.local=repository release:prepare -DreleaseVersion=${RELEASE_VER} -DdevelopmentVersion=${NEW_DEV_VER}
