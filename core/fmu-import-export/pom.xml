@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.overturetool.fmi</groupId>
 		<artifactId>core</artifactId>
-		<version>0.2.8</version>
+		<version>0.2.9-SNAPSHOT</version>
 	</parent>
 	<properties>
 	<vdm2c.version>0.1.8</vdm2c.version>
