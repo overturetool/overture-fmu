@@ -321,9 +321,9 @@ http://mojo.codehaus.org/versions-maven-plugin/
 	</build>
 
 	<scm>
-		<url>git@github.com:overturetool/overture.git</url>
-		<connection>scm:git:git://github.com/overturetool/overture.git</connection>
-		<developerConnection>scm:git:git@github.com:overturetool/overture.git</developerConnection>
+		<url>git@github.com:overturetool/overture-fmu.git</url>
+		<connection>scm:git:git://github.com/overturetool/overture-fmu.git</connection>
+		<developerConnection>scm:git:git@github.com:overturetool/overture-fmu.git</developerConnection>
 		<tag>HEAD</tag>
 	</scm>
 
