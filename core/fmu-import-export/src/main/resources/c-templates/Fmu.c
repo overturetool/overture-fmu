@@ -147,6 +147,14 @@ fmi2Status fmi2GetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
 
 fmi2Status fmi2GetString(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2String value[])
 {
+	int i, j;
+
+	for(i = 0; i < nvr; i++)
+	{
+		fmi2ValueReference vRef = vr[i];
+		strcpy(value[vRef], fmiBuffer.stringBuffer[vRef]);
+	}
+
 	return fmi2OK;
 }
 
@@ -197,6 +205,14 @@ fmi2Status fmi2SetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
 fmi2Status fmi2SetString(fmi2Component c, const fmi2ValueReference vr[], size_t nvr,
 		const fmi2String value[])
 {
+int i, j;
+
+	for(i = 0; i < nvr; i++)
+	{
+		fmi2ValueReference vRef = vr[i];
+		strcpy(fmiBuffer.stringBuffer[vRef], value[vRef]);
+	}
+
 	return fmi2OK;
 }
 

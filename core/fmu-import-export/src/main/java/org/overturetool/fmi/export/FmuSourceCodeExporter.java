@@ -125,6 +125,8 @@ public class FmuSourceCodeExporter extends FmuExporter
 				+ info.maxVariableReference);
 		contentFmuh = contentFmuh.replace("//#define INT_COUNT", "#define INT_COUNT "
 				+ info.maxVariableReference);
+		contentFmuh = contentFmuh.replace("//#define STRING_COUNT", "#define STRING_COUNT "
+				+ info.maxVariableReference);
 
 		byte[] bytes = contentFmuh.getBytes("UTF-8");
 		ByteArrayInputStream source = new ByteArrayInputStream(bytes);

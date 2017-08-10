@@ -11,6 +11,7 @@
 //#define BOOL_COUNT
 //#define REAL_COUNT
 //#define INT_COUNT
+//#define STRING_COUNT
 
 #include "fmi2Functions.h"
 #include "FmuGUID.h"
@@ -21,9 +22,10 @@
 #include <stdio.h>
 
 struct FmiBuffer{
-	 fmi2Boolean booleanBuffer[BOOL_COUNT];
-	 fmi2Real realBuffer[REAL_COUNT];
-	 fmi2Integer intBuffer[INT_COUNT];
+	fmi2Boolean booleanBuffer[BOOL_COUNT];
+	fmi2Real realBuffer[REAL_COUNT];
+	fmi2Integer intBuffer[INT_COUNT];
+	fmi2String stringBuffer[STRING_COUNT];
 };
 
 struct PeriodicThreadStatus
