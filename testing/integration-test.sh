@@ -127,6 +127,7 @@ case "$OSTYPE" in
 esac
 
 FMUGUID=`grep guid output-source/modelDescription.xml |awk -F '"' '{print $2}'`
+echo "GUID:  $GUID"
 
 fmu-tester/fmu-tester "$LIB" "$RESOURCE" "$FMUGUID"
 
