@@ -126,6 +126,7 @@ case "$OSTYPE" in
   *)        echo "unknown: $OSTYPE" ;;
 esac
 
+cat output-source/modelDescription.xml
 FMUGUID=`grep guid output-source/modelDescription.xml |awk -F '"' '{print $2}'`
 echo "GUID:  $FMUGUID"
 
