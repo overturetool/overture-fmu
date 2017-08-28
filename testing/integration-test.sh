@@ -94,6 +94,7 @@ sed -i "s/##DEFINITIONS##/${defs}/g" CMakeLists.txt
 
 fi
 
+
 ## Read additional includes if any
 if [ -e "sources/includes.txt" ] 
 then
@@ -112,12 +113,16 @@ sed -i "s|##INCLUDES##|${includes}|g" CMakeLists.txt
 
 fi
 
+
+## Compile source code FMU.
 cmake .
 make -j5
 mkdir -p binaries/linux64
 cp wt2.so binaries/linux64
 cd ..
 
+
+## Test source code FMU.
 case "$OSTYPE" in
   solaris*) echo "SOLARIS" ;;
   darwin*)  echo "OSX"; LIB=`readlink -f output-source/binaries/darwin64/$NAME.dylib`;; 
@@ -127,7 +132,6 @@ case "$OSTYPE" in
 esac
 
 FMUGUID=`grep guid output-source/modelDescription.xml |awk -F '"' '{print $2}'`
-echo "GUID:  $FMUGUID"
 
 fmu-tester/fmu-tester "$LIB" "$RESOURCE" "$FMUGUID"
 
