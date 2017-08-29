@@ -48,12 +48,11 @@ rm -rf output
 cd output-source
 
 unzip $NAME.fmu
-ls sources
-cat sources/defines.def
-cat sources/includes.txt
 
 cp ../CMakeLists.txt .
 sed -i "s/##NAME##/$NAME/g" CMakeLists.txt
+
+exit 0
 
 ## Read defines if any
 if [ -e "sources/defines.def" ] 
@@ -90,8 +89,6 @@ echo "additional includes ${includes}"
 sed -i "s|##INCLUDES##|${includes}|g" CMakeLists.txt
 
 fi
-
-cat CMakeLists.txt
 
 ## Compile source code FMU.
 cmake .
