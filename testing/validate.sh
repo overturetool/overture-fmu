@@ -52,15 +52,14 @@ unzip $NAME.fmu
 cp ../CMakeLists.txt .
 sed -i "s/##NAME##/$NAME/g" CMakeLists.txt
 
-exit 0
-
 ## Read defines if any
 if [ -e "sources/defines.def" ] 
 then
 
 defs=""
 
-while IFS='' read -r line || [[ -n "$line" ]]; do
+#while IFS='' read -r line || [[ -n "$line" ]]; do
+while read -r line || [[ -n "$line" ]]; do
     echo "Text read from file: $line"
   defs="$defs -D$line"
 done < "sources/defines.def"
@@ -78,7 +77,8 @@ then
 
 includes=""
 
-while IFS='' read -r line || [[ -n "$line" ]]; do
+#while IFS='' read -r line || [[ -n "$line" ]]; do
+while read -r line || [[ -n "$line" ]]; do
     echo "Text read from file: $line"
   includes="$includes sources/$line"
 done < "sources/includes.txt"
