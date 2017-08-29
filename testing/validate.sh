@@ -88,6 +88,7 @@ sed -i "s|##INCLUDES##|${includes}|g" CMakeLists.txt
 
 fi
 
+cat CMakeLists.txt
 
 ## Compile source code FMU.
 cmake .
