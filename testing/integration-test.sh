@@ -136,4 +136,4 @@ FMUGUID=`grep guid output-source/modelDescription.xml |awk -F '"' '{print $2}'`
 fmu-tester/fmu-tester "$LIB" "$RESOURCE" "$FMUGUID"
 
 echo "Clean up."
-rm -rf output-source
+#rm -rf output-source

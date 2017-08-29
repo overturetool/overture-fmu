@@ -112,4 +112,4 @@ esac
 $FMU_CHECK_DIR/fmuCheck*  -h 0.001 -s 30  output-source/wt2.fmu
 
 echo "Clean up."
-rm -rf output-source
+#rm -rf output-source
