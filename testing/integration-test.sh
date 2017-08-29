@@ -74,6 +74,9 @@ cd output-source
 
 unzip $NAME.fmu
 
+cat sources/defines.def
+cat sources/includes.txt
+
 cp ../CMakeLists.txt .
 sed -i "s/##NAME##/$NAME/g" CMakeLists.txt
 
