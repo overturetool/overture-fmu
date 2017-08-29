@@ -34,7 +34,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
 	
 	if(strcmp(fmuGUID, _FMU_GUID) != 0)
 	{
-		g_fmiCallbackFunctions->logger((void*) 1,g_fmiInstanceName,fmi2Error,"logError","%s\n", "GUID mismatch.");
+		g_fmiCallbackFunctions->logger(g_fmiCallbackFunctions->componentEnvironment,g_fmiInstanceName,fmi2Error,"logError","%s\n", "GUID mismatch.");
 		return NULL;
 	}
 

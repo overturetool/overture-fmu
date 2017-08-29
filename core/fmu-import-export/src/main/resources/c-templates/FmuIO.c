@@ -90,7 +90,7 @@ void vdm_IO_println(TVP arg)
 	/*  fmi2ComponentEnvironment, fmi2String, fmi2Status, fmi2String, fmi2String, ...  */
 	if(g_fmiCallbackFunctions!=NULL)
 	{
-		g_fmiCallbackFunctions->logger((void*) 1,g_fmiInstanceName,fmi2OK,"logAll","%s\n", str);
+		g_fmiCallbackFunctions->logger(g_fmiCallbackFunctions->componentEnvironment,g_fmiInstanceName,fmi2OK,"logAll","%s\n", str);
 	}
 	else
 	{
@@ -140,7 +140,7 @@ void vdm_IO_print(TVP arg)
 
 	if(g_fmiCallbackFunctions!=NULL)
 	{
-		g_fmiCallbackFunctions->logger((void*) 1,g_fmiInstanceName,fmi2OK,"logAll","%s", str);
+		g_fmiCallbackFunctions->logger(g_fmiCallbackFunctions->componentEnvironment,g_fmiInstanceName,fmi2OK,"logAll","%s", str);
 	}
 	else
 	{
@@ -174,7 +174,7 @@ TVP vdm_IO_echo(TVP text)
 
 	if(g_fmiCallbackFunctions!=NULL)
 	{
-		/*  g_fmiCallbackFunctions->logger((void*) 1,g_fmiInstanceName,fmi2OK,"logAll","%s", str);  */
+		/*  g_fmiCallbackFunctions->logger(g_fmiCallbackFunctions->componentEnvironment,g_fmiInstanceName,fmi2OK,"logAll","%s", str);  */
 	}
 	else
 	{

@@ -469,7 +469,7 @@ public class FmuSourceCodeExporter extends FmuExporter
 	{
 		final static String PeriodicTaskName = "periodic_task%s_%s";
 		final static String PeriodicTaskFunctionTemplate = "void %s()\n{\n\tCALL_FUNC(%s, %s, %s, %s);\n\t%s\n}\n";
-		final static String PeriodicTaskFunctionLogCallTemplate = "g_fmiCallbackFunctions->logger((void*) 1, g_fmiInstanceName, fmi2OK, \"logAll\", \"called %s\\n\");";
+		final static String PeriodicTaskFunctionLogCallTemplate = "g_fmiCallbackFunctions->logger(g_fmiCallbackFunctions->componentEnvironment, g_fmiInstanceName, fmi2OK, \"logAll\", \"called %s\\n\");";
 		final static String PeriodicTaskCallTemplate = "&%s";
 		// String periodicTaskFunction;
 		// String perioducTaskCall;
