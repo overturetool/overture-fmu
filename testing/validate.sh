@@ -48,6 +48,7 @@ rm -rf output
 cd output-source
 
 unzip $NAME.fmu
+ls sources
 
 cp ../CMakeLists.txt .
 sed -i "s/##NAME##/$NAME/g" CMakeLists.txt
