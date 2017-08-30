@@ -55,7 +55,7 @@ sed -i "s/##NAME##/$NAME/g" CMakeLists.txt
 if [ -e "sources/defines.def" ] 
 then
 
-cat -e sources/defines.def
+#cat -e sources/defines.def
 
 defs=""
 
