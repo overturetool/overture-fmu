@@ -55,8 +55,6 @@ sed -i "s/##NAME##/$NAME/g" CMakeLists.txt
 if [ -e "sources/defines.def" ] 
 then
 
-#cat -e sources/defines.def
-
 defs=""
 
 while IFS='' read line || [[ -n "$line" ]]; do
