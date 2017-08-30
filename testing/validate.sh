@@ -58,8 +58,7 @@ then
 
 defs=""
 
-#while IFS='' read -r line || [[ -n "$line" ]]; do
-while read -r line || [[ -n "$line" ]]; do
+while IFS='' read line || [[ -n "$line" ]]; do
     echo "Text read from file: $line"
   defs="$defs -D$line"
 done < "sources/defines.def"
@@ -77,8 +76,7 @@ then
 
 includes=""
 
-#while IFS='' read -r line || [[ -n "$line" ]]; do
-while read -r line || [[ -n "$line" ]]; do
+while IFS='' read -r line || [[ -n "$line" ]]; do
     echo "Text read from file: $line"
   includes="$includes sources/$line"
 done < "sources/includes.txt"
@@ -113,4 +111,4 @@ esac
 $FMU_CHECK_DIR/fmuCheck*  -h 0.001 -s 30  output-source/wt2.fmu
 
 echo "Clean up."
-#rm -rf output-source
+rm -rf output-source
