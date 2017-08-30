@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 set -e
@@ -55,6 +54,8 @@ sed -i "s/##NAME##/$NAME/g" CMakeLists.txt
 ## Read defines if any
 if [ -e "sources/defines.def" ] 
 then
+
+cat -e sources/defines.def
 
 defs=""
 
