@@ -57,7 +57,7 @@ then
 
 defs=""
 
-while IFS='' read line || [[ -n "$line" ]]; do
+while IFS='' read -r line || [[ -n "$line" ]]; do
     echo "Text read from file: $line"
   defs="$defs -D$line"
 done < "sources/defines.def"
