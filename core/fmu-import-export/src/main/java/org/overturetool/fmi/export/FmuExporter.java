@@ -167,6 +167,7 @@ public class FmuExporter
 							fmuFolderPath = project.getTempFolder();
 							try
 							{
+								out.println("Compressing FMU archive...\n");
 								FolderCompressor.compress(fmuFolderPath, fmuArchieveName);
 
 								String hash = Tracability.calculateGitHash(fmuArchieveName);
