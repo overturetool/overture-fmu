@@ -199,6 +199,7 @@ public class FmuExporter
 					}
 				});
 
+				out.println("FMU export complete for project '" + project.getName() + "'.\n");
 				return fmuArchieveName;
 
 			} catch (IOException e)
@@ -212,8 +213,7 @@ public class FmuExporter
 		else
 		{
 			err.println("FAILURE:  Model contains type errors.");
-		}
-		out.println("FMU export complete for project '" + project.getName() + "'.\n");
+		}		
 		
 		return null;
 	}
