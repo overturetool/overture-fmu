@@ -167,7 +167,7 @@ public class FmuExporter
 							fmuFolderPath = project.getTempFolder();
 							try
 							{
-								out.println("Compressing FMU archive... ");
+								out.println("Compressing FMU archive.");
 								FolderCompressor.compress(fmuFolderPath, fmuArchieveName);
 
 								String hash = Tracability.calculateGitHash(fmuArchieveName);
@@ -186,7 +186,6 @@ public class FmuExporter
 										FileUtils.write(hwiFile, sb, Charset.forName("UTF-8"));
 									}
 								}
-								out.println("Done.\n");
 								project.cleanUp();
 							} catch (IOException e)
 							{
@@ -214,6 +213,8 @@ public class FmuExporter
 		{
 			err.println("FAILURE:  Model contains type errors.");
 		}
+		out.println("FMU export complete for project " + project.getName());
+		
 		return null;
 	}
 
