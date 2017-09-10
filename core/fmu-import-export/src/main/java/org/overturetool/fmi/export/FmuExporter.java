@@ -187,6 +187,7 @@ public class FmuExporter
 									}
 								}
 								project.cleanUp();
+								out.println("FMU export complete for project '" + project.getName() + "'.\n");
 							} catch (IOException e)
 							{
 								project.log(e);
@@ -199,7 +200,6 @@ public class FmuExporter
 					}
 				});
 
-				out.println("FMU export complete for project '" + project.getName() + "'.\n");
 				return fmuArchieveName;
 
 			} catch (IOException e)
