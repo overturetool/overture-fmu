@@ -167,7 +167,7 @@ public class FmuExporter
 							fmuFolderPath = project.getTempFolder();
 							try
 							{
-								out.println("Compressing FMU archive...\n");
+								out.println("Compressing FMU archive... ");
 								FolderCompressor.compress(fmuFolderPath, fmuArchieveName);
 
 								String hash = Tracability.calculateGitHash(fmuArchieveName);
@@ -186,7 +186,7 @@ public class FmuExporter
 										FileUtils.write(hwiFile, sb, Charset.forName("UTF-8"));
 									}
 								}
-
+								out.println("Done.\n");
 								project.cleanUp();
 							} catch (IOException e)
 							{
