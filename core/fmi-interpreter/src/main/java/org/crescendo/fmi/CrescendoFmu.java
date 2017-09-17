@@ -198,9 +198,9 @@ public abstract class CrescendoFmu implements IServiceProtocol
 				return ok;
 			}
 
-			double internalVdmClockTime = new Double(SystemClock.timeToInternal(TimeUnit.seconds, nextFmiTime));
+			long internalVdmClockTime = SystemClock.timeToInternal(TimeUnit.seconds, nextFmiTime);
 
-			log(LogCategory.LogAll, Fmi2LogReply.Status.Ok, "DoStep VDM time: "
+			log(LogCategory.LogAll, Fmi2LogReply.Status.Ok, "DoStep VDM internal stop time: "
 					+ internalVdmClockTime);
 			List<NamedValue> res = null;
 
@@ -218,8 +218,8 @@ public abstract class CrescendoFmu implements IServiceProtocol
 				fmiLog(LogCategory.LogError, e.getMessage());
 				return fatal;
 			}
-			log(LogCategory.LogAll, Fmi2LogReply.Status.Ok, "DoStep VDM time: "
-					+ internalVdmClockTime + " - completed");
+			log(LogCategory.LogAll, Fmi2LogReply.Status.Ok, "DoStep VDM internal time reached: "
+					+ internalVdmClockTime + " at doStep completion");
 			NamedValue timeValue = null;
 			for (NamedValue namedValue : res)
 			{
@@ -234,6 +234,8 @@ public abstract class CrescendoFmu implements IServiceProtocol
 
 			// Convert back to SI from internal VDM clock
 			curTime = SystemClock.internalToTime(TimeUnit.seconds, curTime.longValue());
+			log(LogCategory.LogAll, Fmi2LogReply.Status.Ok, "DoStep VDM clock conversion. Internal time: "
+					+ internalVdmClockTime + " External [s]: "+curTime);
 
 			// Write changes to the FMI cache
 			state.syncOutputsToCache(res);
@@ -403,7 +405,7 @@ public abstract class CrescendoFmu implements IServiceProtocol
 	@Override
 	public Fmi2GetMaxStepSizeReply GetMaxStepSize(Fmi2Empty parseFrom)
 	{
-		return Fmi2GetMaxStepSizeReply.newBuilder().setMaxStepSize(time
+		return Fmi2GetMaxStepSizeReply.newBuilder().setMaxStepSize(time==0?Double.MIN_VALUE:time-
 				- (lastCommunicationPoint + lastStepSize)).build();
 	}
 

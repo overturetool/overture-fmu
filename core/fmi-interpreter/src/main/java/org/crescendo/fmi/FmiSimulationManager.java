@@ -53,7 +53,7 @@ public class FmiSimulationManager extends SimulationManager
 	 * @throws RemoteSimulationException
 	 *             thrown if an internal error occur
 	 */
-	public synchronized List<NamedValue> step(Double outputTime,
+	public synchronized List<NamedValue> step(long outputTime,
 			List<NamedValue> inputs) throws RemoteSimulationException
 	{
 		checkMainContext();
