@@ -46,7 +46,7 @@ node {
 
 			sh "echo Detecting current version"
 
-			version = sh (script: "mvn -N org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version -DDmaven.repo.local=.repository/ | grep -v '\\[' | grep -v -e '^\$'" , returnStdout:true).trim()
+			version = sh (script: "mvn -s ${env.MVN_SETTINGS_PATH} -N org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version -DDmaven.repo.local=.repository/ | grep -v '\\[' | grep -v -e '^\$'" , returnStdout:true).trim()
 
 			sh "echo Version K${version}K"
 
