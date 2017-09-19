@@ -35,4 +35,5 @@ mvn -Dmaven.repo.local=repository release:prepare -DreleaseVersion=${RELEASE_VER
 mvn -Dmaven.repo.local=repository release:perform
 ```
 5. Create a github release with text from relaseNotes and add the fmu-import-export jar and p2 repo from http://overture.au.dk/into-cps/vdm-tool-wrapper/master/latest/
-6. Update the into-cps dev release bundle. Latest bundle from here: https://github.com/into-cps/into-cps.github.io/tree/development/download
+6. Merge the newly released tag into master and push master
+7. Update the into-cps dev release bundle. Latest bundle from here: https://github.com/into-cps/into-cps.github.io/tree/development/download
