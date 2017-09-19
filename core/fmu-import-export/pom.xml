@@ -7,7 +7,7 @@
 		<version>0.2.9-SNAPSHOT</version>
 	</parent>
 	<properties>
-	<vdm2c.version>0.1.8</vdm2c.version>
+	<vdm2c.version>0.1.14</vdm2c.version>
 	</properties>
 
 	<groupId>org.overturetool.fmi.core</groupId>
@@ -51,11 +51,6 @@
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
 			<version>2.4</version>
-		</dependency>
-		<dependency>
-			<groupId>org.overturetool.core</groupId>
-			<artifactId>typechecker</artifactId>
-			<version>2.4.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.overturetool.vdm2c.core</groupId>
