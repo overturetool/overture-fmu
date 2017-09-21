@@ -371,6 +371,8 @@ public class FmuSourceCodeExporter extends FmuExporter
 			String newValueName = "";
 			String valueId = "";
 			String className = null;
+			String unwrapMethod = "";
+			
 			if (type instanceof AClassType)
 			{
 				className = ((AClassType) type).getName().getName();
@@ -379,17 +381,24 @@ public class FmuSourceCodeExporter extends FmuExporter
 				{
 					bufferName = "realBuffer";
 					newValueName = "newReal";
-					valueId = "doubleVal";
+					valueId = "v->value.doubleVal";
 				} else if ("BoolPort".equals(className))
 				{
 					bufferName = "booleanBuffer";
 					newValueName = "newBool";
-					valueId = "boolVal";
+					valueId = "v->value.boolVal";
 				} else if ("IntPort".equals(className))
 				{
 					bufferName = "intBuffer";
 					newValueName = "newInt";
-					valueId = "intVal";
+					valueId = "v->value.intVal";
+				}
+				else if ("StringPort".equals(className))
+				{
+					bufferName = "stringBuffer";
+					newValueName = "newCharSeq";
+					valueId = "v";
+					unwrapMethod = "unpackString";
 				}
 			}
 
@@ -414,8 +423,9 @@ public class FmuSourceCodeExporter extends FmuExporter
 			} else if ("output".equals(svType))
 			{
 				// fmiBuffer.booleanBuffer[VALVE_ID]=GET_FIELD(HardwareInterface,HardwareInterface,g_System_hwi,valveState)->value.boolVal;
-				final String GET_FIELD = "{\n\t\t%s\n\t\t%s\n\t\tfmiBuffer.%s[%s]=v->value.%s;\n\t\tvdmFree(v);vdmFree(p);\n\t}";// "fmiBuffer.%s[%s]=GET_FIELD(HardwareInterface,HardwareInterface,g_%s_hwi,%s)->value.%s;";
-				command = String.format(GET_FIELD, String.format(GET_PORT, systemName, variableName), String.format(GET_PORT_VALUE, className, className), bufferName, entry.getValue().index, valueId);
+				//final String GET_FIELD = "{\n\t\t%s\n\t\t%s\n\t\tfmiBuffer.%s[%s]=%s(v->value.%s);\n\t\tvdmFree(v);vdmFree(p);\n\t}";// "fmiBuffer.%s[%s]=GET_FIELD(HardwareInterface,HardwareInterface,g_%s_hwi,%s)->value.%s;";
+				final String GET_FIELD = "{\n\t\t%s\n\t\t%s\n\t\tfmiBuffer.%s[%s]=%s(%s);\n\t\tvdmFree(v);vdmFree(p);\n\t}";// "fmiBuffer.%s[%s]=GET_FIELD(HardwareInterface,HardwareInterface,g_%s_hwi,%s)->value.%s;";
+				command = String.format(GET_FIELD, String.format(GET_PORT, systemName, variableName), String.format(GET_PORT_VALUE, className, className), bufferName, entry.getValue().index, unwrapMethod ,valueId);
 				outputCommands.add(command);
 
 			} else if ("parameter".equals(svType))

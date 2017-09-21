@@ -20,6 +20,25 @@ TVP sys = NULL;
 fmi2Boolean syncOutAllowed = fmi2True;
 fmi2Real maxStepSize = 0.0;
 
+TVP newCharSeq(fmi2String str)
+{
+	TVP res;
+	TVP *values;
+	int i, len;
+
+	len = strlen(str);
+	values = calloc(len, sizeof(TVP));
+
+	for(i = 0; i < len; i++)  values[i] = newChar(str[i]);
+
+	res = newSeqWithValues(len, values);
+
+	for(i = 0; i < len; i++)  vdmFree(values[i]);
+	free(values);
+
+	return res;
+}
+
 //#GENERATED_INSERT
 
 //#GENERATED_SYSTEM_INIT
