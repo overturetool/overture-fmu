@@ -23,10 +23,9 @@ node {
 
 			try {
 				timeout(time: 15, unit: 'MINUTES') { // change to a convenient timeout for you
-					userInput = input(
-						id: 'ReleaseMaster', message: 'Run perform release on the release branch?', parameters: [
-							[$class: 'BooleanParameterDefinition', defaultValue: true, description: '', name: 'Please confirm you agree with this']
-						])
+					userInputAcceptRelease = input(message: 'Do want to run the release script?', ok: 'Yes', 
+                        parameters: [booleanParam(defaultValue: false, 
+                        description: 'If you want to run the release script and perform a release, just push the button',name: 'Yes?')])
 				}
 			} catch(err) { // timeout reached or input false
 				//			def user = err.getCauses()[0].getUser()
@@ -41,6 +40,7 @@ node {
 
 			if(userInputAcceptRelease)
 													{
+														echo "Release accepted"
 														sh "echo build..."
 														sh "wget -q https://raw.githubusercontent.com/overturetool/overture-release-scripts/master/perform-release.sh -O perform-release.sh"
 														sh "chmod +x perform-release.sh"
