@@ -46,7 +46,7 @@ node {
 														sh "chmod +x perform-release.sh"
 														sh "wget -q https://raw.githubusercontent.com/overturetool/overture-release-scripts/master/git-set-private-key.sh -O git-set-private-key.sh"
 														sh "chmod +x git-set-private-key.sh"
-														sh "git checkout development"
+														//		sh "git checkout development"
 														sh "batchmode=release ./perform-release.sh ${env.MVN_SETTINGS_PATH}"
 
 												
