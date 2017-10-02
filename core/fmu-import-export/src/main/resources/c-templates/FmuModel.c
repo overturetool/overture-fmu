@@ -53,6 +53,7 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationSte
 {
 	int i, j;
 	int threadRunCount;
+	double dtmp;
 
 	/*  Call each thread the appropriate number of times.  */
 	for(i = 0;  i < PERIODIC_GENERATED_COUNT; i++)
@@ -72,7 +73,15 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationSte
 			else if(threads[i].lastExecuted + threads[i].period <= currentCommunicationPoint + communicationStepSize)
 			{
 				/*  Find number of executions to fit inside of step, allow sync.  */
-				threadRunCount = (currentCommunicationPoint + communicationStepSize - threads[i].lastExecuted) / threads[i].period;
+				dtmp = (currentCommunicationPoint + communicationStepSize - threads[i].lastExecuted) / threads[i].period;
+
+				/*  Underflow  */
+				if(dtmp - ((double)(int)dtmp) >= 0.99999)
+				/*  Overflow  */
+					threadRunCount = dtmp + 1;
+				else
+					threadRunCount = dtmp;
+
 				syncOutAllowed = fmi2True;
 			}
 			/*  Can not execute, but can sync existing values at the end of this step.  */
@@ -85,8 +94,15 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationSte
 		else
 		{
 			/*  Find number of executions to fit inside of step, allow sync because need to update regardless.  */
-			threadRunCount = (currentCommunicationPoint + communicationStepSize - threads[i].lastExecuted) / threads[i].period;
+			dtmp = (currentCommunicationPoint + communicationStepSize - threads[i].lastExecuted) / threads[i].period;
 			syncOutAllowed = fmi2True;
+
+			/*  Underflow  */
+			if(dtmp - ((double)(int)dtmp) >= 0.99999)
+			/*  Overflow  */
+				threadRunCount = dtmp + 1;
+			else
+				threadRunCount = dtmp;
 
 			/*  Period too long for this step so postpone until next step.  */
 			if(threadRunCount == 0)
