@@ -45,6 +45,16 @@ TVP newCharSeq(fmi2String str)
 
 //#GENERATED_SYSTEM_SHUTDOWN
 
+bool doubleLE(double a, double b, double epsilon)
+{
+	return (epsilon <= b - a && b - a <= epsilon) || a <= b;
+}
+
+bool doubleGE(double a, double b, double epsilon)
+{
+
+	return (epsilon <= b - a && b - a <= epsilon) || a >= b;
+}
 
 /*
 * Both time value are given in seconds
@@ -52,17 +62,19 @@ TVP newCharSeq(fmi2String str)
 fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationStepSize)
 {
 	int i, j;
-	int threadRunCount;
 	double dtmp;
+	int threadRunCount;
 
 	/*  Call each thread the appropriate number of times.  */
 	for(i = 0;  i < PERIODIC_GENERATED_COUNT; i++)
 	{
 		/*  Times align, sync took place last time.  */
-		if(threads[i].lastExecuted >= currentCommunicationPoint)
+		if(doubleGE(threads[i].lastExecuted, currentCommunicationPoint, 0.00001))
+		/*  if(threads[i].lastExecuted >= currentCommunicationPoint)  */
 		{
 			/*  Can not do anything, still waiting for the last step's turn to come.  */
-			if(threads[i].lastExecuted >= currentCommunicationPoint + communicationStepSize)
+			/*  if(threads[i].lastExecuted >= currentCommunicationPoint + communicationStepSize)  */
+			if(doubleGE(threads[i].lastExecuted, currentCommunicationPoint + communicationStepSize, 0.00001))
 			{
 				threadRunCount = 0;
 				syncOutAllowed = fmi2False;
@@ -70,7 +82,8 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationSte
 			/*  Previous step will finish inside this step.
 			*   At least one execution can be fit inside this step.
 			*/
-			else if(threads[i].lastExecuted + threads[i].period <= currentCommunicationPoint + communicationStepSize)
+			else if(doubleLE(threads[i].lastExecuted + threads[i].period, currentCommunicationPoint + communicationStepSize, 0.00001))
+			/*  else if(threads[i].lastExecuted + threads[i].period <= currentCommunicationPoint + communicationStepSize)  */
 			{
 				/*  Find number of executions to fit inside of step, allow sync.  */
 				dtmp = (currentCommunicationPoint + communicationStepSize - threads[i].lastExecuted) / threads[i].period;
@@ -109,7 +122,7 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationSte
 			{
 				syncOutAllowed = fmi2False;
 			}
-		}		
+		}
 
 		/*  Execute each thread the number of times that its period fits in the step size.  */
 		for(j = 0; j < threadRunCount; j++)
@@ -129,7 +142,7 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationSte
 	*/
 	maxStepSize = INT_MAX * 1.0;
 
-	/*  g_fmiCallbackFunctions->logger(g_fmiCallbackFunctions->componentEnvironment, g_fmiInstanceName, fmi2OK, "logDebug", "NOW:  %f, TP: %f, LE:  %f, STEP:  %f, SYNC:  %d, RUNS:  %d\n", currentCommunicationPoint, threads[0].period, threads[0].lastExecuted, communicationStepSize, syncOutAllowed, threadRunCount);  */
+	/*  g_fmiCallbackFunctions->logger((void*) 1, g_fmiInstanceName, fmi2OK, "logDebug", "NOW:  %f, TP: %f, LE:  %f, STEP:  %f, SYNC:  %d, RUNS:  %d\n", currentCommunicationPoint, threads[0].period, threads[0].lastExecuted, communicationStepSize, syncOutAllowed, threadRunCount);  */
 
 	return fmi2OK;
 }
