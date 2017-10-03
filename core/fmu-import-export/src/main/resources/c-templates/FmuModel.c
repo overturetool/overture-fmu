@@ -77,8 +77,8 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationSte
 
 				/*  Underflow  */
 				if(dtmp - ((double)(int)dtmp) >= 0.99999)
-				/*  Overflow  */
 					threadRunCount = dtmp + 1;
+				/*  Overflow  */
 				else
 					threadRunCount = dtmp;
 
@@ -99,8 +99,8 @@ fmi2Status vdmStep(fmi2Real currentCommunicationPoint, fmi2Real communicationSte
 
 			/*  Underflow  */
 			if(dtmp - ((double)(int)dtmp) >= 0.99999)
-			/*  Overflow  */
 				threadRunCount = dtmp + 1;
+			/*  Overflow  */
 			else
 				threadRunCount = dtmp;
 
