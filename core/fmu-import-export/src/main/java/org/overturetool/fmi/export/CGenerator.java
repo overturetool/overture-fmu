@@ -60,7 +60,7 @@ public class CGenerator
 
 		// Generate user specified classes
 		vdm2c.getCGenSettings().setUseGarbageCollection(true);
-				
+
 		try {
 			GeneratedData data = vdm2c.generate(nodes);
 			vdm2c.genCSourceFiles(outputDir, data.getClasses());
