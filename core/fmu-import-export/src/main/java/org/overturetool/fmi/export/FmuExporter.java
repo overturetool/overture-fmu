@@ -85,7 +85,7 @@ public class FmuExporter
 		out.println("|             " + title + "             |");
 		out.println("---------------------------------------");
 		out.println("Starting FMU export for project: '" + project.getName()
-				+ "' ...");
+		+ "' ...");
 
 		if (project.typeCheck())
 		{
@@ -113,7 +113,7 @@ public class FmuExporter
 						}
 					}
 				}
-				
+
 				if(!hasWorldRun)
 				{
 					err.println("Missing entry point: 'new World.run()'");
@@ -167,14 +167,7 @@ public class FmuExporter
 
 				project.createProjectTempRelativeFile("modelDescription.xml", new ByteArrayInputStream(modelDescription.getBytes("UTF-8")));
 
-				final File fmuArchieveName = new File(project.getOutputFolder(), project.getName()
-						+ ".fmu");
-
-				if (fmuArchieveName.exists())
-				{
-					if (force)
-						fmuArchieveName.delete();
-				}
+				File fmuNameByProjectName = new File(project.getOutputFolder(), project.getName() + ".fmu");
 
 				project.scheduleJob(new IJob()
 				{
@@ -188,27 +181,39 @@ public class FmuExporter
 							fmuFolderPath = project.getTempFolder();
 							try
 							{
-								out.println("Compressing FMU archive ...");
-								FolderCompressor.compress(fmuFolderPath, fmuArchieveName);
-
-								String hash = Tracability.calculateGitHash(fmuArchieveName);
-
-								for (SClassDefinition cDef : classList)
+								for(int i = 0; i < 5; i++)
 								{
-									if (ModelDescriptionGenerator.INTERFACE_CLASSNAME.equals(cDef.getName().getName()))
+									File fmuArchieveName = new File(project.getOutputFolder(), project.getName()
+											+ i + ".fmu");
+
+									if (fmuArchieveName.exists())
 									{
-										File hwiFile = cDef.getLocation().getFile();
-										String data = FileUtils.readFileToString(hwiFile, Charset.forName("UTF-8"));
-										StringBuilder sb = new StringBuilder(data);
-										if (project.isTracabilityEnabled())
-										{
-											sb.insert(0, String.format("--##\tEXPORT\t%s\t%s\t%s\t%s\t%s\n", hash, fmuArchieveName.getName(), Tracability.getCurrentTimeStamp(), getExportType(), Tracability.getToolId()));
-										}
-										FileUtils.write(hwiFile, sb, Charset.forName("UTF-8"));
+										if (force)
+											fmuArchieveName.delete();
 									}
+
+									out.println("Compressing FMU archive ...");
+									FolderCompressor.compress(fmuFolderPath, fmuArchieveName);
+
+									String hash = Tracability.calculateGitHash(fmuArchieveName);
+
+									for (SClassDefinition cDef : classList)
+									{
+										if (ModelDescriptionGenerator.INTERFACE_CLASSNAME.equals(cDef.getName().getName()))
+										{
+											File hwiFile = cDef.getLocation().getFile();
+											String data = FileUtils.readFileToString(hwiFile, Charset.forName("UTF-8"));
+											StringBuilder sb = new StringBuilder(data);
+											if (project.isTracabilityEnabled())
+											{
+												sb.insert(0, String.format("--##\tEXPORT\t%s\t%s\t%s\t%s\t%s\n", hash, fmuArchieveName.getName(), Tracability.getCurrentTimeStamp(), getExportType(), Tracability.getToolId()));
+											}
+											FileUtils.write(hwiFile, sb, Charset.forName("UTF-8"));
+										}
+									}
+
+									out.println("FMU export complete for project '" + project.getName() + "'.\n");
 								}
-								project.cleanUp();
-								out.println("FMU export complete for project '" + project.getName() + "'.\n");
 							} catch (IOException e)
 							{
 								project.log(e);
@@ -217,11 +222,17 @@ public class FmuExporter
 						{
 							project.log(e1);
 						}
-
+						try
+						{
+							project.cleanUp();
+						} catch (IOException e)
+						{
+							project.log(e);
+						}
 					}
 				});
 
-				return fmuArchieveName;
+				return fmuNameByProjectName;
 
 			} catch (IOException e)
 			{
@@ -235,7 +246,7 @@ public class FmuExporter
 		{
 			err.println("FAILURE:  Model contains type errors.");
 		}		
-		
+
 		return null;
 	}
 
@@ -282,7 +293,7 @@ public class FmuExporter
 	protected void copyFmuResources(GeneratorInfo info, String name,
 			IProject project, ModelDescriptionConfig modelDescriptionConfig,
 			ASystemClassDefinition system, PrintStream out, PrintStream err)
-			throws IOException, AnalysisException
+					throws IOException, AnalysisException
 	{
 		final String resourcesFolder = "resources";
 
@@ -338,8 +349,8 @@ public class FmuExporter
 				int index = unit.getAbsolutePath().indexOf(File.separatorChar);
 				path = unit.getAbsolutePath().substring(index+1);
 			}
-			
-			
+
+
 			project.createProjectTempRelativeFile(resourcesFolder + "/model/"
 					+ path, FileUtils.openInputStream(unit));
 		}
