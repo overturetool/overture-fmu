@@ -171,11 +171,10 @@ public class FmuExporter
 
 				project.scheduleJob(new IJob()
 				{
-
-					@Override
-					public void run()
+					private void emitDist()
 					{
 						File fmuFolderPath;
+
 						try
 						{
 							fmuFolderPath = project.getTempFolder();
@@ -229,6 +228,68 @@ public class FmuExporter
 						{
 							project.log(e);
 						}
+					}
+
+					private void emitNonDist()
+					{
+						File fmuFolderPath;
+
+						try
+						{
+							fmuFolderPath = project.getTempFolder();
+							try
+							{
+								File fmuArchieveName = new File(project.getOutputFolder(), project.getName() + ".fmu");
+
+								if (fmuArchieveName.exists())
+								{
+									if (force)
+										fmuArchieveName.delete();
+								}
+
+								out.println("Compressing FMU archive ...");
+								FolderCompressor.compress(fmuFolderPath, fmuArchieveName);
+
+								String hash = Tracability.calculateGitHash(fmuArchieveName);
+
+								for (SClassDefinition cDef : classList)
+								{
+									if (ModelDescriptionGenerator.INTERFACE_CLASSNAME.equals(cDef.getName().getName()))
+									{
+										File hwiFile = cDef.getLocation().getFile();
+										String data = FileUtils.readFileToString(hwiFile, Charset.forName("UTF-8"));
+										StringBuilder sb = new StringBuilder(data);
+										if (project.isTracabilityEnabled())
+										{
+											sb.insert(0, String.format("--##\tEXPORT\t%s\t%s\t%s\t%s\t%s\n", hash, fmuArchieveName.getName(), Tracability.getCurrentTimeStamp(), getExportType(), Tracability.getToolId()));
+										}
+										FileUtils.write(hwiFile, sb, Charset.forName("UTF-8"));
+									}
+								}
+
+								out.println("FMU export complete for project '" + project.getName() + "'.\n");
+							} catch (IOException e)
+							{
+								project.log(e);
+							}
+						} catch (IOException e1)
+						{
+							project.log(e1);
+						}
+						try
+						{
+							project.cleanUp();
+						} catch (IOException e)
+						{
+							project.log(e);
+						}
+					}
+
+					@Override
+					public void run()
+					{
+						if()
+						emitNonDist();
 					}
 				});
 
