@@ -122,6 +122,7 @@ cd target/checkout/ide/repository/target/repository
 																	def server = Artifactory.server "-844406945@1404457436085"
 																	def buildInfo = Artifactory.newBuildInfo()
 																	buildInfo.env.capture = true
+                									buildInfo.env.filter.addExclude("org/overturetool/fmi/ide/**")
 				
 																	def rtMaven = Artifactory.newMavenBuild()
 																	rtMaven.tool = "Maven 3.1.1" // Tool name from Jenkins configuration
