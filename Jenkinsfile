@@ -4,17 +4,18 @@ def userInputAcceptRelease = false
 node{
   // Only keep one build
 	properties([[$class: 'BuildDiscarderProperty', strategy: [$class: 'LogRotator', numToKeepStr: '5']]])
-    
+  
+cleanWs()  
 	// Mark the code checkout 'stage'....
 	stage ('Checkout')
 	{
 		checkout scm
 		sh 'git submodule update --init --remote'
 	}
-}
+//}
 
 
-node {
+//node {
   try
   {
 
