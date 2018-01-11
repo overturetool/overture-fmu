@@ -46,6 +46,7 @@ cleanWs()
 														sh "git checkout ${env.BRANCH_NAME}"
 														sh "echo build..."
 														sh "wget -q https://raw.githubusercontent.com/overturetool/overture-release-scripts/master/perform-release.sh -O perform-release.sh"
+														sh "sed -i 's/localCheckout=true/localCheckout=false/g' perform-release.sh"
 														sh "chmod +x perform-release.sh"
 														sh "wget -q https://raw.githubusercontent.com/overturetool/overture-release-scripts/master/git-set-private-key.sh -O git-set-private-key.sh"
 														sh "chmod +x git-set-private-key.sh"
