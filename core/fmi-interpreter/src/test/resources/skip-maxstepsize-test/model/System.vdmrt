@@ -1,0 +1,19 @@
+system System
+
+instance variables
+
+-- Hardware interface variable required by FMU Import/Export
+  
+  public static controller:Controller  := new Controller();  
+  
+  	cpu1 : CPU := new CPU(<FP>, 20);
+
+operations
+
+public System : () ==> System
+System () == 
+(
+	skip;
+);
+
+end System

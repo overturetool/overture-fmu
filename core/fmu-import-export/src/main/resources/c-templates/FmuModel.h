@@ -2,6 +2,7 @@
 #define FMU_MODEL_H_
 
 //#GENERATED_MODEL_INCLUDE
+#include "VdmUnpackString.h"
 
 //#GENERATED_PERIODIC_DEFINITION_COUNT
 

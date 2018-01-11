@@ -42,9 +42,11 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
 	strcpy(tmpInstanceName, instanceName);
 	g_fmiInstanceName = tmpInstanceName;
 
-	resourcesLocation = (char*)calloc(strlen(fmuResourceLocation) + 1, sizeof(char));
-	strcpy(resourcesLocation, fmuResourceLocation);
-	
+	if(fmuResourceLocation != NULL)
+	{
+		resourcesLocation = (char*)calloc(strlen(fmuResourceLocation) + 1, sizeof(char));
+		strcpy(resourcesLocation, fmuResourceLocation);
+	}
 	systemInit();
 
 	return (void*) 1;
@@ -148,11 +150,14 @@ fmi2Status fmi2GetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
 fmi2Status fmi2GetString(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2String value[])
 {
 	int i, j;
+	char *tmp;
 
 	for(i = 0; i < nvr; i++)
 	{
 		fmi2ValueReference vRef = vr[i];
-		strcpy(value[vRef], fmiBuffer.stringBuffer[vRef]);
+		tmp = calloc(strlen(fmiBuffer.stringBuffer[vRef]), sizeof(fmi2Char) + 1);
+		sprintf(tmp, "%s", fmiBuffer.stringBuffer[vRef]);
+		value[i] = tmp;
 	}
 
 	return fmi2OK;
@@ -205,12 +210,15 @@ fmi2Status fmi2SetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
 fmi2Status fmi2SetString(fmi2Component c, const fmi2ValueReference vr[], size_t nvr,
 		const fmi2String value[])
 {
-int i, j;
+	int i, j;
+	char *tmp;
 
 	for(i = 0; i < nvr; i++)
 	{
 		fmi2ValueReference vRef = vr[i];
-		strcpy(fmiBuffer.stringBuffer[vRef], value[vRef]);
+		tmp = calloc(strlen(value[i]), sizeof(fmi2Char) + 1);
+		sprintf(tmp, "%s", value[i]);
+		fmiBuffer.stringBuffer[vRef] = tmp;
 	}
 
 	return fmi2OK;

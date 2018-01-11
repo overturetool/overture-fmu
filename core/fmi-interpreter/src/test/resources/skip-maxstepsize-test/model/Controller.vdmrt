@@ -1,0 +1,15 @@
+class Controller
+ 
+
+operations
+
+public loop : () ==>()
+loop()==
+   (
+        skip;
+   );
+
+thread
+periodic(10E6,0,0,0)(loop);
+		 
+end Controller

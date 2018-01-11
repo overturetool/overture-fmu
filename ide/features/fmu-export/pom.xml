@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.overturetool.fmi.ide</groupId>
     <artifactId>org.overture.fmi.ide.features</artifactId>
-    <version>0.2.9-SNAPSHOT</version>
+    <version>0.2.11-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   

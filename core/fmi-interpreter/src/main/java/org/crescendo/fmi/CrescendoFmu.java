@@ -426,7 +426,7 @@ public abstract class CrescendoFmu implements IServiceProtocol
 	@Override
 	public Fmi2GetMaxStepSizeReply GetMaxStepSize(Fmi2Empty parseFrom)
 	{
-		return Fmi2GetMaxStepSizeReply.newBuilder().setMaxStepSize(time==0?Double.MIN_VALUE:time-
+		return Fmi2GetMaxStepSizeReply.newBuilder().setMaxStepSize(time==0?Double.MIN_VALUE:time
 				- (lastCommunicationPoint + lastStepSize)).build();
 	}
 
