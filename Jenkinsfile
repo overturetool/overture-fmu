@@ -159,11 +159,11 @@ cd target/checkout/ide/repository/target/repository
                 sh "echo The remote dir will be: ${DEST}"
                 sh "ssh ${REMOTE} mkdir -p ${DEST}"
 
-                if (env.BRANCH_NAME == 'release')
+                if (env.BRANCH_NAME != 'release')
                     sh "scp -r ide/repository/target/repository/* ${REMOTE}:${DEST}"
                 else
                     sh "scp -r target/checkout/ide/repository/target/repository/* ${REMOTE}:${DEST}"
-                
+
                 sh "ssh ${REMOTE} /home/jenkins/update-latest.sh web/into-cps/vdm-tool-wrapper/${deployBranchName}"
             }
         }
