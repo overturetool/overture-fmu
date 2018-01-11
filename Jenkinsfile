@@ -43,7 +43,7 @@ cleanWs()
 													{
 														echo "Release accepted"
 														echo "Checkout branch ${env.BRANCH_NAME} to confirm to the release script"
-														sh git checkout env.BRANCH_NAME
+														sh "git checkout ${env.BRANCH_NAME}"
 														sh "echo build..."
 														sh "wget -q https://raw.githubusercontent.com/overturetool/overture-release-scripts/master/perform-release.sh -O perform-release.sh"
 														sh "chmod +x perform-release.sh"
