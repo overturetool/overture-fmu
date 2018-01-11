@@ -115,50 +115,6 @@ public class SimulationTest
 	}
 
 	@Test
-	public void getMaxStepSizeTest()
-	{
-		Logger logger = LoggerFactory.getLogger(ShmServer.class);
-		new SharedMemory().setDebug(logger.isDebugEnabled());
-		SharedMemoryServer.setServerDebug(logger.isDebugEnabled());
-
-		CrescendoFmu fmu = new CrescendoFmu("max-step-size-test")
-		{
-
-			@Override
-			public void close()
-			{
-
-			}
-		};
-
-		String resourcePath = new File(".").toURI().resolve("src/test/resources/skip-maxstepsize-test/").toString();
-		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.Instantiate(Fmi2InstantiateRequest.newBuilder().setFmuResourceLocation(resourcePath).build()).getStatus());
-
-		final int p_s = 8;
-
-		// do step 1.
-		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.EnterInitializationMode(empty).getStatus());
-		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.ExitInitializationMode(empty).getStatus());
-		double curTime = 0;
-		double maxStepSize = fmu.GetMaxStepSize(null).getMaxStepSize();
-		System.out.println("Cur time: " + curTime + " - maxStepSize: " + maxStepSize);
-		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.DoStep(Fmi2DoStepRequest.newBuilder().setCurrentCommunicationPoint(0).setCommunicationStepSize(maxStepSize).build()).getStatus());
-		curTime = maxStepSize;
-
-		// do step 2 till 10
-		for (int i = 0; i < 9; i++) {
-			maxStepSize = fmu.GetMaxStepSize(null).getMaxStepSize();
-			System.out.println("Cur time: " + curTime + " - maxStepSize: " + maxStepSize);
-			// The model contains periodic(10E6,0,0,0) and cycles(0) which means that it should sync every 10th millisecond or 0.01 second.
-			// The value must be > 0.009 and < 0.011.
-			// This discrepancy is due to double interpretation. Really the difference is around 0.000000000000000005
-			Assert.assertTrue("getMaxStepSize is not between 0.009 and 0.011", maxStepSize > 0.009 && maxStepSize < 0.011);
-			Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.DoStep(Fmi2DoStepRequest.newBuilder().setCurrentCommunicationPoint(curTime).setCommunicationStepSize(maxStepSize).build()).getStatus());
-			curTime = curTime + maxStepSize;
-		}
-	}
-
-	@Test
 	public void testInitError()
 	{
 		Logger logger = LoggerFactory.getLogger(ShmServer.class);
@@ -205,4 +161,48 @@ public class SimulationTest
 		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.ExitInitializationMode(empty).getStatus());
 		Assert.assertEquals(Fmi2StatusReply.Status.Fatal, fmu.DoStep(Fmi2DoStepRequest.newBuilder().setCurrentCommunicationPoint(0).setCommunicationStepSize(4).build()).getStatus());
 	}
+
+	@Test
+	public void testGetMaxStepSizeTest()
+	{
+		Logger logger = LoggerFactory.getLogger(ShmServer.class);
+		new SharedMemory().setDebug(logger.isDebugEnabled());
+		SharedMemoryServer.setServerDebug(logger.isDebugEnabled());
+
+		CrescendoFmu fmu = new CrescendoFmu("max-step-size-test")
+		{
+
+			@Override
+			public void close()
+			{
+
+			}
+		};
+
+		String resourcePath = new File(".").toURI().resolve("src/test/resources/skip-maxstepsize-test/").toString();
+		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.Instantiate(Fmi2InstantiateRequest.newBuilder().setFmuResourceLocation(resourcePath).build()).getStatus());
+
+		// do step 1.
+		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.EnterInitializationMode(empty).getStatus());
+		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.ExitInitializationMode(empty).getStatus());
+		double curTime = 0;
+		double maxStepSize = fmu.GetMaxStepSize(empty).getMaxStepSize();
+		System.out.println("Cur time: " + curTime + " - maxStepSize: " + maxStepSize);
+		Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.DoStep(Fmi2DoStepRequest.newBuilder().setCurrentCommunicationPoint(0).setCommunicationStepSize(maxStepSize).build()).getStatus());
+		curTime = maxStepSize;
+
+		// do step 2 till 10
+		for (int i = 0; i < 9; i++) {
+			maxStepSize = fmu.GetMaxStepSize(null).getMaxStepSize();
+			System.out.println("Cur time: " + curTime + " - maxStepSize: " + maxStepSize);
+			// The model contains periodic(10E6,0,0,0) and cycles(0) which means that it should sync every 10th millisecond or 0.01 second.
+			// The value must be > 0.009 and < 0.011.
+			// This discrepancy is due to double interpretation. Really the difference is around 0.000000000000000005
+			Assert.assertTrue("getMaxStepSize is not between 0.009 and 0.011", maxStepSize > 0.009 && maxStepSize < 0.011);
+			Assert.assertEquals(Fmi2StatusReply.Status.Ok, fmu.DoStep(Fmi2DoStepRequest.newBuilder().setCurrentCommunicationPoint(curTime).setCommunicationStepSize(maxStepSize).build()).getStatus());
+			curTime = curTime + maxStepSize;
+		}
+		fmu.Terminate(empty);
+	}
+
 }
