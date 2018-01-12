@@ -12,7 +12,7 @@
 	<artifactId>root</artifactId>
 	<packaging>pom</packaging>
 	<name>Overture FMI Root Pom</name>
-	<version>0.2.13-SNAPSHOT</version>
+	<version>0.2.12</version>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -359,7 +359,7 @@ http://mojo.codehaus.org/versions-maven-plugin/
 		<url>git@github.com:overturetool/overture-fmu.git</url>
 		<connection>scm:git:git://github.com/overturetool/overture-fmu.git</connection>
 		<developerConnection>scm:git:git@github.com:overturetool/overture-fmu.git</developerConnection>
-		<tag>HEAD</tag>
+		<tag>Release/0.2.12</tag>
 	</scm>
 
 	<developers>
