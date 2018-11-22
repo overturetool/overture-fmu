@@ -65,6 +65,7 @@ public class CGenerator
 			GeneratedData data = vdm2c.generate(nodes);
 			vdm2c.genCSourceFiles(outputDir, data.getClasses());
 			vdm2c.emitFeatureFile(outputDir,  CGen.FEATURE_FILE_NAME);
+			vdm2c.emitClassAssocFile(outputDir, CGen.CLASS_ASSOC_FILE_NAME);
 		}  catch (Exception e) {
 			err.println("FAILURE:  the code generator encountered an error.");
 			e.printStackTrace(err);

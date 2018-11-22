@@ -9,8 +9,8 @@ Bundle-SymbolicName: org.overture.fmi.ide.fmuexport;singleton:=true
 Require-Bundle: org.eclipse.ui.console,
  org.overture.ide.ui,
  org.overture.ide.core,
- org.overture.ide.builders.vdmj;bundle-version="2.5.2",
- org.overturetool.vdm2c.ide.cgen;bundle-version="0.1.14"
+ org.overture.ide.builders.vdmj;bundle-version="2.6.4",
+ org.overturetool.vdm2c.ide.cgen;bundle-version="0.2.2"
 Bundle-Activator: org.overture.fmi.ide.fmuexport.FmuExportPlugin
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ClassPath: .,
