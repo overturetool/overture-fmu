@@ -26,14 +26,10 @@ git add ReleaseNotes_* && git commit -m "updated release note" && git push
 ```
 
 4. Perform the release
+- Update `overture.release.properties` and perform a commit.
+- Checkout the release branch and merge to the commit above.
+- Go to the build on Jenkins and answer `ABORT` to the prompt. (yes, `ABORT`).
 
-The prefered way is to update `overture.release.properties` and run the release scipt using jenkins and the release job. Otherwise this works for the core plugins.
-
-```bash
-mvn -Dmaven.repo.local=repository release:clean
-mvn -Dmaven.repo.local=repository release:prepare -DreleaseVersion=${RELEASE_VER} -DdevelopmentVersion=${NEW_DEV_VER}
-mvn -Dmaven.repo.local=repository release:perform
-```
 5. Create a github release with text from relaseNotes and add the fmu-import-export jar and p2 repo from http://overture.au.dk/into-cps/vdm-tool-wrapper/master/latest/
 6. Merge the newly released tag into master and push master
 7. Update the into-cps dev release bundle. Latest bundle from here: https://github.com/into-cps/into-cps.github.io/tree/development/download
