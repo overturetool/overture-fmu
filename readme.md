@@ -16,9 +16,9 @@ This project depends on (**See https://github.com/overturetool/overture-release-
 
 ### Prepare
 
-1. Move all not closed issued to next milestone
-2. Close current milestone
-3. Update release note in repo
+1. Move all open issued to next milestone
+2. Close the current milestone
+3. Create the release note:
 ```bash
 cd releaseNotes/
 ./github-fetch-milestone-issues.py 
@@ -26,10 +26,10 @@ git add ReleaseNotes_* && git commit -m "updated release note" && git push
 ```
 
 4. Perform the release
-- Update `overture.release.properties` and perform a commit.
-- Checkout the release branch and merge to the commit above.
-- Go to the build on Jenkins and answer `ABORT` to the prompt. (yes, `ABORT`).
+- Update `overture.release.properties` to contain the release version and the next development version and commit/push this change.
+- Checkout the release branch and merge this change.
+- Go to the build task found [here](https://build.overture.au.dk/jenkins/view/Overture/job/overture-fmu/job/release/) and instruct the build server to perform the release by checking and clicking 'Yes'.
 
-5. Create a github release with text from relaseNotes and add the fmu-import-export jar and p2 repo from http://overture.au.dk/into-cps/vdm-tool-wrapper/master/latest/
-6. Merge the newly released tag into master and push master
+5. Create a github release with the content of the release note and attach the fmu-import-export JAR and p2 repository from http://overture.au.dk/into-cps/vdm-tool-wrapper/master/latest/
+6. Merge the newly released tag into master and push this change
 7. Update the into-cps dev release bundle. Latest bundle from here: https://github.com/into-cps/into-cps.github.io/tree/development/download
