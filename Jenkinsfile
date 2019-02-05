@@ -24,14 +24,9 @@ node {
                                     description: 'If you want to run the release script and perform a release, just push the button', name: 'Yes?')])
                 }
             } catch (err) {
-            // timeout reached or input false
-                def user = err.getcauses()[0].getuser()
-                if('system' == user.tostring()) { // system means timeout.
-                	didtimeout = true
-                } else {
-                	userinput = false
-                }
-                echo "aborted by: [${user}]"
+                echo "Timeout or build abort. Marking build as SUCCESS."
+                currentBuild.result = 'SUCCESS'
+                return
              }
 
             if (userInputAcceptRelease == true) {
