@@ -11,14 +11,11 @@ node {
                 checkout scm
                 sh 'git submodule update --init --remote'
             }
-//}
-
-//node {
     try {
 
 
         if (env.BRANCH_NAME == 'release') {
-
+           //https://support.cloudbees.com/hc/en-us/articles/226554067-Pipeline-How-to-add-an-input-step-with-timeout-that-continues-if-timeout-is-reached-using-a-default-value
             try {
                 timeout(time: 15, unit: 'MINUTES') {
                     // change to a convenient timeout for you
@@ -26,18 +23,13 @@ node {
                             parameters: [booleanParam(defaultValue: false,
                                     description: 'If you want to run the release script and perform a release, just push the button', name: 'Yes?')])
                 }
-            } catch (err) { // timeout reached or input false
-                //			def user = err.getCauses()[0].getUser()
-                //if('SYSTEM' == user.toString()) { // SYSTEM means timeout.
-                //	didTimeout = true
-                //} else {
-                //	userInput = false
-                //echo "Aborted by: [${user}]"
-                //	}
-                userInputAcceptRelease = true
-            }
+            } catch (err) {
+                echo "Timeout or build abort. Marking build as SUCCESS."
+                currentBuild.result = 'SUCCESS'
+                return
+             }
 
-            if (userInputAcceptRelease) {
+            if (userInputAcceptRelease == true) {
                 echo "Release accepted"
                 echo "Checkout branch ${env.BRANCH_NAME} to confirm to the release script"
                 sh "git checkout ${env.BRANCH_NAME}"
