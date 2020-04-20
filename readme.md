@@ -6,7 +6,7 @@
 
 ## Dependencies
 
-This project depends on (**See https://github.com/overturetool/overture-release-scripts/wiki/Overture-FMU-Details**):
+This project depends on (**See https://gitlab.au.dk/software-engineering/tool-dependencies/-/wikis/Overture-FMU**):
 * FMI implementation: https://github.com/overturetool/shm-fmi
 * Co-simulation extension for the Overture Interpreter: https://github.com/crescendotool/crescendo
 * Overture Interpreter: https://github.com/overturetool/overture
