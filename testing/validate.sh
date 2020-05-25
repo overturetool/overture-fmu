@@ -91,20 +91,23 @@ fi
 cmake .
 make -j5
 
+echo packing
 
 case "$OSTYPE" in
   solaris*) echo "SOLARIS" ;;
-  darwin*)  echo "OSX"; LIB=`readlink -f output-source/$NAME.dylib`
+  darwin*)  echo "OSX"; LIB=`readlink -f $NAME.dylib`
 			BIN=darwin64;; 
-  linux*)   echo "LINUX"; LIB=`readlink -f output-source/$NAME.so`
+  linux*)   echo "LINUX"; LIB=`readlink -f $NAME.so`
 			BIN=linux64;; 
   bsd*)     echo "BSD" ;;
   *)        echo "unknown: $OSTYPE" ;;
 esac
 
 
-
+echo making dir: binaries/$BIN
 mkdir -p binaries/$BIN
+
+echo copying $LIB to binaries/$BIN
 cp $LIB binaries/$BIN
 
 ##  Add library to source code FMU.
