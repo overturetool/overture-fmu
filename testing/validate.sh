@@ -8,7 +8,7 @@ FMU_CHECK_DIR=fmuchecker
 mkdir -p $FMU_CHECK_DIR
 cd $FMU_CHECK_DIR
 
-cmake ../FMUComplianceChecker/ > /dev/null
+cmake ../FMUComplianceChecker/ -B . > /dev/null
 
 make -j4 >/dev/null
 
@@ -49,7 +49,7 @@ cd output-source
 unzip $NAME.fmu
 
 cp ../CMakeLists.txt .
-sed -i "s/##NAME##/$NAME/g" CMakeLists.txt
+sed -i.bak "s/##NAME##/$NAME/g" CMakeLists.txt
 
 ## Read defines if any
 if [ -e "sources/defines.def" ] 
@@ -64,7 +64,7 @@ done < "sources/defines.def"
 
 defs="add_definitions(${defs})"
 
-sed -i "s/##DEFINITIONS##/${defs}/g" CMakeLists.txt
+sed -i.bak "s/##DEFINITIONS##/${defs}/g" CMakeLists.txt
 
 fi
 
@@ -83,15 +83,29 @@ done < "sources/includes.txt"
 
 includes="include_directories(${includes})"
 echo "additional includes ${includes}"
-sed -i "s|##INCLUDES##|${includes}|g" CMakeLists.txt
+sed -i.bak "s|##INCLUDES##|${includes}|g" CMakeLists.txt
 
 fi
 
 ## Compile source code FMU.
 cmake .
 make -j5
-mkdir -p binaries/linux64
-cp wt2.so binaries/linux64
+
+
+case "$OSTYPE" in
+  solaris*) echo "SOLARIS" ;;
+  darwin*)  echo "OSX"; LIB=`readlink -f output-source/binaries/darwin64/$NAME.dylib`
+			BIN=darwin64;; 
+  linux*)   echo "LINUX"; LIB=`readlink -f output-source/binaries/linux64/$NAME.so`
+			BIN=linux64;; 
+  bsd*)     echo "BSD" ;;
+  *)        echo "unknown: $OSTYPE" ;;
+esac
+
+
+
+mkdir -p binaries/$BIN
+cp $LIB binaries/$BIN
 
 ##  Add library to source code FMU.
 zip -ur wt2.fmu binaries/
