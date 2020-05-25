@@ -127,7 +127,7 @@ cd target/checkout/ide/repository/target/repository
                     rtMaven.run pom: 'pom.xml', goals: 'install', buildInfo: buildInfo
 
                     //get rid of old snapshots only keep then for a short amount of time
-                    buildInfo.retention maxBuilds: 5, maxDays: 7, deleteBuildArtifacts: true
+//                    buildInfo.retention maxBuilds: 5, maxDays: 7, deleteBuildArtifacts: true
 
                     // Publish build info.
                     server.publishBuildInfo buildInfo
