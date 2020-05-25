@@ -8,7 +8,7 @@ FMU_CHECK_DIR=fmuchecker
 mkdir -p $FMU_CHECK_DIR
 cd $FMU_CHECK_DIR
 
-cmake ../FMUComplianceChecker/ -B . > /dev/null
+cmake -H../FMUComplianceChecker/ -B. > /dev/null
 
 make -j4 >/dev/null
 
