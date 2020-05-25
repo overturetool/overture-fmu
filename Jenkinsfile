@@ -9,7 +9,7 @@ node {
     stage('Checkout')
             {
                 checkout scm
-                sh 'git submodule update --init --remote'
+                sh 'git submodule update --init'
             }
     try {
 
