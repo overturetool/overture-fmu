@@ -146,7 +146,7 @@ cd target/checkout/ide/repository/target/repository
                 sh "echo branch is now ${env.BRANCH_NAME}"
 
                 DEST = sh script: "echo /home/jenkins/web/into-cps/vdm-tool-wrapper/${deployBranchName}/Build-${BUILD_NUMBER}_`date +%Y-%m-%d_%H-%M`", returnStdout: true
-                REMOTE = "jenkins@overture.au.dk"
+                REMOTE = "jenkins@overture-server.au.dk"
 
                 sh "echo The remote dir will be: ${DEST}"
                 sh "ssh ${REMOTE} mkdir -p ${DEST}"
