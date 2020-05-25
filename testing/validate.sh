@@ -94,9 +94,9 @@ make -j5
 
 case "$OSTYPE" in
   solaris*) echo "SOLARIS" ;;
-  darwin*)  echo "OSX"; LIB=`readlink -f output-source/binaries/darwin64/$NAME.dylib`
+  darwin*)  echo "OSX"; LIB=`readlink -f output-source/$NAME.dylib`
 			BIN=darwin64;; 
-  linux*)   echo "LINUX"; LIB=`readlink -f output-source/binaries/linux64/$NAME.so`
+  linux*)   echo "LINUX"; LIB=`readlink -f output-source/$NAME.so`
 			BIN=linux64;; 
   bsd*)     echo "BSD" ;;
   *)        echo "unknown: $OSTYPE" ;;
@@ -111,15 +111,6 @@ cp $LIB binaries/$BIN
 zip -ur wt2.fmu binaries/
 cd ..
 
-
-## Test source code FMU.
-case "$OSTYPE" in
-  solaris*) echo "SOLARIS" ;;
-  darwin*)  echo "OSX"; LIB=`readlink -f output-source/binaries/darwin64/$NAME.dylib`;; 
-  linux*)   echo "LINUX"; LIB=`readlink -f output-source/binaries/linux64/$NAME.so`;; 
-  bsd*)     echo "BSD" ;;
-  *)        echo "unknown: $OSTYPE" ;;
-esac
 
 $FMU_CHECK_DIR/fmuCheck*  -h 0.001 -s 30  output-source/wt2.fmu
 
