@@ -1,104 +1,104 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<!-- Needed to make deployment work -->
-	<parent>
-		<groupId>org.sonatype.oss</groupId>
-		<artifactId>oss-parent</artifactId>
-		<version>7</version>
-	</parent>
+    <!-- Needed to make deployment work -->
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+    </parent>
 
-	<groupId>org.overturetool.fmi</groupId>
-	<artifactId>root</artifactId>
-	<packaging>pom</packaging>
-	<name>Overture FMI Root Pom</name>
-	<version>0.2.19-SNAPSHOT</version>
+    <groupId>org.overturetool.fmi</groupId>
+    <artifactId>root</artifactId>
+    <packaging>pom</packaging>
+    <name>Overture FMI Root Pom</name>
+    <version>0.2.19-SNAPSHOT</version>
 
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<crescendo.version>2.2.6</crescendo.version>
-		<intocps.shm.version>0.3.0</intocps.shm.version>
-	</properties>
-
-
-	<repositories>
-
-		<repository>
-			<id>crescendo-development</id>
-			<name>crescendo-development</name>
-			<url>http://overture.au.dk/artifactory/crescendo</url>
-		</repository>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <crescendo.version>2.2.6</crescendo.version>
+        <intocps.shm.version>0.3.0</intocps.shm.version>
+    </properties>
 
 
+    <repositories>
 
-    <repository>
-      <id>intocps-development</id>
-      <name>intocps-development</name>
-      <url>http://overture.au.dk/artifactory/into-cps</url>
-    </repository>
-
-
-		<repository>
-      <id>overture.au.dk-vdm2c</id>
-      <name>overture.au.dk-releases</name>
-      <url>http://overture.au.dk/artifactory/vdm2c</url>
-    </repository>
-
-	</repositories>
+        <repository>
+            <id>crescendo-development</id>
+            <name>crescendo-development</name>
+            <url>http://overture.au.dk/artifactory/crescendo</url>
+        </repository>
 
 
-	<modules>
-		<module>core</module>
-	</modules>
-	
-	<profiles>
-		<profile>
-			<id>With-IDE</id>
-			<modules>
-				<module>ide</module>
-			</modules>
-		</profile>
+        <repository>
+            <id>intocps-development</id>
+            <name>intocps-development</name>
+            <url>http://overture.au.dk/artifactory/into-cps</url>
+        </repository>
 
-		<profile>
-			<id>codesigning</id>
-			<build>
-				<plugins>
-					<plugin>   
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-jarsigner-plugin</artifactId>
-						<configuration>
-							<storetype>${keystore.type}</storetype>
-							<keystore>${keystore.path}</keystore>
-							<alias>${keystore.alias}</alias>
-							<storepass>${keystore.store.password}</storepass>
-							<keypass>${keystore.key.password}</keypass>
-						</configuration>
-						<executions>
-							<execution>
-								<id>sign</id>
-								<goals>
-									<goal>sign</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
 
-	<build>
-		<defaultGoal>install</defaultGoal>
+        <repository>
+            <id>overture.au.dk-vdm2c</id>
+            <name>overture.au.dk-releases</name>
+            <url>http://overture.au.dk/artifactory/vdm2c</url>
+        </repository>
 
-		<plugins>
+    </repositories>
 
-<plugin>
-    <artifactId>maven-dependency-plugin</artifactId>
-    <version>2.8</version>
-</plugin>
-			<plugin>
-				<!--
-						This plugin allows you to run
+
+    <modules>
+        <module>core</module>
+    </modules>
+
+    <profiles>
+        <profile>
+            <id>With-IDE</id>
+            <modules>
+                <module>ide</module>
+            </modules>
+        </profile>
+
+        <profile>
+            <id>codesigning</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jarsigner-plugin</artifactId>
+                        <configuration>
+                            <storetype>${keystore.type}</storetype>
+                            <keystore>${keystore.path}</keystore>
+                            <alias>${keystore.alias}</alias>
+                            <storepass>${keystore.store.password}</storepass>
+                            <keypass>${keystore.key.password}</keypass>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>sign</id>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+    <build>
+        <defaultGoal>install</defaultGoal>
+
+        <plugins>
+
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.8</version>
+            </plugin>
+            <plugin>
+                <!--
+                        This plugin allows you to run
 
 $ mvn versions:set -Dtycho.mode=maven -PWith-IDE -DnewVersion=2.0.4
 
@@ -111,309 +111,306 @@ need to be set.
 
 More details on the versions-maven-plugin are at
 http://mojo.codehaus.org/versions-maven-plugin/
-				-->
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>versions-maven-plugin</artifactId>
-				<configuration>
-					<!-- Version control obviates the need for this. -->
-					<generateBackupPoms>false</generateBackupPoms>
-				</configuration>
-			</plugin>
+                -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>versions-maven-plugin</artifactId>
+                <configuration>
+                    <!-- Version control obviates the need for this. -->
+                    <generateBackupPoms>false</generateBackupPoms>
+                </configuration>
+            </plugin>
 
 
-		</plugins>
+        </plugins>
 
-		<!-- Configuration of plugins for inheriting pom.xml files should
-				 be in the pluginManagement tag
-		-->
-		<pluginManagement>
-			<plugins>
+        <!-- Configuration of plugins for inheriting pom.xml files should
+                 be in the pluginManagement tag
+        -->
+        <pluginManagement>
+            <plugins>
 
-<plugin>
-    <artifactId>maven-dependency-plugin</artifactId>
-    <version>2.8</version>
-</plugin>
-				<!-- Configure the compiler for all Overture Projects -->
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-compiler-plugin</artifactId>
-					<version>3.0</version>
-					<configuration>
-						<source>1.8</source>
-						<target>1.8</target>
-					</configuration>
-				</plugin>
+                <plugin>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>2.8</version>
+                </plugin>
+                <!-- Configure the compiler for all Overture Projects -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.0</version>
+                    <configuration>
+                        <source>1.8</source>
+                        <target>1.8</target>
+                    </configuration>
+                </plugin>
 
-				<!-- Attatch sources to all installed jars -->
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-source-plugin</artifactId>
-					<version>2.2.1</version>
-					<!-- <executions> -->
-					<!--	 <execution> -->
-					<!--		 <id>attach-sources</id> -->
-					<!--		 <goals> -->
-					<!--			 <goal>jar</goal> -->
-					<!--		 </goals> -->
-					<!--	 </execution> -->
-					<!-- </executions> -->
-					<configuration>
-						<attach>true</attach>
-					</configuration>
-				</plugin>
+                <!-- Attatch sources to all installed jars -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>2.2.1</version>
+                    <!-- <executions> -->
+                    <!--	 <execution> -->
+                    <!--		 <id>attach-sources</id> -->
+                    <!--		 <goals> -->
+                    <!--			 <goal>jar</goal> -->
+                    <!--		 </goals> -->
+                    <!--	 </execution> -->
+                    <!-- </executions> -->
+                    <configuration>
+                        <attach>true</attach>
+                    </configuration>
+                </plugin>
 
-				<!-- Enable JavaDoc but dont fail on error. This must be disabled for
-						 the Eclipse project in the IDE -->
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-javadoc-plugin</artifactId>
-					<version>2.9</version>
-					<executions>
-						<execution>
-							<id>attach-javadocs</id>
-							<goals>
-								<goal>jar</goal>
-							</goals>
-						</execution>
-					</executions>
-					<configuration>
-						<failOnError>false</failOnError>
-						<quiet>true</quiet>
-					</configuration>
-				</plugin>
+                <!-- Enable JavaDoc but dont fail on error. This must be disabled for
+                         the Eclipse project in the IDE -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>2.9</version>
+                    <executions>
+                        <execution>
+                            <id>attach-javadocs</id>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <failOnError>false</failOnError>
+                        <quiet>true</quiet>
+                    </configuration>
+                </plugin>
 
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-resources-plugin</artifactId>
-					<version>2.6</version>
-				</plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>2.6</version>
+                </plugin>
 
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-surefire-plugin</artifactId>
-					<version>2.13</version>
-					<configuration>
-					</configuration>
-				</plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>2.13</version>
+                    <configuration>
+                    </configuration>
+                </plugin>
 
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-dependency-plugin</artifactId>
-					<version>2.6</version>
-				</plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>2.6</version>
+                </plugin>
 
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-assembly-plugin</artifactId>
-					<version>2.4</version>
-					<configuration>
-						<descriptorRefs>
-							<descriptorRef>jar-with-dependencies</descriptorRef>
-						</descriptorRefs>
-					</configuration>
-				</plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>2.4</version>
+                    <configuration>
+                        <descriptorRefs>
+                            <descriptorRef>jar-with-dependencies</descriptorRef>
+                        </descriptorRefs>
+                    </configuration>
+                </plugin>
 
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-install-plugin</artifactId>
-					<version>2.4</version>
-				</plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>2.4</version>
+                </plugin>
 
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-deploy-plugin</artifactId>
-					<version>2.8.1</version>
-				</plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>2.8.1</version>
+                </plugin>
 
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-shade-plugin</artifactId>
-					<version>2.0</version>
-				</plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <version>2.0</version>
+                </plugin>
 
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-jar-plugin</artifactId>
-					<version>2.4</version>
-				</plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>2.4</version>
+                </plugin>
 
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-clean-plugin</artifactId>
-					<version>2.5</version>
-				</plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-clean-plugin</artifactId>
+                    <version>2.5</version>
+                </plugin>
 
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-antrun-plugin</artifactId>
-					<version>1.7</version>
-				</plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-antrun-plugin</artifactId>
+                    <version>1.7</version>
+                </plugin>
 
-				<plugin>
-					<groupId>org.codehaus.mojo</groupId>
-					<artifactId>build-helper-maven-plugin</artifactId>
-					<version>1.7</version>
-				</plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <version>1.7</version>
+                </plugin>
 
-				<plugin>
-					<groupId>org.codehaus.mojo</groupId>
-					<artifactId>versions-maven-plugin</artifactId>
-					<version>2.1</version>
-				</plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>versions-maven-plugin</artifactId>
+                    <version>2.1</version>
+                </plugin>
 
-				<plugin>
-					<groupId>pl.project13.maven</groupId>
-					<artifactId>git-commit-id-plugin</artifactId>
-					<version>2.1.8</version>
-					<configuration>
-						<dotGitDirectory>${project.basedir}/.git</dotGitDirectory>
-					</configuration>
-				</plugin>
+                <plugin>
+                    <groupId>pl.project13.maven</groupId>
+                    <artifactId>git-commit-id-plugin</artifactId>
+                    <version>2.1.8</version>
+                    <configuration>
+                        <dotGitDirectory>${project.basedir}/.git</dotGitDirectory>
+                    </configuration>
+                </plugin>
 
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-release-plugin</artifactId>
-					<version>2.5</version>
-					<configuration>
-						<releaseProfiles>With-IDE,all-platforms,codesigning</releaseProfiles>
-						<tagNameFormat>Release/@{project.version}</tagNameFormat>
-					</configuration>
-				</plugin>
-
-
-				<!-- Disable the maven enforcer warning in Eclipse -->
-				<plugin>
-					<groupId>org.eclipse.m2e</groupId>
-					<artifactId>lifecycle-mapping</artifactId>
-					<version>1.0.0</version>
-					<configuration>
-						<lifecycleMappingMetadata>
-							<pluginExecutions>
-								<pluginExecution>
-									<pluginExecutionFilter>
-										<groupId>org.apache.maven.plugins</groupId>
-										<artifactId>maven-enforcer-plugin</artifactId>
-										<versionRange>[1.0,)</versionRange>
-										<goals>
-											<goal>enforce</goal>
-										</goals>
-									</pluginExecutionFilter>
-									<action>
-										<ignore />
-									</action>
-								</pluginExecution>
-							</pluginExecutions>
-						</lifecycleMappingMetadata>
-					</configuration>
-				</plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-release-plugin</artifactId>
+                    <version>2.5</version>
+                    <configuration>
+                        <releaseProfiles>With-IDE,all-platforms,codesigning</releaseProfiles>
+                        <tagNameFormat>Release/@{project.version}</tagNameFormat>
+                    </configuration>
+                </plugin>
 
 
-
-				
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-jarsigner-plugin</artifactId>
-					<version>1.2</version>
-				</plugin>
-
-	<plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>license-maven-plugin</artifactId>
-          <version>1.8</version>
-					<configuration>
-						<verbose>true</verbose>
-						<addSvnKeyWords>false</addSvnKeyWords>
-						<processEndTag>#~%</processEndTag>
-						<processStartTag>#%~</processStartTag>
-						<addJavaLicenseAfterPackage>false</addJavaLicenseAfterPackage>
-						<!--descriptionTemplate>${basedir}/src/license/myDescriptionTemplate.ftl</descriptionTemplate-->
-            <licenseName>gpl_v3</licenseName>
-            <roots>
-              <root>src/main/java</root>
-              <root>src/test/java</root>
-            </roots>
-
-						<includes>
-              <include>**/*.java</include>
-            </includes>
-						<excludes>
-              <exclude>*.ftl</exclude>
-
-            </excludes>
-					</configuration>
-        </plugin>
-				
-			</plugins>
-		</pluginManagement>
-
-		<extensions>
-			<extension>
-				<groupId>org.apache.maven.wagon</groupId>
-				<artifactId>wagon-ssh</artifactId>
-				<version>2.4</version>
-			</extension>
-		</extensions>
-	</build>
-
-	<scm>
-		<url>git@github.com:overturetool/overture-fmu.git</url>
-		<connection>scm:git:git://github.com/overturetool/overture-fmu.git</connection>
-		<developerConnection>scm:git:git@github.com:overturetool/overture-fmu.git</developerConnection>
-		<tag>HEAD</tag>
-	</scm>
-
-	<developers>
-		<developer>
-			<id>overture</id>
-			<email>info@overturetool.org</email>
-			<name>Information contact for the Overture project</name>
-			<url>http://overturetool.org/</url>
-			<roles>
-				<role>Primary point of contact</role>
-			</roles>
-		</developer>
-		<developer>
-			<id>lausdahl</id>
-			<email>lausdahl@eng.au.dk</email>
-			<name>Kenneth Lausdahl</name>
-			<roles>
-				<role>coordinator</role>
-				<role>architect</role>
-				<role>developer</role>
-			</roles>
-			<organization>Aarhus University</organization>
-			<organizationUrl>http://eng.au.dk/</organizationUrl>
-		</developer>
-		
-	</developers>
-
- <licenses>
-    <license>
-      <name>GNU General Public License (GPL) version 3</name>
-      <url>http://www.gnu.org/licenses/gpl.txt</url>
-    </license>
-  </licenses>
-
-	<organization>
-		<name>Overture</name>
-		<url>http://overturetool.org/</url>
-	</organization>
-
-	<inceptionYear>2015</inceptionYear>
+                <!-- Disable the maven enforcer warning in Eclipse -->
+                <plugin>
+                    <groupId>org.eclipse.m2e</groupId>
+                    <artifactId>lifecycle-mapping</artifactId>
+                    <version>1.0.0</version>
+                    <configuration>
+                        <lifecycleMappingMetadata>
+                            <pluginExecutions>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>org.apache.maven.plugins</groupId>
+                                        <artifactId>maven-enforcer-plugin</artifactId>
+                                        <versionRange>[1.0,)</versionRange>
+                                        <goals>
+                                            <goal>enforce</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore/>
+                                    </action>
+                                </pluginExecution>
+                            </pluginExecutions>
+                        </lifecycleMappingMetadata>
+                    </configuration>
+                </plugin>
 
 
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jarsigner-plugin</artifactId>
+                    <version>1.2</version>
+                </plugin>
 
-  <distributionManagement>
-    <repository>
-      <id>overture.au.dk</id>
-      <name>overture.au.dk-releases</name>
-      <url>https://overture.au.dk/artifactory/overture-fmu</url>
-    </repository>
-    <snapshotRepository>
-      <id>overture.au.dk</id>
-      <name>overture.au.dk-snapshots</name>
-      <url>https://overture.au.dk/artifactory/overture-fmu</url>
-    </snapshotRepository>
-  </distributionManagement>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>license-maven-plugin</artifactId>
+                    <version>1.8</version>
+                    <configuration>
+                        <verbose>true</verbose>
+                        <addSvnKeyWords>false</addSvnKeyWords>
+                        <processEndTag>#~%</processEndTag>
+                        <processStartTag>#%~</processStartTag>
+                        <addJavaLicenseAfterPackage>false</addJavaLicenseAfterPackage>
+                        <!--descriptionTemplate>${basedir}/src/license/myDescriptionTemplate.ftl</descriptionTemplate-->
+                        <licenseName>gpl_v3</licenseName>
+                        <roots>
+                            <root>src/main/java</root>
+                            <root>src/test/java</root>
+                        </roots>
+
+                        <includes>
+                            <include>**/*.java</include>
+                        </includes>
+                        <excludes>
+                            <exclude>*.ftl</exclude>
+
+                        </excludes>
+                    </configuration>
+                </plugin>
+
+            </plugins>
+        </pluginManagement>
+
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ssh</artifactId>
+                <version>2.4</version>
+            </extension>
+        </extensions>
+    </build>
+
+    <scm>
+        <url>git@github.com:overturetool/overture-fmu.git</url>
+        <connection>scm:git:git://github.com/overturetool/overture-fmu.git</connection>
+        <developerConnection>scm:git:git@github.com:overturetool/overture-fmu.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+
+    <developers>
+        <developer>
+            <id>overture</id>
+            <email>info@overturetool.org</email>
+            <name>Information contact for the Overture project</name>
+            <url>http://overturetool.org/</url>
+            <roles>
+                <role>Primary point of contact</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>lausdahl</id>
+            <email>lausdahl@eng.au.dk</email>
+            <name>Kenneth Lausdahl</name>
+            <roles>
+                <role>coordinator</role>
+                <role>architect</role>
+                <role>developer</role>
+            </roles>
+            <organization>Aarhus University</organization>
+            <organizationUrl>http://eng.au.dk/</organizationUrl>
+        </developer>
+
+    </developers>
+
+    <licenses>
+        <license>
+            <name>GNU General Public License (GPL) version 3</name>
+            <url>http://www.gnu.org/licenses/gpl.txt</url>
+        </license>
+    </licenses>
+
+    <organization>
+        <name>Overture</name>
+        <url>http://overturetool.org/</url>
+    </organization>
+
+    <inceptionYear>2015</inceptionYear>
+
+
+    <distributionManagement>
+        <repository>
+            <id>overture.au.dk</id>
+            <name>overture.au.dk-releases</name>
+            <url>https://overture.au.dk/artifactory/overture-fmu</url>
+        </repository>
+        <snapshotRepository>
+            <id>overture.au.dk</id>
+            <name>overture.au.dk-snapshots</name>
+            <url>https://overture.au.dk/artifactory/overture-fmu</url>
+        </snapshotRepository>
+    </distributionManagement>
 
 </project>
