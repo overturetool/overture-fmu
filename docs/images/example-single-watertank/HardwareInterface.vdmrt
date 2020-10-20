@@ -1,0 +1,23 @@
+--##	EXPORT	7d126fb88309ed5e5f9c83583f05f541b14223b1	single-watertank-example.fmu	2020-20-10 14:28:13	tool-wrapper	{"name":"fmu-import-export","version":"0.2.19-SNAPSHOT"}
+--##	EXPORT	7178b9165d3e0ee42c7a40678b0c7e635da6de04	test.fmu	2020-20-10 14:14:39	tool-wrapper	{"name":"fmu-import-export","version":"0.2.19-SNAPSHOT"}
+class HardwareInterface
+
+values
+	-- @ interface: type = parameter, name="minlevel";
+	public minlevel : RealPort = new RealPort(1.0);
+	-- @ interface: type = parameter, name="maxlevel";
+	public maxlevel : RealPort = new RealPort(2.0);
+
+
+instance variables
+	-- @ interface: type = input, name="level";
+	public level : RealPort := new RealPort(0.0);
+
+
+instance variables
+	-- @ interface: type = output, name="valve";
+	public valveState : BoolPort := new BoolPort(false);
+
+
+end HardwareInterface
+
