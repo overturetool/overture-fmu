@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = "INTO-CPS"
+project = "INTO-CPS Overture FMU"
 copyright = "2020, INTO-CPS Association"
 author = "INTO-CPS Association"
 
