@@ -27,21 +27,21 @@
         <repository>
             <id>crescendo-development</id>
             <name>crescendo-development</name>
-            <url>http://overture.au.dk/artifactory/crescendo</url>
+            <url>https://overture.au.dk/artifactory/crescendo</url>
         </repository>
 
 
         <repository>
             <id>intocps-development</id>
             <name>intocps-development</name>
-            <url>http://overture.au.dk/artifactory/into-cps</url>
+            <url>https://overture.au.dk/artifactory/into-cps</url>
         </repository>
 
 
         <repository>
             <id>overture.au.dk-vdm2c</id>
             <name>overture.au.dk-releases</name>
-            <url>http://overture.au.dk/artifactory/vdm2c</url>
+            <url>https://overture.au.dk/artifactory/vdm2c</url>
         </repository>
 
     </repositories>
