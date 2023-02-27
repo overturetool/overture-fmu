@@ -34,7 +34,7 @@ jobs:
     #    name: Jars
     #    path: /**/target/*.jar
         
-    #- name: Publish artifacts to GitHub Packages
-    #  run: mvn --batch-mode -Pgithub-packages deploy
-    #  env:
-    #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Publish artifacts to GitHub Packages
+      run: mvn --batch-mode -Pgithub-packages deploy
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
