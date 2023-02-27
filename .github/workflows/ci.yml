@@ -26,19 +26,19 @@ jobs:
         cache: maven
         
     - name: Build with Maven
-      run: mvn --batch-mode package -pl :fmu-import-export -am
+      run: mvn --batch-mode package -Pgithub-packages
       
     - name: Publish Test Report
       if: success() || failure()
       uses: scacap/action-surefire-report@v1
       
-    - name: Archive Jar artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: Jars
-        path: core/fmu-import-export/target/*.jar
+    #- name: Archive Jar artifacts
+    #  uses: actions/upload-artifact@v3
+    #  with:
+    #    name: Jars
+    #    path: /**/target/*.jar
         
-    - name: Publish artifacts to GitHub Packages
-      run: mvn --batch-mode -Pgithub-packages deploy
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #- name: Publish artifacts to GitHub Packages
+    #  run: mvn --batch-mode -Pgithub-packages deploy
+    #  env:
+    #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
