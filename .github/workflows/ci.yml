@@ -20,3 +20,6 @@ jobs:
         cache: maven
     - name: Build with Maven
       run: mvn --batch-mode package -pl :fmu-import-export -am
+    - name: Publish Test Report
+      if: success() || failure()
+      uses: scacap/action-surefire-report@v1
