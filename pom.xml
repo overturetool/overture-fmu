@@ -416,6 +416,12 @@ http://mojo.codehaus.org/versions-maven-plugin/
             <name>overture.au.dk-snapshots</name>
             <url>https://overture.au.dk/artifactory/overture-fmu</url>
         </snapshotRepository>
+
+        <repository>
+            <id>github</id>
+            <name>GitHub Packages overturetool</name>
+            <url>https://maven.pkg.github.com/overturetool/overture-fmu</url>
+        </repository>
     </distributionManagement>
 
 </project>
