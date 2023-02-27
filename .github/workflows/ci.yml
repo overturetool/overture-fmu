@@ -23,3 +23,8 @@ jobs:
     - name: Publish Test Report
       if: success() || failure()
       uses: scacap/action-surefire-report@v1
+    - name: Archive Jar artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: Jars
+        path: core/fmu-import-export/target/*.jar
