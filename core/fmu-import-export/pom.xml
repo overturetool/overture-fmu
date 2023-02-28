@@ -13,6 +13,7 @@
 	<groupId>org.overturetool.fmi.core</groupId>
 	<artifactId>fmu-import-export</artifactId>
 	<name>Fmu import exporter</name>
+	<packaging>jar</packaging>
 
 	<dependencies>
 
