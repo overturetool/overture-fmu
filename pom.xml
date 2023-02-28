@@ -90,17 +90,6 @@
                 </plugins>
             </build>
         </profile>
-
-        <profile>
-            <id>github-packages</id>
-            <distributionManagement>
-                <repository>
-                    <id>github</id>
-                    <name>GitHub Packages overturetool</name>
-                    <url>https://maven.pkg.github.com/overturetool/overture-fmu</url>
-                </repository>
-            </distributionManagement>
-        </profile>
     </profiles>
 
     <build>
