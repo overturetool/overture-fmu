@@ -142,10 +142,14 @@
 					<descriptorRefs>
 						<descriptorRef>jar-with-dependencies</descriptorRef>
 					</descriptorRefs>
+					<classifier>jar-with-dependencies</classifier>
 				</configuration>
 				<executions>
 					<execution>
 						<id>make-my-jar-with-dependencies</id>
+						<configuration>
+							<classifier>jar-with-dependencies</classifier>
+						</configuration>
 						<phase>package</phase>
 						<goals>
 							<goal>single</goal>
