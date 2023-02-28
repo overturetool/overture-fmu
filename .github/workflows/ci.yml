@@ -35,6 +35,6 @@ jobs:
     #    path: /**/target/*.jar
         
     - name: Publish artifacts to GitHub Packages
-      run: mvn --batch-mode -Pgithub-packages deploy
+      run: mvn --batch-mode deploy -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/overturetool/overture-fmu
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
