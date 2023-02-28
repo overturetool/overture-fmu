@@ -143,7 +143,6 @@
 					<descriptorRefs>
 						<descriptorRef>jar-with-dependencies</descriptorRef>
 					</descriptorRefs>
-					<classifier>jar-with-dependencies</classifier>
 				</configuration>
 				<executions>
 					<execution>
