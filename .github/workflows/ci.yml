@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-and-deploy:
 
     runs-on: ubuntu-latest
 
@@ -21,20 +21,14 @@ jobs:
         server-id: github
         cache: maven
         
-    - name: Build with Maven
+    - name: Build & Test with Maven
       run: mvn --batch-mode clean verify
       
     - name: Publish Test Report
       if: success() || failure()
       uses: scacap/action-surefire-report@v1
-      
-    #- name: Archive Jar artifacts
-    #  uses: actions/upload-artifact@v3
-    #  with:
-    #    name: Jars
-    #    path: /**/target/*.jar
         
     - name: Publish artifacts to GitHub Packages
-      run: mvn --batch-mode deploy -DskipTests -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/${{ github.repository }}
+      run: mvn --batch-mode deploy -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/${{ github.repository }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
