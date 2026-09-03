@@ -1,0 +1,26 @@
+--##	EXPORT	ac621cfaf051a4958946021f7a838dad25cef21f	watertankController.fmu	2017-08-03 10:51:37	c-code	{"name":"fmu-import-export","version":"0.1.7-SNAPSHOT"}
+-- Generated class
+class HardwareInterface
+
+values
+	-- @ScalarVariable(  <parameter>,  <constant>)
+	public minlevel : RealPort = new RealPort(1.0);
+	--  interface: type = parameter, name="maxlevel";
+		-- @ScalarVariable(  <parameter>,  <constant>)
+	public maxlevel : RealPort = new RealPort(2.0);
+
+
+instance variables
+	--  interface: type = input, name="level";
+		-- @ScalarVariable(  <input>,<continuous>)
+	public level : RealPort := new RealPort(0.0);
+
+
+instance variables
+	--  interface: type = output, name="valve";
+	-- @ScalarVariable(  <output>,<discrete>)
+	public valveState : BoolPort := new BoolPort(false);
+
+
+end HardwareInterface
+
