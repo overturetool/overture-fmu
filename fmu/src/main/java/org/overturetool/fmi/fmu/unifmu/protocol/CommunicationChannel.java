@@ -1,4 +1,4 @@
-package org.overturetool.fmi.fmu.unifmu;
+package org.overturetool.fmi.fmu.unifmu.protocol;
 
 public interface CommunicationChannel extends AutoCloseable {
 

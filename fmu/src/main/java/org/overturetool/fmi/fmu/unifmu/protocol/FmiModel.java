@@ -1,4 +1,4 @@
-package org.overturetool.fmi.fmu.unifmu;
+package org.overturetool.fmi.fmu.unifmu.protocol;
 
 import java.util.List;
 
@@ -6,27 +6,9 @@ public interface FmiModel {
 
     void setLogCallback(FmiLogCallback fmiLogCallback);
 
-    class Fmi2GetValuePair<T> {
-        FmiProtocol.Fmi2Status status;
-        List<T> values;
+   record Fmi2GetValuePair<T>(FmiProtocol.Fmi2Status status, List<T> values) {}
 
-        public Fmi2GetValuePair(FmiProtocol.Fmi2Status status, List<T> values)
-
-        {
-            this.status = status;
-            this.values = values;
-        }
-    }
-
-    class Fmi2SerializeFmuStatePair {
-        public FmiProtocol.Fmi2Status status;
-        public byte[] bytes;
-
-        public Fmi2SerializeFmuStatePair(FmiProtocol.Fmi2Status status, byte[] bytes) {
-            this.status = status;
-            this.bytes = bytes;
-        }
-    }
+   record Fmi2SerializeFmuStatePair(FmiProtocol.Fmi2Status status, byte[] bytes) {}
 
 
     void log(String message, FmiProtocol.Fmi2Status status, String category);

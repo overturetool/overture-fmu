@@ -1,55 +1,29 @@
 package org.overturetool.fmi.fmu.unifmu.model;
 
-import com.fujitsu.vdmj.values.Value;
-import org.overturetool.fmi.fmu.unifmu.FmiModel;
-import org.overturetool.fmi.fmu.unifmu.FmiProtocol;
+import org.overturetool.fmi.fmu.unifmu.protocol.FmiModel;
+import org.overturetool.fmi.fmu.unifmu.protocol.FmiProtocol;
+import org.overturetool.fmi.fmu.unifmu.FmuPacker;
 
 import java.util.*;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public abstract class FmiStateModel implements FmiModel {
 
-    public enum ModelInterface {
-        Value,
-        RuntimeVariable
+String modelName;
+    final Map<Integer, Object> inputs = new HashMap<>();
+    final Map<Integer, Object> outputs = new HashMap<>();
+    List<FmuPacker.ScalarVariable> interfaceReferences = new ArrayList<>();
+
+    static <T> Stream<T> stream(Iterable<T> iterable) {
+        return StreamSupport.stream(iterable.spliterator(), false);
     }
 
-    enum Mode {
-        ParserModel,
-        RuntimeModel
-
-    }
-
-    public static class ModelVariable {
-        String name;
-        ModelInterface modelInterface;
-
-        public ModelVariable(String name, ModelInterface modelInterface) {
-            this.name = name;
-            this.modelInterface = modelInterface;
-        }
-    }
-
-    List<ModelVariable> interfaceReferences = new ArrayList<>();
-    Mode mode = Mode.ParserModel;
-    Map<ModelVariable, Value> runtimeValues = new HashMap<>();
-
-    protected void setInterfaceReferences(List<ModelVariable> interfaceReferences) {
+    protected void setInterfaceReferences(List<FmuPacker.ScalarVariable> interfaceReferences) {
         this.interfaceReferences = interfaceReferences;
-        this.mode = Mode.ParserModel;
     }
 
-
-    @Override
-    public FmiProtocol.Fmi2Status fmi2ExitInitializationMode() {
-        mode = Mode.RuntimeModel;
-        return FmiProtocol.Fmi2Status.OK;
-    }
-
-    abstract protected void setValueParameter(ModelVariable var, Object value);
-
-
-    Map<Integer, Object> inputs = new HashMap<>();
-
+    abstract protected void setValueParameter(FmuPacker.ScalarVariable var, Object value);
 
     <T> FmiProtocol.Fmi2Status setInput(Iterable<Integer> references, Iterable<T> values) {
         var success = true;
@@ -61,7 +35,7 @@ public abstract class FmiStateModel implements FmiModel {
             Integer ref = refIt.next();
             T value = valIt.next();
 
-            if (ref > interfacesSize) {
+            if (ref >= interfacesSize) {
                 success = false;
                 continue;
             }
@@ -72,13 +46,21 @@ public abstract class FmiStateModel implements FmiModel {
                 continue;
             }
 
-            if (modelVariable.modelInterface != ModelInterface.RuntimeVariable)
-
-                if (inputs.containsKey(ref)) {
+            switch (modelVariable.causality()) {
+                case parameter, calculatedParameter -> {
+                    setValueParameter(modelVariable, value);
+                    success = true;
+                }
+                case input -> {
                     inputs.put(ref, value);
-                } else {
+                    success = true;
+                }
+                case output, local, independent -> {
                     success = false;
                 }
+            }
+
+
         }
 
         if (refIt.hasNext() || valIt.hasNext()) {
@@ -87,7 +69,6 @@ public abstract class FmiStateModel implements FmiModel {
 
         return success ? FmiProtocol.Fmi2Status.OK : FmiProtocol.Fmi2Status.Error;
     }
-
 
     @Override
     public FmiProtocol.Fmi2Status fmi2SetReal(Iterable<Integer> references, Iterable<Double> values) throws Exception {
@@ -109,23 +90,31 @@ public abstract class FmiStateModel implements FmiModel {
         return setInput(references, values);
     }
 
+    private <T> Fmi2GetValuePair<T> getOutputs(Class<T> clz, Iterable<Integer> references) {
+        //TODO return also parameters
+        var values = stream(references).sorted().map(outputs::get).filter(clz::isInstance).map(clz::cast).toList();
+        if (values.contains(null)|| values.size() != ((Collection<?>) references).size())
+            return new Fmi2GetValuePair<>(FmiProtocol.Fmi2Status.Error, null);
+        return new Fmi2GetValuePair<>(FmiProtocol.Fmi2Status.OK, values.stream().map(v -> v).toList());
+    }
+
     @Override
     public Fmi2GetValuePair<Double> fmi2GetReal(Iterable<Integer> references) throws Exception {
-        return null;
+        return getOutputs(Double.class, references);
     }
 
     @Override
     public Fmi2GetValuePair<Integer> fmi2GetInteger(Iterable<Integer> references) throws Exception {
-        return null;
+        return getOutputs(Integer.class, references);
     }
 
     @Override
     public Fmi2GetValuePair<Boolean> fmi2GetBoolean(Iterable<Integer> references) throws Exception {
-        return null;
+        return getOutputs(Boolean.class, references);
     }
 
     @Override
     public Fmi2GetValuePair<String> fmi2GetString(Iterable<Integer> references) throws Exception {
-        return null;
+        return getOutputs(String.class, references);
     }
 }

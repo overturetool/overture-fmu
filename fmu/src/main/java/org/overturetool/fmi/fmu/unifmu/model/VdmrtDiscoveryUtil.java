@@ -1,7 +1,7 @@
 package org.overturetool.fmi.fmu.unifmu.model;
 
 import com.fujitsu.vdmj.lex.Dialect;
-import org.overturetool.fmi.fmu.unifmu.FmiProtocol;
+import org.overturetool.fmi.fmu.unifmu.protocol.FmiProtocol;
 
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -64,7 +64,7 @@ final class VdmrtDiscoveryUtil {
         }
     }
 
-    private static List<Path> discover(Path loadOrigin) throws IOException {
+    public static List<Path> discover(Path loadOrigin) throws IOException {
         if (Files.isDirectory(loadOrigin)) {
             return discoverFromDirectory(loadOrigin);
         }

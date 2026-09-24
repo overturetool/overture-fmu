@@ -1,12 +1,10 @@
-package org.overturetool.fmi.fmu.unifmu;
+package org.overturetool.fmi.fmu.unifmu.protocol;
 
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
-import java.io.IOException;
-
-public class ZMQProtocolChannel implements CommunicationChannel , AutoCloseable {
+public class ZMQProtocolChannel implements CommunicationChannel, AutoCloseable {
 
     private final ZContext context;
     ZMQ.Socket socket;

@@ -28,7 +28,7 @@ private loop : () ==>()
 loop()==
 	cycles(2)
    (-- retrieve the first value from Co-SIM
-   
+  --IO`println("Controller: reading level from sensor");
    let level : real = levelSensor.getLevel()
    in
    (

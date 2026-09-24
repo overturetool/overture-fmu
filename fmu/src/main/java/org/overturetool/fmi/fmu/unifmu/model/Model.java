@@ -7,9 +7,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
-import org.overturetool.fmi.fmu.unifmu.FmiLogCallback;
-import org.overturetool.fmi.fmu.unifmu.FmiModel;
-import org.overturetool.fmi.fmu.unifmu.FmiProtocol.Fmi2Status;
+import org.overturetool.fmi.fmu.unifmu.protocol.FmiLogCallback;
+import org.overturetool.fmi.fmu.unifmu.protocol.FmiModel;
+import org.overturetool.fmi.fmu.unifmu.protocol.FmiProtocol.Fmi2Status;
 public class Model implements Serializable, FmiModel {
 
     private static final long serialVersionUID = 1L;
