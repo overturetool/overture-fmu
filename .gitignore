@@ -59,6 +59,7 @@ target/
 
 # eclipse noise #
 #################
+.venv/
 .metadata/
 .classpath
 .settings/

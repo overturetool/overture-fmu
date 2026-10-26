@@ -100,9 +100,19 @@ public class FmiProtocol implements FmiLogCallback {
 
 
     void run() throws Exception {
+        logger.debug("Sending UniFMU handshake reply");
         handshake();
+        logger.debug("Handshake reply sent; waiting for the first FMI command");
+        boolean connectionConfirmed = false;
         while (true) {
             Fmi2Messages.Fmi2Command command = recvCommand();
+            if (!connectionConfirmed) {
+                logger.info("Dispatcher connection confirmed; received first FMI command: {}",
+                        command.getCommandCase());
+                connectionConfirmed = true;
+            } else {
+                logger.trace("Received FMI command: {}", command.getCommandCase());
+            }
 
             switch (command.getCommandCase()) {
 
@@ -379,5 +389,9 @@ public class FmiProtocol implements FmiLogCallback {
             return (FmiModel) clazz.getConstructor(parameterTypes).newInstance(instanceName, URI.create(fmuResourceLocation), visible, loggingOn);
         }
         return null;
+    }
+
+    public static void main(String[] args) throws Exception {
+        discoverAndInstantiateModel(".", "dummy-guid", "dummy-instance", false, false);
     }
 }

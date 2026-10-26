@@ -3,13 +3,16 @@ package org.overturetool.fmi.fmu.unifmu.model;
 import org.overturetool.fmi.fmu.unifmu.protocol.FmiModel;
 import org.overturetool.fmi.fmu.unifmu.protocol.FmiProtocol;
 import org.overturetool.fmi.fmu.unifmu.FmuPacker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.DoubleConsumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public abstract class FmiStateModel implements FmiModel {
-
+    final static Logger logger = LoggerFactory.getLogger(FmiStateModel.class);
 String modelName;
     final Map<Integer, Object> inputs = new HashMap<>();
     final Map<Integer, Object> outputs = new HashMap<>();
@@ -20,6 +23,7 @@ String modelName;
     }
 
     protected void setInterfaceReferences(List<FmuPacker.ScalarVariable> interfaceReferences) {
+        logger.debug("Setting interface references: {}", interfaceReferences);
         this.interfaceReferences = interfaceReferences;
     }
 
@@ -91,11 +95,17 @@ String modelName;
     }
 
     private <T> Fmi2GetValuePair<T> getOutputs(Class<T> clz, Iterable<Integer> references) {
-        //TODO return also parameters
+        logger.debug("Getting outputs of type {} for references: {}", clz.getSimpleName(), references);
+        //TODO return also parameters and outputs with initial values
         var values = stream(references).sorted().map(outputs::get).filter(clz::isInstance).map(clz::cast).toList();
-        if (values.contains(null)|| values.size() != ((Collection<?>) references).size())
-            return new Fmi2GetValuePair<>(FmiProtocol.Fmi2Status.Error, null);
-        return new Fmi2GetValuePair<>(FmiProtocol.Fmi2Status.OK, values.stream().map(v -> v).toList());
+        if (values.contains(null)|| values.size() != ((Collection<?>) references).size()) {
+            logger.debug("Some requested references are not available in outputs: {}. Available outputs: {}", references, outputs.keySet());
+            logger.trace("Outputs: {}", outputs.keySet());
+            logger.trace("Inputs: {}", inputs.keySet());
+//            return new Fmi2GetValuePair<>(FmiProtocol.Fmi2Status.OK, stream(references).map(r->Boolean.valueOf(false)).map(clz::cast).toList());
+            return new Fmi2GetValuePair<>(FmiProtocol.Fmi2Status.Error, List.of());
+        }
+        return new Fmi2GetValuePair<>(FmiProtocol.Fmi2Status.OK, values.stream().toList());
     }
 
     @Override

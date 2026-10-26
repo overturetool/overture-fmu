@@ -1,12 +1,16 @@
 package org.overturetool.fmi.fmu.unifmu;
 
+import com.fujitsu.vdmj.lex.LexLocation;
 import com.fujitsu.vdmj.tc.definitions.*;
 import com.fujitsu.vdmj.tc.expressions.TCNewExpression;
 import com.fujitsu.vdmj.tc.lex.TCNameToken;
-import com.fujitsu.vdmj.tc.types.TCClassType;
+import com.fujitsu.vdmj.tc.types.*;
 import com.fujitsu.vdmj.typechecker.TypeComparator;
 import org.overturetool.fmi.vdm.annotations.TCScalarVariableAnnotation;
+import org.overturetool.fmi.fmu.unifmu.model.VdmFmiModel;
+import org.overturetool.fmi.fmu.unifmu.protocol.FmiProtocol;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -14,6 +18,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -26,7 +31,7 @@ public class FmuPacker {
     }
 
     public enum Variability {
-        constant, discrete, continuous, tunable
+        constant, discrete, continuous, tunable, fixed
     }
 
     public enum Causality {
@@ -53,11 +58,14 @@ public class FmuPacker {
                             canInterpolateInputs="false"
                             maxOutputDerivativeOrder="0"
                             canRunAsynchronuously="false"
-                            canBeInstantiatedOnlyOncePerProcess="false"
+                            canBeInstantiatedOnlyOncePerProcess="true"
                             canNotUseMemoryManagementFunctions="true"
                             canGetAndSetFMUstate="false"
                             canSerializeFMUstate="false"
                             providesDirectionalDerivative="false"/>
+              <LogCategories>
+            %s
+              </LogCategories>
               <ModelVariables>
             %s
               </ModelVariables>
@@ -68,6 +76,10 @@ public class FmuPacker {
             """;
     private static final String MAIN_CLASS = "org.overturetool.fmi.fmu.unifmu.protocol.Main";
     private static final String MODEL_IMPL_CLASS = "org.overturetool.fmi.fmu.unifmu.model.VdmRuntimeFmiModel";
+    private static final int DEFAULT_DEBUG_PORT = 5005;
+    private static final String UNIFMU_MESSAGES_LOG_CATEGORY = "logUnifmuMessages";
+    private static final String UNIFMU_MESSAGES_LOG_DESCRIPTION =
+            "Messages related to internal UniFMU functionality. Enabling this category is required for distributed UniFMUs.";
 
     public static List<ScalarVariable> getScalarVariables(final List<Path> discoveredVdmrtFiles) throws Exception {
         VdmjUtils.init();
@@ -116,296 +128,376 @@ public class FmuPacker {
             return Collections.emptyList();
         }
 
-            // Create scalar variables from sorted definitions
-            int valueReference = 0;
-            for (var entry : annotatedDefs) {
-                TCDefinition def = entry.getKey();
-                Type type = inferType(def.getType());
-                Variability variability = Variability.continuous;
-                Causality causality = Causality.local;
-                Object initialValue = null;
+        // Create scalar variables from sorted definitions
+        int valueReference = 0;
+        for (var entry : annotatedDefs) {
+            TCDefinition def = entry.getKey();
+            Type type = inferType(def.getType());
+            Variability variability = Variability.continuous;
+            Causality causality = Causality.local;
+            Object initialValue = null;
 
-                var annotations = def instanceof TCLocalDefinition ? ((TCLocalDefinition) def).valueDefinition.annotations : def.annotations;
-                // Extract causality and variability from annotation if available
-                if (annotations != null) {
-                    for (var ann : annotations) {
-                        if (ann instanceof TCScalarVariableAnnotation scalarAnn) {
-                            if (!scalarAnn.args.isEmpty()) {
-                                causality = parseCausality(scalarAnn.args.getFirst());
-                            }
-                            if (scalarAnn.args.size() >= 2) {
-                                variability = parseVariability(scalarAnn.args.get(1));
-                            }
+            var annotations = def instanceof TCLocalDefinition ? ((TCLocalDefinition) def).valueDefinition.annotations : def.annotations;
+            // Extract causality and variability from annotation if available
+            if (annotations != null) {
+                for (var ann : annotations) {
+                    if (ann instanceof TCScalarVariableAnnotation scalarAnn) {
+                        if (!scalarAnn.args.isEmpty()) {
+                            causality = parseCausality(scalarAnn.args.getFirst());
+                        }
+                        if (scalarAnn.args.size() >= 2) {
+                            variability = parseVariability(scalarAnn.args.get(1));
                         }
                     }
                 }
-                String name = null;
-                switch (causality) {
-                    case parameter, calculatedParameter -> {
-                        name = def.name.getExplicit(true).toString().replace("`", ".");
-                    }
-                    case input, output, local, independent -> {
-                        name = systemClass.get().name.getName() + "." + systemClassHardwareInterfaceVar.get().name.getName() + "." + def.name.getExplicit(false).toString().replace("`", ".");
-                    }
+            }
+            String name = null;
+            switch (causality) {
+                case parameter, calculatedParameter -> {
+                    name = def.name.getExplicit(true).toString().replace("`", ".");
                 }
-
-                if(entry.getKey() instanceof TCLocalDefinition  vdef )
-                {
-                    if(vdef.valueDefinition != null && vdef.valueDefinition.exp instanceof TCNewExpression newExpr && newExpr.args != null && !newExpr.args.isEmpty())
-                    {
-                        initialValue = newExpr.args.getFirst().toString();
-                    }
-
-                }else if(entry.getKey() instanceof TCInstanceVariableDefinition idef)
-                {
-                    if(idef.expression != null && idef.expression instanceof TCNewExpression newExpr && newExpr.args != null && !newExpr.args.isEmpty())
-                    {
-                        initialValue = newExpr.args.getFirst().toString();
-                    }
-                }
-
-
-                scalarVariables.add(new ScalarVariable(valueReference++, name, type, variability, causality, def, initialValue));
-            }
-
-            return scalarVariables;
-        }
-
-        private static Type inferType (com.fujitsu.vdmj.tc.types.TCType vdmType){
-            if (vdmType.toString().contains("real")) return Type.Real;
-            if (vdmType.toString().contains("int")) return Type.Integer;
-            if (vdmType.toString().contains("bool")) return Type.Boolean;
-            if (vdmType.toString().contains("seq of char")) return Type.String;
-            return Type.Real;
-        }
-
-        private static Causality parseCausality (com.fujitsu.vdmj.tc.expressions.TCExpression expr){
-            String val = expr.toString().toLowerCase();
-            if (val.contains("input")) return Causality.input;
-            if (val.contains("output")) return Causality.output;
-            if (val.contains("parameter")) return Causality.parameter;
-            if (val.contains("calculatedparameter")) return Causality.calculatedParameter;
-            if (val.contains("local")) return Causality.local;
-            return Causality.local;
-        }
-
-        private static Variability parseVariability (com.fujitsu.vdmj.tc.expressions.TCExpression expr){
-            String val = expr.toString().toLowerCase();
-            if (val.contains("discrete")) return Variability.discrete;
-            if (val.contains("continuous")) return Variability.continuous;
-            if (val.contains("constant")) return Variability.constant;
-            if (val.contains("tunable")) return Variability.tunable;
-            return Variability.continuous;
-        }
-
-        public static String createModelDescription(String modelName, List<ScalarVariable> scalarVariables) {
-            Objects.requireNonNull(modelName, "modelName");
-            List<ScalarVariable> safeScalars = Objects.requireNonNullElseGet(scalarVariables, List::of);
-
-            String scalarXml = safeScalars.stream()
-                    .map(FmuPacker::toScalarVariableXml)
-                    .collect(Collectors.joining("\n"));
-
-            String outputsXml = safeScalars.stream()
-                    .filter(scalar -> scalar.causality() == Causality.output)
-                    .map(scalar -> "    <Outputs>\n      <Unknown index=\"" + (scalar.valueReference() + 1) + "\" dependencies=\"\"/>\n    </Outputs>")
-                    .findFirst()
-                    .map(first -> safeScalars.stream()
-                            .filter(scalar -> scalar.causality() == Causality.output)
-                            .map(scalar -> "      <Unknown index=\"" + (scalar.valueReference() + 1) + "\" dependencies=\"\"/>")
-                            .collect(Collectors.joining("\n", "    <Outputs>\n", "\n    </Outputs>")))
-                    .orElse("");
-
-            return MODEL_DESCRIPTION_TEMPLATE.formatted(
-                    escapeXml(modelName),
-                    UUID.randomUUID(),
-                    Instant.now().toString(),
-                    escapeXml(modelName),
-                    scalarXml.isEmpty() ? "" : scalarXml + "\n",
-                    outputsXml
-            );
-        }
-
-        public static Path packageFmu(Path vdmModelPath, Path outputDirectory, String fmuName) throws Exception {
-            Path normalizedModelPath = vdmModelPath.toAbsolutePath().normalize();
-            Path normalizedOutputDir = outputDirectory.toAbsolutePath().normalize();
-            Files.createDirectories(normalizedOutputDir);
-
-            List<Path> discoveredVdmrtFiles = discoverModelFiles(normalizedModelPath);
-            List<ScalarVariable> scalarVariables = getScalarVariables(discoveredVdmrtFiles);
-            String modelDescription = createModelDescription(fmuName, scalarVariables);
-
-            Path archive = normalizedOutputDir.resolve(fmuName.endsWith(".fmu") ? fmuName : fmuName + ".fmu");
-            try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(archive))) {
-                addDirectoryEntry(zip, "binaries/");
-                addDirectoryEntry(zip, "resources/");
-                addFile(zip, "modelDescription.xml", modelDescription.getBytes(StandardCharsets.UTF_8));
-
-                copyDirectoryToZip(zip, resolveProjectResource("binaries"), "binaries/");
-                copyModelResources(zip, normalizedModelPath, "resources/");
-                addFile(zip, "resources/log4j2.xml", Files.readAllBytes(resolveProjectResource("log4j2.xml")));
-                RuntimeArtifact runtimeArtifact = copyRuntimeArtifact(zip, "resources/");
-                addFile(zip, "resources/launch.toml", createLaunchToml(runtimeArtifact).getBytes(StandardCharsets.UTF_8));
-            }
-
-            return archive;
-        }
-
-        public static void main(String[] args) throws Exception {
-            if (args.length != 3) {
-                throw new IllegalArgumentException("Usage: FmuPacker <vdm-model-path> <output-directory> <fmu-name>");
-            }
-
-            Path archive = packageFmu(Paths.get(args[0]), Paths.get(args[1]), args[2]);
-            System.out.println("Created FMU: " + archive);
-        }
-
-        private static List<Path> discoverModelFiles(Path modelPath) throws IOException {
-            if (Files.isDirectory(modelPath)) {
-                try (Stream<Path> paths = Files.walk(modelPath)) {
-                    return paths.filter(Files::isRegularFile)
-                            .filter(path -> path.getFileName() != null && path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".vdmrt"))
-                            .sorted()
-                            .toList();
+                case input, output, local, independent -> {
+                    name = systemClass.get().name.getName() + "." + systemClassHardwareInterfaceVar.get().name.getName() + "." + def.name.getExplicit(false).toString().replace("`", ".");
                 }
             }
-            if (Files.isRegularFile(modelPath)) {
-                return List.of(modelPath);
+
+            if (entry.getKey() instanceof TCLocalDefinition vdef) {
+                if (vdef.valueDefinition != null && vdef.valueDefinition.exp instanceof TCNewExpression newExpr && newExpr.args != null && !newExpr.args.isEmpty()) {
+                    initialValue = newExpr.args.getFirst().toString();
+                }
+
+            } else if (entry.getKey() instanceof TCInstanceVariableDefinition idef) {
+                if (idef.expression != null && idef.expression instanceof TCNewExpression newExpr && newExpr.args != null && !newExpr.args.isEmpty()) {
+                    initialValue = newExpr.args.getFirst().toString();
+                }
             }
-            throw new IOException("VDM model path does not exist: " + modelPath);
+
+
+            scalarVariables.add(new ScalarVariable(valueReference++, name, type, variability, causality, def, initialValue));
         }
 
-        private static String toScalarVariableXml(ScalarVariable scalar) {
-            String typeXml = switch (scalar.type()) {
-                case Real -> "      <Real" + startAttribute(scalar, scalar.initialValue+"") + "/>";
-                case Integer -> "      <Integer" + startAttribute(scalar, scalar.initialValue+"") + "/>";
-                case Boolean -> "      <Boolean" + startAttribute(scalar, scalar.initialValue+"") + "/>";
-                case String -> "      <String" + startAttribute(scalar, scalar.initialValue+"") + "/>";
-            };
+        return scalarVariables;
+    }
 
-            String initial = scalar.causality() == Causality.output ? " initial=\"calculated\"" :
-                    (scalar.causality() == Causality.parameter || scalar.causality() == Causality.calculatedParameter ? " initial=\"exact\"" : "");
+    final static Map<TCType, Type> vdmFmiTypeMapping = Map.of(
+            new TCRealType(new LexLocation(new File(""), "", 0, 0, 0, 0)), Type.Real,
+            new TCIntegerType(new LexLocation(new File(""), "", 0, 0, 0, 0)), Type.Integer,
+            new TCBooleanType(new LexLocation(new File(""), "", 0, 0, 0, 0)), Type.Boolean,
+            new TCSeqType(new LexLocation(new File(""), "", 0, 0, 0, 0), new TCCharacterType(new LexLocation(new File(""), "", 0, 0, 0, 0))), Type.String
+    );
 
-            return """
+    private static Type inferType(com.fujitsu.vdmj.tc.types.TCType vdmType) {
+
+        if (vdmType instanceof TCClassType classType) {
+            var valueDef = classType.classdef.definitions.stream().filter(d -> d instanceof TCInstanceVariableDefinition ivd && ivd.name.getName().equals("value")).filter(Objects::nonNull).map(def -> def.getType()).filter(Objects::nonNull).findFirst();
+
+            if (valueDef.isPresent()) {
+                for (var entry : vdmFmiTypeMapping.entrySet()) {
+                    if (entry.getKey().equals(valueDef.get())) {
+                        return entry.getValue();
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private static Causality parseCausality(com.fujitsu.vdmj.tc.expressions.TCExpression expr) {
+        String val = expr.toString().toLowerCase();
+        if (val.contains("input")) return Causality.input;
+        if (val.contains("output")) return Causality.output;
+        if (val.contains("parameter")) return Causality.parameter;
+        if (val.contains("calculatedparameter")) return Causality.calculatedParameter;
+        if (val.contains("local")) return Causality.local;
+        return Causality.local;
+    }
+
+    private static Variability parseVariability(com.fujitsu.vdmj.tc.expressions.TCExpression expr) {
+        String val = expr.toString().toLowerCase();
+        if (val.contains("discrete")) return Variability.discrete;
+        if (val.contains("fixed")) return Variability.fixed;
+        if (val.contains("continuous")) return Variability.continuous;
+        if (val.contains("constant")) return Variability.constant;
+        if (val.contains("tunable")) return Variability.tunable;
+        return Variability.continuous;
+    }
+
+    public static String createModelDescription(String modelName, List<ScalarVariable> scalarVariables) {
+        Objects.requireNonNull(modelName, "modelName");
+        List<ScalarVariable> safeScalars = Objects.requireNonNullElseGet(scalarVariables, List::of);
+
+        String scalarXml = safeScalars.stream()
+                .map(FmuPacker::toScalarVariableXml)
+                .collect(Collectors.joining("\n"));
+
+        String outputsXml = safeScalars.stream()
+                .filter(scalar -> scalar.causality() == Causality.output)
+                .map(scalar -> "    <Outputs>\n      <Unknown index=\"" + (scalar.valueReference() + 1) + "\" dependencies=\"\"/>\n    </Outputs>")
+                .findFirst()
+                .map(first -> safeScalars.stream()
+                        .filter(scalar -> scalar.causality() == Causality.output)
+                        .map(scalar -> "      <Unknown index=\"" + (scalar.valueReference() + 1) + "\" dependencies=\"\"/>")
+                        .collect(Collectors.joining("\n", "    <Outputs>\n", "\n    </Outputs>")))
+                .orElse("");
+
+        return MODEL_DESCRIPTION_TEMPLATE.formatted(
+                escapeXml(modelName),
+                UUID.randomUUID(),
+                Instant.now().toString(),
+                escapeXml(modelName),
+                createLogCategoriesXml(),
+                scalarXml.isEmpty() ? "" : scalarXml + "\n",
+                outputsXml
+        );
+    }
+
+    private static String createLogCategoriesXml() {
+        var categories = new LinkedHashSet<String>();
+        Arrays.stream(FmiProtocol.Fmi2Status.values())
+                .filter(status -> status != FmiProtocol.Fmi2Status.OK)
+                .map(status -> "logStatus" + status.name())
+                .forEach(categories::add);
+        categories.add(UNIFMU_MESSAGES_LOG_CATEGORY);
+        Arrays.stream(VdmFmiModel.LogCategory.values())
+                .map(VdmFmiModel.LogCategory::categoryName)
+                .forEach(categories::add);
+
+        return categories.stream()
+                .map(category -> {
+                    String description = category.equals(UNIFMU_MESSAGES_LOG_CATEGORY)
+                            ? " description=\"" + escapeXml(UNIFMU_MESSAGES_LOG_DESCRIPTION) + "\""
+                            : "";
+                    return "    <Category name=\"" + escapeXml(category) + "\"" + description + " />";
+                })
+                .collect(Collectors.joining("\n"));
+    }
+
+    public static Path packageFmu(Path vdmModelPath, Path outputDirectory, String fmuName) throws Exception {
+        return packageFmu(vdmModelPath, outputDirectory, fmuName, null);
+    }
+
+    public static Path packageFmu(Path vdmModelPath, Path outputDirectory, String fmuName,
+                                  Integer debugPort) throws Exception {
+        if (debugPort != null) {
+            validateDebugPort(debugPort);
+        }
+
+        Path normalizedModelPath = vdmModelPath.toAbsolutePath().normalize();
+        Path normalizedOutputDir = outputDirectory.toAbsolutePath().normalize();
+        Files.createDirectories(normalizedOutputDir);
+
+        List<Path> discoveredVdmrtFiles = discoverModelFiles(normalizedModelPath);
+        List<ScalarVariable> scalarVariables = getScalarVariables(discoveredVdmrtFiles);
+        String modelDescription = createModelDescription(fmuName, scalarVariables);
+
+        Path archive = normalizedOutputDir.resolve(fmuName.endsWith(".fmu") ? fmuName : fmuName + ".fmu");
+        try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(archive))) {
+            addDirectoryEntry(zip, "binaries/");
+            addDirectoryEntry(zip, "resources/");
+            addFile(zip, "modelDescription.xml", modelDescription.getBytes(StandardCharsets.UTF_8));
+
+            copyDirectoryToZip(zip, resolveProjectResource("unifmu/binaries"), "binaries/",
+                    fileName -> fileName.replace("unifmu", fmuName));
+            copyModelResources(zip, normalizedModelPath, "resources/");
+            addFile(zip, "resources/log4j2.xml", Files.readAllBytes(resolveProjectResource("log4j2.xml")));
+            RuntimeArtifact runtimeArtifact = copyRuntimeArtifact(zip, "resources/");
+            addFile(zip, "resources/launch.toml",
+                    createLaunchToml(runtimeArtifact, debugPort).getBytes(StandardCharsets.UTF_8));
+        }
+
+        return archive;
+    }
+
+    public static void main(String[] args) throws Exception {
+        if (args.length < 3 || args.length > 4) {
+            throw new IllegalArgumentException(
+                    "Usage: FmuPacker <vdm-model-path> <output-directory> <fmu-name> [--debug[=<port>]]");
+        }
+
+        Integer debugPort = args.length == 4 ? parseDebugPort(args[3]) : null;
+        Path archive = packageFmu(Paths.get(args[0]), Paths.get(args[1]), args[2], debugPort);
+        System.out.println("Created FMU: " + archive);
+        if (debugPort != null) {
+            System.out.printf(
+                    "Debug mode enabled: when the FMU starts, its JVM will wait for a debugger on TCP port %1$d. "
+                            + "For Docker, publish it with -p %1$d:%1$d; connect IntelliJ Remote JVM Debug to 127.0.0.1:%1$d. "
+                            + "JDWP has no authentication; do not expose this port publicly.%n",
+                    debugPort);
+        }
+    }
+
+    private static Integer parseDebugPort(String argument) {
+        if ("--debug".equals(argument)) {
+            return DEFAULT_DEBUG_PORT;
+        }
+        if (!argument.startsWith("--debug=")) {
+            throw new IllegalArgumentException("Expected --debug or --debug=<port>");
+        }
+        try {
+            return validateDebugPort(Integer.parseInt(argument.substring("--debug=".length())));
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Debug port must be an integer between 1 and 65535", e);
+        }
+    }
+
+    private static int validateDebugPort(int port) {
+        if (port < 1 || port > 65535) {
+            throw new IllegalArgumentException("Debug port must be between 1 and 65535: " + port);
+        }
+        return port;
+    }
+
+    private static List<Path> discoverModelFiles(Path modelPath) throws IOException {
+        if (Files.isDirectory(modelPath)) {
+            try (Stream<Path> paths = Files.walk(modelPath)) {
+                return paths.filter(Files::isRegularFile)
+                        .filter(path -> path.getFileName() != null && path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".vdmrt"))
+                        .sorted()
+                        .toList();
+            }
+        }
+        if (Files.isRegularFile(modelPath)) {
+            return List.of(modelPath);
+        }
+        throw new IOException("VDM model path does not exist: " + modelPath);
+    }
+
+    private static String toScalarVariableXml(ScalarVariable scalar) {
+        String typeXml = switch (scalar.type()) {
+            case Real -> "      <Real" + startAttribute(scalar, scalar.initialValue + "") + "/>";
+            case Integer -> "      <Integer" + startAttribute(scalar, scalar.initialValue + "") + "/>";
+            case Boolean -> "      <Boolean" + startAttribute(scalar, scalar.initialValue + "") + "/>";
+            case String -> "      <String" + startAttribute(scalar, scalar.initialValue + "") + "/>";
+        };
+
+        String initial = scalar.causality() == Causality.output ? " initial=\"calculated\"" :
+                (scalar.causality() == Causality.parameter || scalar.causality() == Causality.calculatedParameter ? " initial=\"exact\"" : "");
+
+        return """
                         <ScalarVariable name="%s" valueReference="%d" causality="%s" variability="%s"%s>
                 %s
                         </ScalarVariable>""".formatted(
-                    escapeXml(scalar.name()),
-                    scalar.valueReference(),
-                    scalar.causality(),
-                    scalar.variability(),
-                    initial,
-                    typeXml
-            );
+                escapeXml(scalar.name()),
+                scalar.valueReference(),
+                scalar.causality(),
+                scalar.variability(),
+                initial,
+                typeXml
+        );
+    }
+
+    private static String startAttribute(ScalarVariable scalar, String defaultValue) {
+        return switch (scalar.causality()) {
+            case input, parameter, calculatedParameter -> " start=\"" + escapeXml(defaultValue) + "\" ";
+            default -> " ";
+        };
+    }
+
+    private static String escapeXml(String value) {
+        return value
+                .replace("&", "&amp;")
+                .replace("\"", "&quot;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;");
+    }
+
+    private static Path resolveProjectResource(String relativePath) {
+        Path moduleRoot = Paths.get("").toAbsolutePath().normalize();
+        if (Files.exists(moduleRoot.resolve("src/main/resources").resolve(relativePath))) {
+            return moduleRoot.resolve("src/main/resources").resolve(relativePath);
         }
+        return moduleRoot.resolve("fmu").resolve("src/main/resources").resolve(relativePath);
+    }
 
-        private static String startAttribute(ScalarVariable scalar, String defaultValue) {
-            return switch (scalar.causality()) {
-                case input, parameter, calculatedParameter -> " start=\"" + escapeXml(defaultValue) + "\" ";
-                default -> " ";
-            };
-        }
-
-        private static String escapeXml(String value) {
-            return value
-                    .replace("&", "&amp;")
-                    .replace("\"", "&quot;")
-                    .replace("<", "&lt;")
-                    .replace(">", "&gt;");
-        }
-
-        private static Path resolveProjectResource(String relativePath) {
-            Path moduleRoot = Paths.get("").toAbsolutePath().normalize();
-            if (Files.exists(moduleRoot.resolve("src/main/resources").resolve(relativePath))) {
-                return moduleRoot.resolve("src/main/resources").resolve(relativePath);
-            }
-            return moduleRoot.resolve("fmu").resolve("src/main/resources").resolve(relativePath);
-        }
-
-        private static void copyModelResources(ZipOutputStream zip, Path source, String zipPrefix) throws IOException {
-            if (Files.isDirectory(source)) {
-                try (Stream<Path> paths = Files.walk(source)) {
-                    for (Path path : paths.filter(Files::isRegularFile).toList()) {
-                        String entryName = zipPrefix + source.relativize(path).toString().replace('\\', '/');
-                        addFile(zip, entryName, Files.readAllBytes(path));
-                    }
-                }
-                return;
-            }
-
-            addFile(zip, zipPrefix + source.getFileName(), Files.readAllBytes(source));
-        }
-
-        private static void copyDirectoryToZip(ZipOutputStream zip, Path sourceDir, String zipPrefix) throws IOException {
-            try (Stream<Path> paths = Files.walk(sourceDir)) {
-                for (Path path : paths.toList()) {
-                    if (path.equals(sourceDir)) {
-                        continue;
-                    }
-                    String entryName = zipPrefix + sourceDir.relativize(path).toString().replace('\\', '/');
-                    if (Files.isDirectory(path)) {
-                        addDirectoryEntry(zip, entryName + "/");
-                    } else {
-                        addFile(zip, entryName, Files.readAllBytes(path));
-                    }
+    private static void copyModelResources(ZipOutputStream zip, Path source, String zipPrefix) throws
+            IOException {
+        if (Files.isDirectory(source)) {
+            try (Stream<Path> paths = Files.walk(source)) {
+                for (Path path : paths.filter(Files::isRegularFile).toList()) {
+                    String entryName = zipPrefix + source.relativize(path).toString().replace('\\', '/');
+                    addFile(zip, entryName, Files.readAllBytes(path));
                 }
             }
+            return;
         }
 
-        private static RuntimeArtifact copyRuntimeArtifact(ZipOutputStream zip, String zipPrefix) throws IOException {
-            Path moduleRoot = Paths.get("").toAbsolutePath().normalize();
-            Path targetDir = Files.exists(moduleRoot.resolve("target")) ? moduleRoot.resolve("target") : moduleRoot.resolve("fmu").resolve("target");
-            Path fatJar = targetDir.resolve("vdmfmu-0.3.0-SNAPSHOT-jar-with-dependencies.jar");
-            if (Files.exists(fatJar)) {
-                String entryName = zipPrefix + fatJar.getFileName();
-                addFile(zip, entryName, Files.readAllBytes(fatJar));
-                return new RuntimeArtifact(RuntimeArtifactType.JAR, entryName);
+        addFile(zip, zipPrefix + source.getFileName(), Files.readAllBytes(source));
+    }
+
+    private static void copyDirectoryToZip(ZipOutputStream zip, Path sourceDir, String
+            zipPrefix, Function<String, String> renamer) throws IOException {
+        try (Stream<Path> paths = Files.walk(sourceDir)) {
+            for (Path path : paths.toList()) {
+                if (path.equals(sourceDir)) {
+                    continue;
+                }
+                String entryName = zipPrefix + sourceDir.relativize(path).toString().replace('\\', '/');
+                if (Files.isDirectory(path)) {
+                    addDirectoryEntry(zip, entryName + "/");
+                } else {
+                    entryName = renamer != null ? renamer.apply(entryName) : entryName;
+                    addFile(zip, entryName, Files.readAllBytes(path));
+                }
             }
-
-            Path classesDir = targetDir.resolve("classes");
-            if (!Files.isDirectory(classesDir)) {
-                throw new IOException("No runtime artifact found in " + targetDir);
-            }
-            copyDirectoryToZip(zip, classesDir, zipPrefix + "classes/");
-            return new RuntimeArtifact(RuntimeArtifactType.CLASSES, zipPrefix + "classes/");
-        }
-
-        private static String createLaunchToml(RuntimeArtifact runtimeArtifact) {
-            return switch (runtimeArtifact.type()) {
-                case JAR -> """
-                        linux = ["java", "-Dlog4j.configurationFile=resources/log4j2.xml", "-Dfmu.model.impl=%s", "-cp", "%s", "%s"]
-                        macos = ["java", "-Dlog4j.configurationFile=resources/log4j2.xml", "-Dfmu.model.impl=%s", "-cp", "%s", "%s"]
-                        windows = ["java", "-Dlog4j.configurationFile=resources/log4j2.xml", "-Dfmu.model.impl=%s", "-cp", "%s", "%s"]
-                        """.formatted(MODEL_IMPL_CLASS, runtimeArtifact.path(), MAIN_CLASS,
-                        MODEL_IMPL_CLASS, runtimeArtifact.path(), MAIN_CLASS,
-                        MODEL_IMPL_CLASS, runtimeArtifact.path(), MAIN_CLASS);
-                case CLASSES -> """
-                        linux = ["java", "-Dlog4j.configurationFile=resources/log4j2.xml", "-Dfmu.model.impl=%s", "-cp", "%s", "%s"]
-                        macos = ["java", "-Dlog4j.configurationFile=resources/log4j2.xml", "-Dfmu.model.impl=%s", "-cp", "%s", "%s"]
-                        windows = ["java", "-Dlog4j.configurationFile=resources/log4j2.xml", "-Dfmu.model.impl=%s", "-cp", "%s", "%s"]
-                        """.formatted(MODEL_IMPL_CLASS, runtimeArtifact.path(), MAIN_CLASS,
-                        MODEL_IMPL_CLASS, runtimeArtifact.path(), MAIN_CLASS,
-                        MODEL_IMPL_CLASS, runtimeArtifact.path(), MAIN_CLASS);
-            };
-        }
-
-        private static void addDirectoryEntry(ZipOutputStream zip, String entryName) throws IOException {
-            ZipEntry entry = new ZipEntry(entryName);
-            zip.putNextEntry(entry);
-            zip.closeEntry();
-        }
-
-        private static void addFile(ZipOutputStream zip, String entryName, byte[] content) throws IOException {
-            ZipEntry entry = new ZipEntry(entryName);
-            zip.putNextEntry(entry);
-            zip.write(content);
-            zip.closeEntry();
-        }
-
-        private enum RuntimeArtifactType {
-            JAR, CLASSES
-        }
-
-        private record RuntimeArtifact(RuntimeArtifactType type, String path) {
         }
     }
+
+    private static RuntimeArtifact copyRuntimeArtifact(ZipOutputStream zip, String zipPrefix) throws
+            IOException {
+        Path moduleRoot = Paths.get("").toAbsolutePath().normalize();
+        Path targetDir = Files.exists(moduleRoot.resolve("target")) ? moduleRoot.resolve("target") : moduleRoot.resolve("fmu").resolve("target");
+        Path fatJar = targetDir.resolve("vdmfmu-0.3.0-SNAPSHOT-jar-with-dependencies.jar");
+        if (Files.exists(fatJar)) {
+            String entryName = zipPrefix + fatJar.getFileName();
+            addFile(zip, entryName, Files.readAllBytes(fatJar));
+            return new RuntimeArtifact(RuntimeArtifactType.JAR, fatJar.getFileName().toString());
+        }
+
+        Path classesDir = targetDir.resolve("classes");
+        if (!Files.isDirectory(classesDir)) {
+            throw new IOException("No runtime artifact found in " + targetDir);
+        }
+        copyDirectoryToZip(zip, classesDir, zipPrefix + "classes/", null);
+        return new RuntimeArtifact(RuntimeArtifactType.CLASSES, "classes/");
+    }
+
+    private static String createLaunchToml(RuntimeArtifact runtimeArtifact, Integer debugPort) {
+        List<String> javaArguments = new ArrayList<>();
+        javaArguments.add("java");
+        if (debugPort != null) {
+            javaArguments.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:" + debugPort);
+        }
+        javaArguments.add("-Dlog4j.configurationFile=log4j2.xml");
+        javaArguments.add("-Dfmu.model.impl=" + MODEL_IMPL_CLASS);
+        javaArguments.add("-cp");
+        javaArguments.add(runtimeArtifact.path());
+        javaArguments.add(MAIN_CLASS);
+
+        String command = javaArguments.stream()
+                .map(argument -> "\"" + argument.replace("\\", "\\\\").replace("\"", "\\\"") + "\"")
+                .collect(Collectors.joining(", ", "[", "]"));
+        return "linux = " + command + "\n"
+                + "macos = " + command + "\n"
+                + "windows = " + command + "\n";
+    }
+
+    private static void addDirectoryEntry(ZipOutputStream zip, String entryName) throws IOException {
+        ZipEntry entry = new ZipEntry(entryName);
+        zip.putNextEntry(entry);
+        zip.closeEntry();
+    }
+
+    private static void addFile(ZipOutputStream zip, String entryName, byte[] content) throws IOException {
+        ZipEntry entry = new ZipEntry(entryName);
+        zip.putNextEntry(entry);
+        zip.write(content);
+        zip.closeEntry();
+    }
+
+    private enum RuntimeArtifactType {
+        JAR, CLASSES
+    }
+
+    private record RuntimeArtifact(RuntimeArtifactType type, String path) {
+    }
+}

@@ -2,15 +2,17 @@
 <Configuration status="WARN">
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="%-5p %c{1}:%L - %m%n"/>
+            <ThresholdFilter level="WARN" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout pattern="%d{ISO8601} %-5p %c{1}:%L - %m%ex{full}%n"/>
         </Console>
-
+        <File name="File" fileName="${sys:user.home}/unifmu.log" append="true">
+            <PatternLayout pattern="%d{ISO8601} %-5p %c{1}:%L - %m%ex{full}%n"/>
+        </File>
     </Appenders>
     <Loggers>
         <Root level="trace">
             <AppenderRef ref="Console"/>
+            <AppenderRef ref="File"/>
         </Root>
     </Loggers>
 </Configuration>
-
-

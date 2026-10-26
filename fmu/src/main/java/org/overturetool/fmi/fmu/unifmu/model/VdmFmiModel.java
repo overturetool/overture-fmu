@@ -6,6 +6,7 @@ import com.fujitsu.vdmj.ast.lex.*;
 import com.fujitsu.vdmj.ast.patterns.ASTIdentifierPattern;
 import com.fujitsu.vdmj.lex.LexLocation;
 import com.fujitsu.vdmj.tc.definitions.*;
+import com.fujitsu.vdmj.tc.expressions.*;
 import com.fujitsu.vdmj.tc.lex.TCNameToken;
 import com.fujitsu.vdmj.typechecker.*;
 import org.overturetool.fmi.fmu.unifmu.*;
@@ -51,6 +52,7 @@ public abstract class VdmFmiModel extends FmiStateModel implements FmiModel {
 
 
     private final List<String> enabledLoggingCategories = new Vector<String>();
+    private Map<String, TCDefinition> astHardwareInterfaceInstanceVariableDefinition = new HashMap<>();
 
 
     public VdmFmiModel(final List<Path> discoveredVdmrtFiles) {
@@ -58,9 +60,11 @@ public abstract class VdmFmiModel extends FmiStateModel implements FmiModel {
         initialize();
     }
 
-    public VdmFmiModel(String modelInstanceName, URI resourceLocation, Boolean visible, Boolean loggingOn){
+    public VdmFmiModel(String modelInstanceName, URI resourceLocation, Boolean visible, Boolean loggingOn) {
         try {
+            logger.debug("Discovering VDMRT files in resource location: {}", resourceLocation);
             this.discoveredVdmrtFiles.addAll(VdmrtDiscoveryUtil.discover(Paths.get(resourceLocation.getPath())));
+            logger.debug("Discovered VDMRT files: {}", this.discoveredVdmrtFiles);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -83,7 +87,39 @@ public abstract class VdmFmiModel extends FmiStateModel implements FmiModel {
             throw new RuntimeException(e);
         }
         setInterfaceReferences(FmuPacker.getScalarVariables(tcClassList));
+        setInitialOutputValues();
 
+    }
+
+    private void setInitialOutputValues() {
+        for (var entry : interfaceReferences) {
+            if (entry.causality() == FmuPacker.Causality.output) {
+                for (var def : this.astHardwareInterfaceInstanceVariableDefinition.entrySet()) {
+                    if (def.getKey().equals(entry.name())) {
+                        if (def.getValue() instanceof TCInstanceVariableDefinition idef) {
+                            if (idef.expression instanceof TCNewExpression nexp && nexp.args != null && nexp.args.size() == 1) {
+                                System.out.println("Found match: " + def);
+                                var value = nexp.args.getFirst();
+                                Object val = null;
+                                if (value instanceof TCRealLiteralExpression rle) {
+                                    val = rle.value.value;
+                                } else if (value instanceof TCIntegerLiteralExpression ile) {
+                                    val = ile.value.value;
+                                } else if (value instanceof TCBooleanLiteralExpression ble) {
+                                    val = ble.value.value;
+                                } else if (value instanceof TCStringLiteralExpression sle) {
+                                    val = sle.value.value;
+                                }
+
+                                if (val != null) {
+                                    outputs.put(entry.valueReference(), val);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     protected boolean parse() {
@@ -126,8 +162,9 @@ public abstract class VdmFmiModel extends FmiStateModel implements FmiModel {
             }
 
             var valueScalars = tcClassList.stream().flatMap(c -> c.getDefinitions().stream().filter(d -> d instanceof TCLocalDefinition vd && vd.valueDefinition != null && vd.valueDefinition.annotations.stream().anyMatch(a -> a instanceof TCScalarVariableAnnotation))).collect(Collectors.toMap(d -> d.name.getExplicit(true), Function.identity()));
-//            var variableScalars = tcClassList.stream().flatMap(c -> c.getDefinitions().stream().filter(d -> d instanceof TCInstanceVariableDefinition iv && iv.annotations.stream().anyMatch(a -> a instanceof TCScalarVariableAnnotation))).collect(Collectors.toMap(d -> "System`" + hwiDef.get().name.getName() + "." + d.name.getExplicit(false), Function.identity()));
+            var variableScalars = tcClassList.stream().flatMap(c -> c.getDefinitions().stream().filter(d -> d instanceof TCInstanceVariableDefinition iv && iv.annotations.stream().anyMatch(a -> a instanceof TCScalarVariableAnnotation))).collect(Collectors.toMap(d -> "System." + hwiDef.get().name.getName() + "." + d.name.getExplicit(false), Function.identity()));
 
+            this.astHardwareInterfaceInstanceVariableDefinition = variableScalars;
             this.astHardwareInterfaceValueDefinition = hwDef.definitions.stream().filter(def -> def.annotations != null && def.annotations.stream().anyMatch(an -> an instanceof ASTScalarVariableAnnotation) && valueScalars.values().stream().anyMatch(vd -> vd.name.getLex().equals(lexName.apply(def)))).toList();
         }
     }
@@ -192,7 +229,6 @@ public abstract class VdmFmiModel extends FmiStateModel implements FmiModel {
     }
 
 
-
     @Override
     public FmiProtocol.Fmi2Status fmi2EnterInitializationMode() {
         return FmiProtocol.Fmi2Status.OK;
@@ -231,7 +267,7 @@ public abstract class VdmFmiModel extends FmiStateModel implements FmiModel {
 
     @Override
     public FmiProtocol.Fmi2Status fmi2SetupExperiment(double start_time, Double stop_time, Double tolerance) {
-        return ok;
+        return FmiProtocol.Fmi2Status.OK;
     }
 
     @Override
@@ -241,7 +277,7 @@ public abstract class VdmFmiModel extends FmiStateModel implements FmiModel {
 
     @Override
     public FmiProtocol.Fmi2Status fmi2Terminate() {
-        return null;
+        return FmiProtocol.Fmi2Status.OK;
     }
 
     @Override
@@ -279,6 +315,10 @@ public abstract class VdmFmiModel extends FmiStateModel implements FmiModel {
 
         LogCategory(String name) {
             this.name = name;
+        }
+
+        public String categoryName() {
+            return name;
         }
     }
 
