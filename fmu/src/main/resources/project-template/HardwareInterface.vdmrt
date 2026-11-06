@@ -1,0 +1,26 @@
+class HardwareInterface
+
+values
+    -- @ScalarVariable(<parameter>, <fixed>)
+    public gain : RealPort = new RealPort(2.0);
+
+instance variables
+    -- @ScalarVariable(<input>, <continuous>)
+    public realInput : RealPort := new RealPort(0.0);
+    -- @ScalarVariable(<input>, <discrete>)
+    public integerInput : IntPort := new IntPort(0);
+    -- @ScalarVariable(<input>, <discrete>)
+    public booleanInput : BoolPort := new BoolPort(false);
+    -- @ScalarVariable(<input>, <discrete>)
+    public stringInput : StringPort := new StringPort("hello");
+
+    -- @ScalarVariable(<output>, <continuous>)
+    public realOutput : RealPort := new RealPort(0.0);
+    -- @ScalarVariable(<output>, <discrete>)
+    public integerOutput : IntPort := new IntPort(0);
+    -- @ScalarVariable(<output>, <discrete>)
+    public booleanOutput : BoolPort := new BoolPort(false);
+    -- @ScalarVariable(<output>, <discrete>)
+    public stringOutput : StringPort := new StringPort("");
+
+end HardwareInterface

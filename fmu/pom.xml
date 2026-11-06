@@ -21,6 +21,12 @@
     <dependencies>
 
         <dependency>
+            <groupId>info.picocli</groupId>
+            <artifactId>picocli</artifactId>
+            <version>4.7.7</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.overturetool.fmi</groupId>
             <artifactId>unifmu-runtime</artifactId>
             <version>${project.version}</version>

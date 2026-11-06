@@ -1,0 +1,12 @@
+system System
+
+instance variables
+    public static hwi : HardwareInterface := new HardwareInterface();
+    public static controller : Controller := new Controller(hwi);
+    cpu : CPU := new CPU(<FP>, 1000000000);
+
+operations
+    public System : () ==> System
+    System() == cpu.deploy(controller);
+
+end System

@@ -1,0 +1,28 @@
+class Controller
+
+instance variables
+    hwi : HardwareInterface;
+    ticks : nat := 0;
+
+operations
+    public Controller : HardwareInterface ==> Controller
+    Controller(interface) == hwi := interface;
+
+    public step : () ==> ()
+    step() ==
+    (
+        -- At 10 ms per tick, the triangle repeats every four seconds.
+        dcl phase : nat := ticks mod 400;
+        dcl wave : real := if phase <= 200 then phase / 200 else (400 - phase) / 200;
+        dcl high : bool := (ticks div 100) mod 2 = 1;
+        hwi.realOutput.setValue(hwi.realInput.getValue() + hwi.gain.getValue() * wave);
+        hwi.integerOutput.setValue(hwi.integerInput.getValue() + ticks div 100);
+        hwi.booleanOutput.setValue(hwi.booleanInput.getValue() <> high);
+        hwi.stringOutput.setValue(hwi.stringInput.getValue() ^ (if high then " high" else " low"));
+        ticks := ticks + 1
+    );
+
+thread
+    periodic(10000000, 0, 0, 0)(step)
+
+end Controller

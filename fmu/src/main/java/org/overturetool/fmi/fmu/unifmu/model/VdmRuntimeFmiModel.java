@@ -63,13 +63,17 @@ public class VdmRuntimeFmiModel extends VdmFmiModel {
                         if (newValue != null) {
                             if (value instanceof UpdatableValue uval) {
                                 try {
-                                    uval.set(null, new RealValue((Double) newValue), null);
-//                                    System.out.println("\t" + entry.name() + " set to: " + newValue);
+                                    Value input = switch (entry.type()) {
+                                        case Real -> new RealValue((Double) newValue);
+                                        case Integer -> new IntegerValue((Integer) newValue);
+                                        case Boolean -> new BooleanValue((Boolean) newValue);
+                                        case String -> new SeqValue((String) newValue);
+                                    };
+                                    uval.set(null, input, null);
                                 } catch (Exception e) {
                                     throw new RuntimeException(e);
                                 }
                             }
-//                            if (value.deref() instanceof BooleanValue val) {
                         }
                     }
 
@@ -86,14 +90,16 @@ public class VdmRuntimeFmiModel extends VdmFmiModel {
 
                     var value = searchForMember(Arrays.stream((entry.name() + ".value").split("\\.")).toList());
                     if (value != null) {
-                        var defredValue = value.deref();
-//                        System.out.println("\t\t" + entry.name() + ": " + defredValue);
-                        if (defredValue instanceof BooleanValue val) {
-                            outputs.put(entry.valueReference(), val.value);
-                        } else if (defredValue instanceof RealValue val) {
-                            outputs.put(entry.valueReference(), val.value);
-                        } else if (defredValue instanceof NumericValue val) {
-                            outputs.put(entry.valueReference(), val.value);
+                        try {
+                            Object output = switch (entry.type()) {
+                                case Real -> value.realValue(null);
+                                case Integer -> Math.toIntExact(value.intValue(null));
+                                case Boolean -> value.boolValue(null);
+                                case String -> value.stringValue(null);
+                            };
+                            outputs.put(entry.valueReference(), output);
+                        } catch (com.fujitsu.vdmj.runtime.ValueException e) {
+                            throw new IllegalStateException("Cannot read FMI output " + entry.name(), e);
                         }
 
                     }
