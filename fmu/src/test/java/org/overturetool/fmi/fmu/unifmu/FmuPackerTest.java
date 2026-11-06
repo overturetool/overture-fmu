@@ -7,13 +7,43 @@ import org.intocps.unifmu.model.fmi2.Fmi2Model.Fmi2Status;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.zip.ZipFile;
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class FmuPackerTest {
+
+    @Test
+    void packsFromRepositoryRootWithRootTargetDirectory() throws Exception {
+        Path module = Paths.get("").toAbsolutePath();
+        Path repository = module.getParent();
+        Path output = repository.resolve("target/FmuPackerTest/root-working-directory");
+        Files.createDirectories(output);
+        String classpath = Arrays.stream(System.getProperty("java.class.path").split(File.pathSeparator))
+                .map(path -> module.resolve(path).normalize().toString())
+                .collect(Collectors.joining(File.pathSeparator));
+        Path log = output.resolve("packer.log");
+        String java = Paths.get(System.getProperty("java.home"), "bin", "java").toString();
+        Process process = new ProcessBuilder(java, "-cp", classpath, FmuPacker.class.getName(),
+                module.resolve("src/test/resources/model").toString(), output.toString(), "root-model")
+                .directory(repository.toFile())
+                .redirectErrorStream(true)
+                .redirectOutput(log.toFile())
+                .start();
+        boolean finished = process.waitFor(60, TimeUnit.SECONDS);
+        if (!finished) {
+            process.destroyForcibly();
+        }
+        Assertions.assertTrue(finished, "Packer did not finish");
+        Assertions.assertEquals(0, process.exitValue(), Files.readString(log));
+        Assertions.assertTrue(Files.isRegularFile(output.resolve("root-model.fmu")));
+    }
 
     @Test
     void mainCreatesFmuInTargetFromResourceModel() throws Exception {
