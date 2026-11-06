@@ -1,10 +1,13 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$Version,
-    [string]$OutputDirectory = (Join-Path $PSScriptRoot "target/generated-fmu")
+    [string]$OutputDirectory
 )
 
 $ErrorActionPreference = "Stop"
+if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
+    $OutputDirectory = Join-Path $PSScriptRoot "target/generated-fmu"
+}
 $Version = $Version -replace '^v', ''
 if ($Version -notmatch '^\d+\.\d+\.\d+$') {
     throw "Expected a UniFMU version such as 1.1.0."
