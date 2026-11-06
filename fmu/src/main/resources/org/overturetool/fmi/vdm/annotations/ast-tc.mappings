@@ -1,0 +1,2 @@
+package org.overturetool.fmi.vdm.annotations to org.overturetool.fmi.vdm.annotations;
+map ASTScalarVariableAnnotation{name, args} to TCScalarVariableAnnotation(name, args);
