@@ -207,7 +207,7 @@ class FmuCliTest {
         }
         boolean windows = System.getProperty("os.name").startsWith("Windows");
         ProcessBuilder builder = windows
-                ? new ProcessBuilder("cmd.exe", "/d", "/c", project.resolve("pack.cmd").toString(),
+                ? new ProcessBuilder("cmd.exe", "/d", "/c", "call", project.resolve("pack.cmd").toString(),
                         launcher.toString(), "--name", "helper-test")
                 : new ProcessBuilder("sh", project.resolve("pack.sh").toString(),
                         launcher.toString(), "--name", "helper-test");
