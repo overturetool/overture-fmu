@@ -454,7 +454,8 @@ public class FmuPacker {
     private static RuntimeArtifact copyRuntimeArtifact(ZipOutputStream zip, String zipPrefix) throws
             IOException {
         Path moduleRoot = Paths.get("").toAbsolutePath().normalize();
-        Path targetDir = Files.exists(moduleRoot.resolve("target")) ? moduleRoot.resolve("target") : moduleRoot.resolve("fmu").resolve("target");
+        Path targetDir = Files.isDirectory(moduleRoot.resolve("fmu/target/classes"))
+                ? moduleRoot.resolve("fmu/target") : moduleRoot.resolve("target");
         Path fatJar = targetDir.resolve("vdmfmu-jar-with-dependencies.jar");
         if (Files.exists(fatJar)) {
             String entryName = zipPrefix + fatJar.getFileName();

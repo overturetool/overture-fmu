@@ -1,103 +1,207 @@
-# Overture FMU Simulation and Exporter
+# VDM-RT FMU Exporter
 
-<!-- [![Build Status](https://build.overture.au.dk/jenkins/buildStatus/icon?job=overture-development)](https://build.overture.au.dk/jenkins/job/overture-development/) -->
-[![License](http://img.shields.io/:license-gpl3-blue.svg?style=flat-square)](http://www.gnu.org/licenses/gpl-3.0.html)
-<!-- [![Maven Central](https://img.shields.io/maven-central/v/org.overturetool/core.svg?label=Maven%20Central)](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.overturetool.core%22) -->
+Expose a **VDM Real-Time (VDM-RT)** specification as an **FMI 2.0
+Co-Simulation FMU**. [VDMJ](https://github.com/nickbattle/vdmj) interprets the VDM
+model; [UniFMU](https://github.com/INTO-CPS-Association/unifmu) supplies the native
+FMI embedding and Java communication runtime. The specification stays in VDM:
+it is not translated into C.
 
-## Dependencies
+```text
+FMI importer <-> UniFMU native library <-> Java runtime <-> VDMJ <-> VDM-RT model
+```
 
-### UniFMU Java runtime
+The packer generates `modelDescription.xml`, includes the model and native
+libraries, and configures the Java backend. During simulation, FMI inputs and
+outputs map to VDM port values and `fmi2DoStep` advances the interpreter.
 
-Build the FMU packer and its generated runtime dependency from the repository root:
+## Requirements
+
+- Java **21** and Maven to build; internet access for dependencies and UniFMU.
+- macOS/Linux: `sh`, `curl`, and `unzip`.
+- Windows x86_64: Windows PowerShell.
+- To run an exported FMU: Java 21 available as `java` on the simulator's `PATH`,
+  including inside a container, and an FMI 2.0 Co-Simulation importer.
+
+FMUs include Linux x86_64 and ARM64, universal macOS x86_64/ARM64, and Windows
+x86_64 native binaries. They require the Java backend at runtime; they are not
+standalone native executables.
+
+## Build
+
+From the repository root:
 
 ```sh
 mvn -pl fmu -am package
 ```
 
-Packaging produces a versioned release JAR,
-`fmu/target/vdmfmu-<version>-jar-with-dependencies.jar`, and an additional local
-runtime JAR, `fmu/target/vdmfmu-jar-with-dependencies.jar`. Only the versioned
-assembly is attached for Maven installation/deployment. The packer and
-`pack-debug-fmu.sh` use the unversioned file, so they do not need changing for
-each release.
+This builds and tests both modules and produces:
 
-The `unifmu-runtime` module downloads the native UniFMU generator for macOS/Linux
-(x86_64 or ARM64) or Windows (x86_64), generates a Java FMI 2 FMU, and packages the
-runtime JAR from that FMU as a Maven dependency. Windows uses PowerShell and the
-native Windows generator. The optional `unifmu-windows-docker` profile remains
-available with `--platform linux/amd64`; disable `unifmu-windows-native` when
-selecting it on Windows.
-No separately published release JAR is used. Change `unifmu.version` in the root
-`pom.xml` to select the release.
+| File | Purpose |
+|---|---|
+| `fmu/target/vdmfmu-<version>-jar-with-dependencies.jar` | Versioned release/distribution JAR |
+| `fmu/target/vdmfmu-jar-with-dependencies.jar` | Additional stable filename used by local packing commands |
 
-Downloads, generated binaries, and the runtime JAR stay under
-`unifmu-runtime/target`; generation is skipped when the selected version's JAR
-and all expected binaries are present. macOS/Linux require `sh`, `curl`, and
-`unzip`; Windows requires Windows PowerShell. The FMU module uses the
-upstream communication/protocol implementation, configured with
-`unifmu.model.impl`, `unifmu.fmi.version`, and `unifmu.launch.mode`.
+`unifmu-runtime` downloads the generator matching the host, generates a Java
+FMU, and uses **the JAR inside that generated FMU** as the runtime dependency.
+It does not download the standalone release JAR. Downloads and generation stay
+under `unifmu-runtime/target`; complete output for the selected version is
+reused. Change `unifmu.version` in the root `pom.xml` to choose another release.
 
-Run module-specific tests with, for example,
-`mvn -pl fmu -am -Dtest=FmuChannelTest -Dsurefire.failIfNoSpecifiedTests=false test`.
-To build `fmu/pom.xml` on its own, first install the reactor with
-`mvn -pl fmu -am install`.
+Windows uses the native generator by default. To use Linux Docker instead,
+select `-P'unifmu-windows-docker,!unifmu-windows-native'`; this requires Linux
+containers and explicitly uses `--platform linux/amd64`.
 
-For IntelliJ, import the root `pom.xml` and reload all Maven projects after the
-first build. The `intellij-unifmu-runtime` profile activates automatically when
-IntelliJ supplies `idea.version`, adding the generated runtime JAR as an explicit
-IDE library. This lets the editor resolve `Fmi2Model` and its nested
-`Fmi2Status`; the regular reactor dependency is still used by command-line
-builds. If your IntelliJ importer does not activate the profile automatically,
-enable it in the Maven tool window and reload. After `mvn clean`, regenerate the
-JAR with the build command above before reloading.
+## From a VDM specification to an FMU
 
-This project depends on (**See https://gitlab.au.dk/software-engineering/tool-dependencies/-/wikis/Overture-FMU**):
-* FMI implementation: https://github.com/overturetool/shm-fmi
-* Co-simulation extension for the Overture Interpreter: https://github.com/crescendotool/crescendo
-* Overture Interpreter: https://github.com/overturetool/overture
+### 1. Prepare the model
 
+Put all `.vdmrt` files and required VDM libraries under one model directory.
+The packer discovers `.vdmrt` files recursively and includes the directory's
+contents in the FMU resources. Use a dedicated model directory, not the whole
+project checkout.
 
-## GitHub Actions builds and releases
+The current backend expects:
 
-**Build and Test** runs on branch pushes, pull requests, and manual dispatch,
-using Java 21 on `ubuntu-latest`, `macos-latest`, and `windows-latest`.
-Download the versioned, self-contained runtime
-JAR from the run's **Artifacts** section; build artifacts and failure reports
-expire after **3 days**. Manual builds accept an optional stable `version`
-(with or without `v`); otherwise they use the POM version.
+- A `HardwareInterface` class containing annotated FMI ports.
+- A VDM `system` class with a `HardwareInterface` instance. The example uses
+  `System` and its `public static hwi` member.
+- A `World` class with a public `run : () ==> ()` operation; the backend
+  executes `new World().run()` to start the model's threads.
+- The port classes in [`Fmi.vdmrt`](fmu/src/test/resources/model/lib/Fmi.vdmrt):
+  `RealPort`, `IntPort`, `BoolPort`, and `StringPort`.
 
-To release, run **Actions -> Release -> Run workflow** on the desired branch.
-An explicit `version` must be at least the POM revision and newer than existing
-stable tags. Leave it blank to select the next patch, or patch zero if the POM
-revision starts a newer major/minor line. Legacy `Release/<version>` tags are
-also considered. Releases use `v<version>` tags.
+Expose parameters as annotated value definitions and inputs/outputs as
+annotated instance variables. For example:
 
-The workflow builds and tests first, then commits the release version to a
-tagged commit and creates a **draft GitHub release** with the versioned runtime
-JAR and generated notes. The selected branch is not changed. Select
-`release_automatically` to publish immediately, or publish the draft manually
-after reviewing it. Release assets remain downloadable independently of the
-3-day workflow artifacts. Failed draft creation cleans up the tag owned by
-that run. Neither workflow deploys to Maven Central or any Maven repository.
+```vdm
+class HardwareInterface
 
-## Legacy release procedure
+values
+    -- @ScalarVariable(<parameter>, <fixed>)
+    public threshold : RealPort = new RealPort(2.0);
 
-### Prepare
+instance variables
+    -- @ScalarVariable(<input>, <continuous>)
+    public level : RealPort := new RealPort(0.0);
 
-1. Move all open issued to next milestone
-2. Close the current milestone
-3. Create the release note:
-```bash
-cd releaseNotes/
-./github-fetch-milestone-issues.py 
-git add ReleaseNotes_* && git commit -m "updated release note" && git push
+    -- @ScalarVariable(<output>, <discrete>)
+    public valve : BoolPort := new BoolPort(false);
+
+end HardwareInterface
 ```
 
-4. Perform the release
-- Update `overture.release.properties` to contain the release version and the next development version and commit/push this change.
-- Checkout the release branch and merge this change.
-- Go to the build task found [here](https://build.overture.au.dk/jenkins/view/Overture/job/overture-fmu/job/release/) and instruct the build server to perform the release by checking and clicking 'Yes'.
+Use the port `getValue()` and `setValue()` operations from the model. The
+annotation's first argument is FMI causality; the second is variability.
+The packer assigns value references and derives types and initial values.
+With a system member named `System.hwi`, variable names appear as
+`System.hwi.level` and `System.hwi.valve`; the parameter above appears as
+`HardwareInterface.threshold`.
 
-5. Create a github release with the content of the release note and attach the fmu-import-export JAR and p2 repository from http://overture.au.dk/into-cps/vdm-tool-wrapper/master/latest/
-6. Merge the newly released tag into master and push this change
-7. Update the into-cps dev release bundle. Latest bundle from here: https://github.com/into-cps/into-cps.github.io/tree/development/download
+See the complete [water-tank controller](fmu/src/test/resources/model), especially
+[`System.vdmrt`](fmu/src/test/resources/model/System.vdmrt) and
+[`World.vdmrt`](fmu/src/test/resources/model/World.vdmrt), for system setup,
+CPU deployment, and thread startup. Retain the example's structure when
+adapting a model; this is not yet a general exporter for arbitrary entry points
+or arbitrary VDM data types.
+
+### 2. Pack the FMU
+
+After building, run from the repository root:
+
+```sh
+java -cp fmu/target/vdmfmu-jar-with-dependencies.jar org.overturetool.fmi.fmu.unifmu.FmuPacker path/to/model target/export my-model
+```
+
+The arguments are `<model-directory> <output-directory> <fmu-name>`.
+This creates `target/export/my-model.fmu`. Supply a base name without `.fmu`.
+Keep the build's `fmu/target` resources available: the current packing command
+loads native libraries and logging configuration from the checkout's build
+output. A downloaded JAR alone is not yet a checkout-independent packing tool.
+
+For a complete runnable example:
+
+```sh
+java -cp fmu/target/vdmfmu-jar-with-dependencies.jar org.overturetool.fmi.fmu.unifmu.FmuPacker fmu/src/test/resources/model target/export watertank
+```
+
+### 3. Simulate
+
+Import the `.fmu` into an FMI 2.0 Co-Simulation tool, configure its parameters
+and inputs, and run it with Java 21 available to the backend.
+
+On macOS/Linux, the included FMPy helper can run the packaged example:
+
+```sh
+fmu/src/test/resources/fmu-test.sh target/export/watertank.fmu
+```
+
+The helper needs Python 3 and creates a repository-local `.venv`, installing
+`fmpy[complete]` if needed. Add `--show-plot` to display the result.
+For a meaningful closed-loop water-tank simulation, connect the controller's
+level input to a plant model; the helper does not supply that plant.
+
+## Debug the Java backend
+
+Append `--debug` (port 5005) or `--debug=5007` when packing:
+
+```sh
+java -cp fmu/target/vdmfmu-jar-with-dependencies.jar org.overturetool.fmi.fmu.unifmu.FmuPacker path/to/model target/export my-model --debug=5007
+```
+
+When the simulator starts the FMU, the JVM suspends until a debugger attaches.
+In IntelliJ, create a **Remote JVM Debug** configuration for `localhost:5007`.
+For Docker, publish the same port with `-p 5007:5007`. JDWP listens on all
+interfaces and has no authentication; do not expose it publicly.
+
+`pack-debug-fmu.sh` is a developer convenience script with a hardcoded external
+example-project destination. Use the command above for your own projects.
+
+## Development
+
+Import the root `pom.xml` into IntelliJ and build once. Reload Maven projects;
+the `intellij-unifmu-runtime` profile exposes the generated JAR to the editor.
+If it is not activated automatically, select it in Maven's Profiles list.
+After `mvn clean`, build again before reloading.
+
+Run all tests with `mvn -pl fmu -am test`, or select a test:
+
+```sh
+mvn -pl fmu -am -Dtest=FmuChannelTest -Dsurefire.failIfNoSpecifiedTests=false test
+```
+
+Interpreter tests also use Python 3 and install matplotlib in a test-local
+virtual environment. Build from the root so Maven generates the runtime
+dependency first. To build `fmu/pom.xml` independently, first run
+`mvn -pl fmu -am install`.
+
+| Path | Purpose |
+|---|---|
+| `fmu/` | VDMJ backend, annotations, packer, example model, and tests |
+| `unifmu-runtime/` | Platform-specific UniFMU bootstrap and runtime dependency |
+| `.github/workflows/` | Cross-platform builds and GitHub releases |
+| `scripts/` | Release version selection and its tests |
+| `testing/` | Preserved legacy integration tooling and submodules; not part of the current Maven build |
+
+## Builds and releases
+
+**Build and Test** runs on pushes, pull requests, and manual dispatch with
+Java 21 on `ubuntu-latest`, `macos-latest`, and `windows-latest`. Versioned JARs
+are available under each run's **Artifacts** for **3 days**. Manual builds
+accept an optional stable version, with or without a `v` prefix.
+
+Run **Actions -> Release -> Run workflow** on the desired branch to release.
+Supply a stable version, or leave it blank for the next patch (or patch zero
+when the POM revision begins a newer major/minor line). Version selection
+recognizes both `v<version>` and historical `Release/<version>` tags and rejects
+versions that precede the POM revision or existing releases.
+
+The workflow builds and tests, commits the release version to a tagged commit,
+and creates a **draft GitHub release** with generated notes and the versioned
+JAR. It does not update the selected branch. Select `release_automatically` to
+publish immediately, or review and publish the draft manually. Release assets
+do not expire with workflow artifacts. Neither workflow deploys to Maven Central
+or any other Maven repository.
+
+## License
+
+[GNU General Public License version 3](LICENSE).
