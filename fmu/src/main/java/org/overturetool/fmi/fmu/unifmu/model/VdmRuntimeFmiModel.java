@@ -7,7 +7,7 @@ import com.fujitsu.vdmj.scheduler.*;
 import com.fujitsu.vdmj.tc.definitions.TCClassList;
 import com.fujitsu.vdmj.in.INNode;
 import com.fujitsu.vdmj.values.*;
-import org.overturetool.fmi.fmu.unifmu.protocol.FmiProtocol;
+import org.intocps.unifmu.protocol.Fmi2Messages;
 import org.overturetool.fmi.fmu.unifmu.FmuPacker;
 import org.overturetool.fmi.fmu.vdmj.FmiCoSimClassInterpreter;
 
@@ -15,6 +15,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Runtime-enabled VDM model interpreter with FMI co-simulation scheduler gating.
@@ -22,10 +23,10 @@ import java.util.List;
  */
 public class VdmRuntimeFmiModel extends VdmFmiModel {
 
-    static final FmiProtocol.Fmi2Status ok = FmiProtocol.Fmi2Status.OK;
-    static final FmiProtocol.Fmi2Status fatal = FmiProtocol.Fmi2Status.Fatal;
-    static final FmiProtocol.Fmi2Status error = FmiProtocol.Fmi2Status.Error;
-    static final FmiProtocol.Fmi2Status discard = FmiProtocol.Fmi2Status.Discard;
+    static final Fmi2Status ok = Fmi2Status.OK;
+    static final Fmi2Status fatal = Fmi2Status.Fatal;
+    static final Fmi2Status error = Fmi2Status.Error;
+    static final Fmi2Status discard = Fmi2Status.Discard;
 
     Double time = (double) 0;
     double lastCommunicationPoint = 0;
@@ -43,6 +44,12 @@ public class VdmRuntimeFmiModel extends VdmFmiModel {
 
     public VdmRuntimeFmiModel(String modelInstanceName, URI resourceLocation, Boolean visible, Boolean loggingOn) {
         super(modelInstanceName, resourceLocation, visible, loggingOn);
+    }
+
+    public VdmRuntimeFmiModel(Fmi2Messages.Fmi2Instantiate instantiation, Consumer<LogMessage> logHandler) {
+        this(instantiation.getInstanceName(), URI.create(instantiation.getFmuResourceLocation()),
+                instantiation.getVisible(), instantiation.getLoggingOn());
+        setLogHandler(logHandler);
     }
 
     private void applyInputsToRuntime() {
@@ -145,7 +152,7 @@ public class VdmRuntimeFmiModel extends VdmFmiModel {
     }
 
     @Override
-    public FmiProtocol.Fmi2Status fmi2DoStep(double current_time, double step_size, boolean noStepPrior) {
+    public Fmi2Status fmi2DoStep(double current_time, double step_size, boolean noStepPrior) {
 
         if (!checkStats(CrescendoStateType.Initialized)) {
             return fatal;
@@ -169,7 +176,7 @@ public class VdmRuntimeFmiModel extends VdmFmiModel {
 
             long internalVdmClockTime = SystemClock.timeToInternal(SystemClock.TimeUnit.seconds, nextFmiTime);
 
-            log(LogCategory.LogAll, FmiProtocol.Fmi2Status.OK, "DoStep VDM internal stop time: "
+            log(LogCategory.LogAll, Fmi2Status.OK, "DoStep VDM internal stop time: "
                     + internalVdmClockTime);
 
             synchronized (this.interpreter.stepLock) {
@@ -219,7 +226,7 @@ public class VdmRuntimeFmiModel extends VdmFmiModel {
     }
 
     @Override
-    public FmiProtocol.Fmi2Status fmi2ExitInitializationMode() {
+    public Fmi2Status fmi2ExitInitializationMode() {
         try {
             typeCheck();
             System.out.println("fmi2ExitInitializationMode");
@@ -236,7 +243,7 @@ public class VdmRuntimeFmiModel extends VdmFmiModel {
             this.interpreter.start();
 
             protocolState = CrescendoStateType.Initialized;
-            return FmiProtocol.Fmi2Status.OK;
+            return Fmi2Status.OK;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

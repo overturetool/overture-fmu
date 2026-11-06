@@ -1,17 +1,15 @@
 package org.overturetool.fmi.fmu.unifmu.model;
 
-import org.overturetool.fmi.fmu.unifmu.protocol.FmiModel;
-import org.overturetool.fmi.fmu.unifmu.protocol.FmiProtocol;
+import org.intocps.unifmu.model.fmi2.Fmi2Model;
 import org.overturetool.fmi.fmu.unifmu.FmuPacker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.function.DoubleConsumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public abstract class FmiStateModel implements FmiModel {
+public abstract class FmiStateModel implements Fmi2Model {
     final static Logger logger = LoggerFactory.getLogger(FmiStateModel.class);
 String modelName;
     final Map<Integer, Object> inputs = new HashMap<>();
@@ -29,7 +27,7 @@ String modelName;
 
     abstract protected void setValueParameter(FmuPacker.ScalarVariable var, Object value);
 
-    <T> FmiProtocol.Fmi2Status setInput(Iterable<Integer> references, Iterable<T> values) {
+    <T> Fmi2Status setInput(Iterable<Integer> references, Iterable<T> values) {
         var success = true;
         var interfacesSize = interfaceReferences.size();
         Iterator<Integer> refIt = references.iterator();
@@ -71,26 +69,26 @@ String modelName;
             success = false;
         }
 
-        return success ? FmiProtocol.Fmi2Status.OK : FmiProtocol.Fmi2Status.Error;
+        return success ? Fmi2Status.OK : Fmi2Status.Error;
     }
 
     @Override
-    public FmiProtocol.Fmi2Status fmi2SetReal(Iterable<Integer> references, Iterable<Double> values) throws Exception {
+    public Fmi2Status fmi2SetReal(Iterable<Integer> references, Iterable<Double> values) throws Exception {
         return setInput(references, values);
     }
 
     @Override
-    public FmiProtocol.Fmi2Status fmi2SetInteger(Iterable<Integer> references, Iterable<Integer> values) throws Exception {
+    public Fmi2Status fmi2SetInteger(Iterable<Integer> references, Iterable<Integer> values) throws Exception {
         return setInput(references, values);
     }
 
     @Override
-    public FmiProtocol.Fmi2Status fmi2SetBoolean(Iterable<Integer> references, Iterable<Boolean> values) throws Exception {
+    public Fmi2Status fmi2SetBoolean(Iterable<Integer> references, Iterable<Boolean> values) throws Exception {
         return setInput(references, values);
     }
 
     @Override
-    public FmiProtocol.Fmi2Status fmi2SetString(Iterable<Integer> references, Iterable<String> values) throws Exception {
+    public Fmi2Status fmi2SetString(Iterable<Integer> references, Iterable<String> values) throws Exception {
         return setInput(references, values);
     }
 
@@ -102,10 +100,10 @@ String modelName;
             logger.debug("Some requested references are not available in outputs: {}. Available outputs: {}", references, outputs.keySet());
             logger.trace("Outputs: {}", outputs.keySet());
             logger.trace("Inputs: {}", inputs.keySet());
-//            return new Fmi2GetValuePair<>(FmiProtocol.Fmi2Status.OK, stream(references).map(r->Boolean.valueOf(false)).map(clz::cast).toList());
-            return new Fmi2GetValuePair<>(FmiProtocol.Fmi2Status.Error, List.of());
+//            return new Fmi2GetValuePair<>(Fmi2Status.OK, stream(references).map(r->Boolean.valueOf(false)).map(clz::cast).toList());
+            return new Fmi2GetValuePair<>(Fmi2Status.Error, List.of());
         }
-        return new Fmi2GetValuePair<>(FmiProtocol.Fmi2Status.OK, values.stream().toList());
+        return new Fmi2GetValuePair<>(Fmi2Status.OK, values.stream().toList());
     }
 
     @Override

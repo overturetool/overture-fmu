@@ -1,29 +1,61 @@
 package org.overturetool.fmi.fmu.unifmu.model;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.overturetool.fmi.fmu.unifmu.FmuPacker;
-import org.overturetool.fmi.fmu.unifmu.protocol.CommunicationChannel;
-import org.overturetool.fmi.fmu.unifmu.protocol.Fmi2Messages;
-import org.overturetool.fmi.fmu.unifmu.protocol.FmiModel;
-import org.overturetool.fmi.fmu.unifmu.protocol.FmiProtocol;
-import org.overturetool.fmi.fmu.unifmu.protocol.Main;
-import org.overturetool.fmi.fmu.unifmu.protocol.UnifmuHandshake;
+import org.intocps.unifmu.communication.CommunicationChannel;
+import org.intocps.unifmu.protocol.Fmi2Messages;
+import org.intocps.unifmu.model.fmi2.Fmi2Model;
+import org.intocps.unifmu.model.fmi2.Fmi2Model.Fmi2Status;
+import org.intocps.unifmu.communication.ChannelSelection;
+import org.intocps.unifmu.model.fmi2.ModelSelection;
+import org.intocps.unifmu.protocol.fmi2.Fmi2Protocol;
+import org.intocps.unifmu.protocol.UnifmuHandshake;
 
-import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 @ResourceLock("fmu-channel")
 public class FmuChannelTest {
+    private String previousChannel;
+    private String previousModel;
+    private final AtomicReference<Throwable> protocolFailure = new AtomicReference<>();
+
+    @BeforeEach
+    void rememberConfiguration() {
+        previousChannel = System.getProperty(ChannelSelection.PROPERTY_NAME);
+        previousModel = System.getProperty("unifmu.model.impl");
+    }
+
+    @AfterEach
+    void restoreConfiguration() {
+        restoreProperty(ChannelSelection.PROPERTY_NAME, previousChannel);
+        restoreProperty("unifmu.model.impl", previousModel);
+    }
+
+    private static void restoreProperty(String name, String value) {
+        if (value == null) {
+            System.clearProperty(name);
+        } else {
+            System.setProperty(name, value);
+        }
+    }
+
     public static class LocalChannel implements CommunicationChannel {
+        public LocalChannel(String endpoint) {
+        }
+
         public static final int TIMEOUT = 50;
-        private static final byte[] STOP = new byte[0];
         private static final BlockingQueue<byte[]> incomingMessages = new LinkedBlockingQueue<>();
         private static final BlockingQueue<byte[]> outgoingMessages = new LinkedBlockingQueue<>();
 
@@ -42,7 +74,8 @@ public class FmuChannelTest {
         }
 
         static void shutdown() {
-            incomingMessages.add(STOP);
+            queueIncoming(Fmi2Messages.Fmi2Command.newBuilder()
+                    .setFmi2FreeInstance(Fmi2Messages.Fmi2FreeInstance.newBuilder()).build());
         }
 
         static byte[] awaitOutgoing() throws InterruptedException {
@@ -58,9 +91,6 @@ public class FmuChannelTest {
                 if (message == null) {
                     throw new AssertionError("Timed out waiting for queued inbound message");
                 }
-                if (message == STOP) {
-                    throw new AssertionError("Stop requested");
-                }
                 return message;
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -69,7 +99,7 @@ public class FmuChannelTest {
         }
 
         @Override
-        public void send(byte[] data, int flags) {
+        public void send(byte[] data) {
             outgoingMessages.add(data);
         }
 
@@ -78,105 +108,107 @@ public class FmuChannelTest {
         }
     }
 
-    public static class StubFmiModel implements FmiModel {
-        public StubFmiModel(String modelInstanceName, URI resourceLocation, Boolean visible, Boolean loggingOn) {
-        }
-            @Override
-        public void setLogCallback(org.overturetool.fmi.fmu.unifmu.protocol.FmiLogCallback fmiLogCallback) {
+    public static class StubFmiModel implements Fmi2Model {
+        private Consumer<LogMessage> logHandler;
+
+        public StubFmiModel(Fmi2Messages.Fmi2Instantiate instantiation, Consumer<LogMessage> logHandler) {
+            setLogHandler(logHandler);
         }
 
         @Override
-        public void log(String message, FmiProtocol.Fmi2Status status, String category) {
+        public void setLogHandler(Consumer<LogMessage> logHandler) {
+            this.logHandler = logHandler;
         }
 
         @Override
-        public FmiProtocol.Fmi2Status fmi2DoStep(double current_time, double step_size, boolean noStepPrior) {
-            return FmiProtocol.Fmi2Status.OK;
+        public Fmi2Status fmi2DoStep(double current_time, double step_size, boolean noStepPrior) {
+            logHandler.accept(new LogMessage(Fmi2Status.OK, "logAll", "Step completed"));
+            return Fmi2Status.OK;
         }
 
         @Override
-        public FmiProtocol.Fmi2Status fmi2SetReal(Iterable<Integer> references, Iterable<Double> values) {
-            return FmiProtocol.Fmi2Status.OK;
+        public Fmi2Status fmi2SetReal(Iterable<Integer> references, Iterable<Double> values) {
+            return Fmi2Status.OK;
         }
 
         @Override
-        public FmiProtocol.Fmi2Status fmi2SetInteger(Iterable<Integer> references, Iterable<Integer> values) {
-            return FmiProtocol.Fmi2Status.OK;
+        public Fmi2Status fmi2SetInteger(Iterable<Integer> references, Iterable<Integer> values) {
+            return Fmi2Status.OK;
         }
 
         @Override
-        public FmiProtocol.Fmi2Status fmi2SetBoolean(Iterable<Integer> references, Iterable<Boolean> values) {
-            return FmiProtocol.Fmi2Status.OK;
+        public Fmi2Status fmi2SetBoolean(Iterable<Integer> references, Iterable<Boolean> values) {
+            return Fmi2Status.OK;
         }
 
         @Override
-        public FmiProtocol.Fmi2Status fmi2SetString(Iterable<Integer> references, Iterable<String> values) {
-            return FmiProtocol.Fmi2Status.OK;
+        public Fmi2Status fmi2SetString(Iterable<Integer> references, Iterable<String> values) {
+            return Fmi2Status.OK;
         }
 
         @Override
         public Fmi2GetValuePair<Double> fmi2GetReal(Iterable<Integer> references) {
-            return new Fmi2GetValuePair<>(FmiProtocol.Fmi2Status.OK, List.of(1.25));
+            return new Fmi2GetValuePair<>(Fmi2Status.OK, List.of(1.25));
         }
 
         @Override
         public Fmi2GetValuePair<Integer> fmi2GetInteger(Iterable<Integer> references) {
-            return new Fmi2GetValuePair<>(FmiProtocol.Fmi2Status.OK, List.of(7));
+            return new Fmi2GetValuePair<>(Fmi2Status.OK, List.of(7));
         }
 
         @Override
         public Fmi2GetValuePair<Boolean> fmi2GetBoolean(Iterable<Integer> references) {
-            return new Fmi2GetValuePair<>(FmiProtocol.Fmi2Status.OK, List.of(Boolean.TRUE));
+            return new Fmi2GetValuePair<>(Fmi2Status.OK, List.of(Boolean.TRUE));
         }
 
         @Override
         public Fmi2GetValuePair<String> fmi2GetString(Iterable<Integer> references) {
-            return new Fmi2GetValuePair<>(FmiProtocol.Fmi2Status.OK, List.of("ok"));
+            return new Fmi2GetValuePair<>(Fmi2Status.OK, List.of("ok"));
         }
 
         @Override
-        public FmiProtocol.Fmi2Status fmi2EnterInitializationMode() {
-            return FmiProtocol.Fmi2Status.OK;
+        public Fmi2Status fmi2EnterInitializationMode() {
+            return Fmi2Status.OK;
         }
 
         @Override
-        public FmiProtocol.Fmi2Status fmi2ExitInitializationMode() {
-            return FmiProtocol.Fmi2Status.OK;
+        public Fmi2Status fmi2ExitInitializationMode() {
+            return Fmi2Status.OK;
         }
 
         @Override
-        public FmiProtocol.Fmi2Status fmi2SetupExperiment(double start_time, Double stop_time, Double tolerance) {
-            return FmiProtocol.Fmi2Status.OK;
+        public Fmi2Status fmi2SetupExperiment(double start_time, Double stop_time, Double tolerance) {
+            return Fmi2Status.OK;
         }
 
         @Override
-        public FmiProtocol.Fmi2Status fmi2Reset() {
-            return FmiProtocol.Fmi2Status.OK;
+        public Fmi2Status fmi2Reset() {
+            return Fmi2Status.OK;
         }
 
         @Override
-        public FmiProtocol.Fmi2Status fmi2Terminate() {
-            return FmiProtocol.Fmi2Status.OK;
+        public Fmi2Status fmi2Terminate() {
+            return Fmi2Status.OK;
         }
 
         @Override
-        public FmiProtocol.Fmi2Status fmi2CancelStep() {
-            return FmiProtocol.Fmi2Status.OK;
+        public Fmi2Status fmi2CancelStep() {
+            return Fmi2Status.OK;
         }
 
         @Override
         public Fmi2SerializeFmuStatePair fmi2SerializeFmuState() {
-            return new Fmi2SerializeFmuStatePair(FmiProtocol.Fmi2Status.OK, new byte[]{1, 2, 3});
+            return new Fmi2SerializeFmuStatePair(Fmi2Status.OK, new byte[]{1, 2, 3});
         }
 
         @Override
-        public FmiProtocol.Fmi2Status fmi2DeserializeFmuState(byte[] bytes) {
-            return FmiProtocol.Fmi2Status.OK;
+        public Fmi2Status fmi2DeserializeFmuState(byte[] bytes) {
+            return Fmi2Status.OK;
         }
 
         @Override
-        public FmiProtocol.Fmi2Status fmi2SetDebugLogging(Iterable<String> categories, Boolean logging_on) {
-            return FmiProtocol.Fmi2Status.OK;
+        public Fmi2Status fmi2SetDebugLogging(Iterable<String> categories, Boolean logging_on) {
+            return Fmi2Status.OK;
         }
     }
 
@@ -187,17 +219,46 @@ public class FmuChannelTest {
         return reply;
     }
 
-    private static void shutdownAndJoin(Thread thread) throws InterruptedException {
+    private void shutdownAndJoin(Thread thread) throws InterruptedException {
         LocalChannel.shutdown();
         thread.join(5_000);
         Assertions.assertFalse(thread.isAlive(), "Protocol thread did not stop");
+        Assertions.assertNull(protocolFailure.get(), "Protocol failed");
+    }
+
+    private Thread startProtocol() {
+        Thread thread = new Thread(() -> {
+            try (CommunicationChannel channel = ChannelSelection.connect("test")) {
+                new Fmi2Protocol(channel, ModelSelection.fmi2Factory()).run();
+            } catch (Throwable failure) {
+                protocolFailure.set(failure);
+            }
+        });
+        thread.setDaemon(true);
+        thread.start();
+        return thread;
+    }
+
+    @Test
+    void runtimeCreatesVdmModelWithLogHandler() throws Exception {
+        System.setProperty("unifmu.model.impl", VdmRuntimeFmiModel.class.getName());
+        var messages = new ArrayList<Fmi2Model.LogMessage>();
+        var instantiation = Fmi2Messages.Fmi2Instantiate.newBuilder()
+                .setInstanceName("runtime-model")
+                .setFmuResourceLocation(Paths.get("src", "test", "resources", "model").toUri().toString())
+                .build();
+        var model = ModelSelection.fmi2Factory().create(instantiation, messages::add);
+        var vdmModel = Assertions.assertInstanceOf(VdmRuntimeFmiModel.class, model);
+        vdmModel.fmiLog(VdmFmiModel.LogCategory.LogAll, Fmi2Status.OK, "Runtime callback");
+        Assertions.assertEquals(List.of(new Fmi2Model.LogMessage(
+                Fmi2Status.OK, "logAll", "Runtime callback")), messages);
     }
 
     @Test
     void testChannelBridgesQueuedInputAndCapturedOutput() throws Exception {
         LocalChannel.reset();
-        System.setProperty(Main.PROPERTY_COMMUNICATION_CHANNEL, "custom:" + LocalChannel.class.getName());
-        System.setProperty("fmu.model.impl", StubFmiModel.class.getName());
+        System.setProperty(ChannelSelection.PROPERTY_NAME, LocalChannel.class.getName());
+        System.setProperty("unifmu.model.impl", StubFmiModel.class.getName());
 
         LocalChannel.queueIncoming(
                 Fmi2Messages.Fmi2Command.newBuilder()
@@ -216,14 +277,7 @@ public class FmuChannelTest {
                         .toByteArray()
         );
 
-        Thread mainThread = new Thread(() -> {
-            try {
-                Main.main(new String[]{});
-            } catch (Throwable ignored) {
-            }
-        });
-        mainThread.setDaemon(true);
-        mainThread.start();
+        Thread mainThread = startProtocol();
 
         UnifmuHandshake.HandshakeReply handshakeReply =
                 UnifmuHandshake.HandshakeReply.parseFrom(LocalChannel.awaitOutgoing());
@@ -237,6 +291,16 @@ public class FmuChannelTest {
         Assertions.assertEquals(Fmi2Messages.Fmi2Status.FMI2_OK, getRealReply.getGetReal().getStatus());
         Assertions.assertEquals(List.of(1.25), getRealReply.getGetReal().getValuesList());
 
+        LocalChannel.queueIncoming(Fmi2Messages.Fmi2Command.newBuilder()
+                .setFmi2DoStep(Fmi2Messages.Fmi2DoStep.newBuilder().setStepSize(0.01)).build());
+        Fmi2Messages.Fmi2Return logReply = Fmi2Messages.Fmi2Return.parseFrom(LocalChannel.awaitOutgoing());
+        Assertions.assertTrue(logReply.hasLog());
+        Assertions.assertEquals("logAll", logReply.getLog().getCategory());
+        Assertions.assertEquals("Step completed", logReply.getLog().getLogMessage());
+        LocalChannel.queueIncoming(Fmi2Messages.Fmi2Command.newBuilder()
+                .setFmi2CallbackContinue(Fmi2Messages.Fmi2CallbackContinue.newBuilder()).build());
+        assertOkStatusReply();
+
         shutdownAndJoin(mainThread);
     }
 
@@ -244,8 +308,8 @@ public class FmuChannelTest {
     @Test
     void testChannelActualModel() throws Exception {
         LocalChannel.reset();
-        System.setProperty(Main.PROPERTY_COMMUNICATION_CHANNEL, "custom:" + LocalChannel.class.getName());
-        System.setProperty("fmu.model.impl", VdmRuntimeFmiModel.class.getName());
+        System.setProperty(ChannelSelection.PROPERTY_NAME, LocalChannel.class.getName());
+        System.setProperty("unifmu.model.impl", VdmRuntimeFmiModel.class.getName());
 
         Path vdmModelPath = Paths.get("src", "test", "resources", "model");
         LocalChannel.queueIncoming(
@@ -256,15 +320,7 @@ public class FmuChannelTest {
         );
 
 
-        Thread mainThread = new Thread(() -> {
-            try {
-                Main.main(new String[]{});
-            } catch (Throwable ignored) {
-                ignored.printStackTrace();
-            }
-        });
-        mainThread.setDaemon(true);
-        mainThread.start();
+        Thread mainThread = startProtocol();
 
         UnifmuHandshake.HandshakeReply handshakeReply =
                 UnifmuHandshake.HandshakeReply.parseFrom(LocalChannel.awaitOutgoing());

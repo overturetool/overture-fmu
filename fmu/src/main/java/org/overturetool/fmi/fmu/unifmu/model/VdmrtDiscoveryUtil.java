@@ -1,7 +1,7 @@
 package org.overturetool.fmi.fmu.unifmu.model;
 
 import com.fujitsu.vdmj.lex.Dialect;
-import org.overturetool.fmi.fmu.unifmu.protocol.FmiProtocol;
+import org.intocps.unifmu.model.fmi2.Fmi2Model.Fmi2Status;
 
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -25,7 +25,7 @@ final class VdmrtDiscoveryUtil {
 
     @FunctionalInterface
     interface DiscoveryLog {
-        void log(String message, FmiProtocol.Fmi2Status status, String category);
+        void log(String message, Fmi2Status status, String category);
     }
 
     private VdmrtDiscoveryUtil() {
@@ -34,19 +34,19 @@ final class VdmrtDiscoveryUtil {
     static List<Path> discoverForClass(Class<?> modelClass, DiscoveryLog logger) {
         Path loadOrigin = resolveClassLoadOrigin(modelClass);
         if (loadOrigin == null) {
-            log(logger, "Unable to resolve class load origin for " + modelClass.getSimpleName(), FmiProtocol.Fmi2Status.Warning);
+            log(logger, "Unable to resolve class load origin for " + modelClass.getSimpleName(), Fmi2Status.Warning);
             return List.of();
         }
 
         try {
             List<Path> discovered = discover(loadOrigin);
-            log(logger, "Discovered " + discovered.size() + " .vdmrt file(s) from: " + loadOrigin, FmiProtocol.Fmi2Status.OK);
+            log(logger, "Discovered " + discovered.size() + " .vdmrt file(s) from: " + loadOrigin, Fmi2Status.OK);
             return discovered;
         } catch (IllegalArgumentException e) {
-            log(logger, e.getMessage(), FmiProtocol.Fmi2Status.Warning);
+            log(logger, e.getMessage(), Fmi2Status.Warning);
             return List.of();
         } catch (IOException e) {
-            log(logger, "Failed to discover .vdmrt files from " + loadOrigin + ": " + e.getMessage(), FmiProtocol.Fmi2Status.Error);
+            log(logger, "Failed to discover .vdmrt files from " + loadOrigin + ": " + e.getMessage(), Fmi2Status.Error);
             return List.of();
         }
     }
@@ -107,7 +107,7 @@ final class VdmrtDiscoveryUtil {
         return files;
     }
 
-    private static void log(DiscoveryLog logger, String message, FmiProtocol.Fmi2Status status) {
+    private static void log(DiscoveryLog logger, String message, Fmi2Status status) {
         if (logger != null) {
             logger.log(message, status, "model");
         }

@@ -2,9 +2,6 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <!-- Needed to make deployment work -->
-
-
     <groupId>org.overturetool.fmi</groupId>
     <artifactId>root</artifactId>
     <packaging>pom</packaging>
@@ -13,42 +10,16 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-<!--        <crescendo.version>2.2.6</crescendo.version>-->
-<!--        <intocps.shm.version>0.3.0</intocps.shm.version>-->
-
         <revision>0.3.0</revision>
         <changelist>-SNAPSHOT</changelist>
         <sha1></sha1>
+        <unifmu.version>1.1.0</unifmu.version>
 
     </properties>
 
 
-    <repositories>
-
-<!--        <repository>-->
-<!--            <id>crescendo-development</id>-->
-<!--            <name>crescendo-development</name>-->
-<!--            <url>http://overture.au.dk/artifactory/crescendo</url>-->
-<!--        </repository>-->
-
-
-<!--        <repository>-->
-<!--            <id>intocps-development</id>-->
-<!--            <name>intocps-development</name>-->
-<!--            <url>http://overture.au.dk/artifactory/into-cps</url>-->
-<!--        </repository>-->
-
-
-<!--        <repository>-->
-<!--            <id>overture.au.dk-vdm2c</id>-->
-<!--            <name>overture.au.dk-releases</name>-->
-<!--            <url>http://overture.au.dk/artifactory/vdm2c</url>-->
-<!--        </repository>-->
-
-    </repositories>
-
-
     <modules>
+        <module>unifmu-runtime</module>
         <module>fmu</module>
     </modules>
 
@@ -83,25 +54,6 @@
                     <version>3.7.1</version>
                 </plugin>
 
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-shade-plugin</artifactId>
-                    <version>2.4.3</version>
-                    <dependencies>
-                        <dependency>
-                            <groupId>com.github.edwgiz</groupId>
-                            <artifactId>maven-shade-plugin.log4j2-cachefile-transformer</artifactId>
-                            <version>2.15</version>
-                        </dependency>
-                    </dependencies>
-                </plugin>
-
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-source-plugin</artifactId>
-                    <version>3.2.1</version>
-                </plugin>
-
             </plugins>
         </pluginManagement>
 
@@ -131,43 +83,6 @@
         </plugins>
 
     </build>
-
-<!--    <profiles>-->
-<!--        <profile>-->
-<!--            <id>With-IDE</id>-->
-<!--            <modules>-->
-<!--                <module>ide</module>-->
-<!--            </modules>-->
-<!--        </profile>-->
-
-<!--        <profile>-->
-<!--            <id>codesigning</id>-->
-<!--            <build>-->
-<!--                <plugins>-->
-<!--                    <plugin>-->
-<!--                        <groupId>org.apache.maven.plugins</groupId>-->
-<!--                        <artifactId>maven-jarsigner-plugin</artifactId>-->
-<!--                        <configuration>-->
-<!--                            <storetype>${keystore.type}</storetype>-->
-<!--                            <keystore>${keystore.path}</keystore>-->
-<!--                            <alias>${keystore.alias}</alias>-->
-<!--                            <storepass>${keystore.store.password}</storepass>-->
-<!--                            <keypass>${keystore.key.password}</keypass>-->
-<!--                        </configuration>-->
-<!--                        <executions>-->
-<!--                            <execution>-->
-<!--                                <id>sign</id>-->
-<!--                                <goals>-->
-<!--                                    <goal>sign</goal>-->
-<!--                                </goals>-->
-<!--                            </execution>-->
-<!--                        </executions>-->
-<!--                    </plugin>-->
-<!--                </plugins>-->
-<!--            </build>-->
-<!--        </profile>-->
-<!--    </profiles>-->
-
 
     <developers>
         <developer>
@@ -208,18 +123,5 @@
 
     <inceptionYear>2015</inceptionYear>
 
-
-    <distributionManagement>
-        <repository>
-            <id>overture.au.dk</id>
-            <name>overture.au.dk-releases</name>
-            <url>https://overture.au.dk/artifactory/overture-fmu</url>
-        </repository>
-        <snapshotRepository>
-            <id>overture.au.dk</id>
-            <name>overture.au.dk-snapshots</name>
-            <url>https://overture.au.dk/artifactory/overture-fmu</url>
-        </snapshotRepository>
-    </distributionManagement>
 
 </project>

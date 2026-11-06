@@ -10,9 +10,7 @@ import com.fujitsu.vdmj.tc.expressions.*;
 import com.fujitsu.vdmj.tc.lex.TCNameToken;
 import com.fujitsu.vdmj.typechecker.*;
 import org.overturetool.fmi.fmu.unifmu.*;
-import org.overturetool.fmi.fmu.unifmu.protocol.FmiLogCallback;
-import org.overturetool.fmi.fmu.unifmu.protocol.FmiModel;
-import org.overturetool.fmi.fmu.unifmu.protocol.FmiProtocol;
+import org.intocps.unifmu.model.fmi2.Fmi2Model;
 import org.overturetool.fmi.vdm.annotations.ASTScalarVariableAnnotation;
 import org.overturetool.fmi.vdm.annotations.TCScalarVariableAnnotation;
 import org.slf4j.Logger;
@@ -25,11 +23,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static org.overturetool.fmi.fmu.unifmu.model.VdmRuntimeFmiModel.ok;
-
-public abstract class VdmFmiModel extends FmiStateModel implements FmiModel {
+public abstract class VdmFmiModel extends FmiStateModel implements Fmi2Model {
     final static Logger logger = LoggerFactory.getLogger(VdmFmiModel.class);
     protected final List<Path> discoveredVdmrtFiles = new ArrayList<>();
     //this holds the list of parsed classes
@@ -47,7 +44,7 @@ public abstract class VdmFmiModel extends FmiStateModel implements FmiModel {
         }
         return null;
     };
-    private FmiLogCallback fmiLogCallback;
+    private Consumer<LogMessage> logHandler;
     private boolean loggingOn;
 
 
@@ -63,7 +60,7 @@ public abstract class VdmFmiModel extends FmiStateModel implements FmiModel {
     public VdmFmiModel(String modelInstanceName, URI resourceLocation, Boolean visible, Boolean loggingOn) {
         try {
             logger.debug("Discovering VDMRT files in resource location: {}", resourceLocation);
-            this.discoveredVdmrtFiles.addAll(VdmrtDiscoveryUtil.discover(Paths.get(resourceLocation.getPath())));
+            this.discoveredVdmrtFiles.addAll(VdmrtDiscoveryUtil.discover(Paths.get(resourceLocation)));
             logger.debug("Discovered VDMRT files: {}", this.discoveredVdmrtFiles);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -170,13 +167,13 @@ public abstract class VdmFmiModel extends FmiStateModel implements FmiModel {
     }
 
     @Override
-    public void setLogCallback(FmiLogCallback fmiLogCallback) {
-        this.fmiLogCallback = fmiLogCallback;
+    public void setLogHandler(Consumer<LogMessage> logHandler) {
+        this.logHandler = logHandler;
     }
 
-    public void fmiLog(LogCategory category, FmiProtocol.Fmi2Status status, String message) {
-        if (fmiLogCallback != null) {
-            fmiLogCallback.logFmiCallback(status, category.name, message);
+    public void fmiLog(LogCategory category, Fmi2Status status, String message) {
+        if (logHandler != null) {
+            logHandler.accept(new LogMessage(status, category.name, message));
         } else {
             System.out.println("[" + status + "] [" + category.name + "] " + message);
         }
@@ -188,7 +185,7 @@ public abstract class VdmFmiModel extends FmiStateModel implements FmiModel {
             switch (category) {
                 case LogVdmErr:
                 case LogError:
-                    log(category.name(), FmiProtocol.Fmi2Status.Error, message);
+                    log(category.name(), Fmi2Status.Error, message);
                     break;
 
                 case LogAll:
@@ -196,29 +193,28 @@ public abstract class VdmFmiModel extends FmiStateModel implements FmiModel {
                 case LogProtocol:
                 case LogVdmOut:
                 default:
-                    log(category.name(), FmiProtocol.Fmi2Status.OK, message);
+                    log(category.name(), Fmi2Status.OK, message);
                     break;
             }
         }
 
     }
 
-    public void log(LogCategory category, FmiProtocol.Fmi2Status status, String message) {
+    public void log(LogCategory category, Fmi2Status status, String message) {
         log(message, status, category.name);
     }
 
-    @Override
-    public void log(String message, FmiProtocol.Fmi2Status status, String category) {
+    public void log(String message, Fmi2Status status, String category) {
 
         logger.trace("Log message Category: {}, Status: {}, Message: {}", category, status, message);
         if (enabledLoggingCategories.contains(category)) {
-            if (fmiLogCallback != null) {
+            if (logHandler != null) {
                 message = message.trim();
                 if (message.endsWith("\n")) {
                     message.substring(0, message.length() - 2);
                 }
                 logger.trace("Sending log message category: {}, data: {}", category, message);
-                fmiLogCallback.logFmiCallback(status, category, message);
+                logHandler.accept(new LogMessage(status, category, message));
             } else {
                 logger.warn("Log driver present: {}, is connected: {}, category: {}", false, false, category);
                 System.out.println(message);
@@ -230,13 +226,13 @@ public abstract class VdmFmiModel extends FmiStateModel implements FmiModel {
 
 
     @Override
-    public FmiProtocol.Fmi2Status fmi2EnterInitializationMode() {
-        return FmiProtocol.Fmi2Status.OK;
+    public Fmi2Status fmi2EnterInitializationMode() {
+        return Fmi2Status.OK;
     }
 
     @Override
-    public FmiProtocol.Fmi2Status fmi2ExitInitializationMode() {
-        return FmiProtocol.Fmi2Status.OK;
+    public Fmi2Status fmi2ExitInitializationMode() {
+        return Fmi2Status.OK;
     }
 
     @Override
@@ -266,44 +262,44 @@ public abstract class VdmFmiModel extends FmiStateModel implements FmiModel {
     }
 
     @Override
-    public FmiProtocol.Fmi2Status fmi2SetupExperiment(double start_time, Double stop_time, Double tolerance) {
-        return FmiProtocol.Fmi2Status.OK;
+    public Fmi2Status fmi2SetupExperiment(double start_time, Double stop_time, Double tolerance) {
+        return Fmi2Status.OK;
     }
 
     @Override
-    public FmiProtocol.Fmi2Status fmi2Reset() {
-        return FmiProtocol.Fmi2Status.Discard;
+    public Fmi2Status fmi2Reset() {
+        return Fmi2Status.Discard;
     }
 
     @Override
-    public FmiProtocol.Fmi2Status fmi2Terminate() {
-        return FmiProtocol.Fmi2Status.OK;
+    public Fmi2Status fmi2Terminate() {
+        return Fmi2Status.OK;
     }
 
     @Override
-    public FmiProtocol.Fmi2Status fmi2CancelStep() {
-        return FmiProtocol.Fmi2Status.Discard;
+    public Fmi2Status fmi2CancelStep() {
+        return Fmi2Status.Discard;
     }
 
     @Override
     public Fmi2SerializeFmuStatePair fmi2SerializeFmuState() throws Exception {
-        return new Fmi2SerializeFmuStatePair(FmiProtocol.Fmi2Status.Discard, new byte[0]);
+        return new Fmi2SerializeFmuStatePair(Fmi2Status.Discard, new byte[0]);
     }
 
     @Override
-    public FmiProtocol.Fmi2Status fmi2DeserializeFmuState(byte[] bytes) throws Exception {
-        return FmiProtocol.Fmi2Status.Discard;
+    public Fmi2Status fmi2DeserializeFmuState(byte[] bytes) throws Exception {
+        return Fmi2Status.Discard;
     }
 
     @Override
-    public FmiProtocol.Fmi2Status fmi2SetDebugLogging(Iterable<String> categories, Boolean logging_on) {
+    public Fmi2Status fmi2SetDebugLogging(Iterable<String> categories, Boolean logging_on) {
         this.loggingOn = logging_on;
         if (categories != null)
             for (var category : categories) {
                 logger.debug("Enabling logging for category: {}", category);
                 enabledLoggingCategories.add(category);
             }
-        return FmiProtocol.Fmi2Status.OK;
+        return Fmi2Status.OK;
     }
 
     public enum LogCategory {
