@@ -18,7 +18,7 @@ mvn -q -f "$SCRIPT_DIR/pom.xml" -pl fmu -am -DskipTests package
 
 (
     cd "$FMU_DIR"
-    java -cp "$RUNTIME_JAR" org.overturetool.fmi.fmu.unifmu.FmuPacker \
+    java -jar "$RUNTIME_JAR" \
         "src/test/resources/model" \
         "target/FmuPackerTest/mainCreatesFmuInTargetFromResourceModel" \
         "test-model" \

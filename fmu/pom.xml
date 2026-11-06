@@ -14,6 +14,10 @@
     <artifactId>vdmfmu</artifactId>
     <name>VDM Fmu interpreter integration</name>
 
+    <properties>
+        <vdmj.version>4.7.0</vdmj.version>
+    </properties>
+
     <dependencies>
 
         <dependency>
@@ -26,13 +30,13 @@
         <dependency>
             <groupId>dk.au.ece.vdmj</groupId>
             <artifactId>vdmj</artifactId>
-            <version>4.7.0</version>
+            <version>${vdmj.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>dk.au.ece.vdmj</groupId>
             <artifactId>stdlib</artifactId>
-            <version>4.7.0</version>
+            <version>${vdmj.version}</version>
             <scope>compile</scope>
         </dependency>
 
@@ -127,7 +131,7 @@
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
-                            <mainClass>org.intocps.unifmu.Main</mainClass>
+                            <mainClass>org.overturetool.fmi.fmu.unifmu.FmuPacker</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>

@@ -31,25 +31,14 @@ standalone native executables.
 From the repository root:
 
 ```sh
-mvn -pl fmu -am package
+mvn package
 ```
 
-This builds and tests both modules and produces:
-
-| File | Purpose |
-|---|---|
-| `fmu/target/vdmfmu-<version>-jar-with-dependencies.jar` | Versioned release/distribution JAR |
-| `fmu/target/vdmfmu-jar-with-dependencies.jar` | Additional stable filename used by local packing commands |
-
-`unifmu-runtime` downloads the generator matching the host, generates a Java
-FMU, and uses **the JAR inside that generated FMU** as the runtime dependency.
-It does not download the standalone release JAR. Downloads and generation stay
-under `unifmu-runtime/target`; complete output for the selected version is
-reused. Change `unifmu.version` in the root `pom.xml` to choose another release.
-
-Windows uses the native generator by default. To use Linux Docker instead,
-select `-P'unifmu-windows-docker,!unifmu-windows-native'`; this requires Linux
-containers and explicitly uses `--platform linux/amd64`.
+This builds and tests both modules and produces the executable release JAR
+`fmu/target/vdmfmu-<version>-jar-with-dependencies.jar`.
+You can also download the versioned JAR from a GitHub release or build artifact.
+The examples below use `0.3.0-SNAPSHOT`; substitute the version you downloaded
+or built.
 
 ## From a VDM specification to an FMU
 
@@ -109,7 +98,7 @@ or arbitrary VDM data types.
 After building, run from the repository root:
 
 ```sh
-java -cp fmu/target/vdmfmu-jar-with-dependencies.jar org.overturetool.fmi.fmu.unifmu.FmuPacker path/to/model target/export my-model
+java -jar fmu/target/vdmfmu-0.3.0-SNAPSHOT-jar-with-dependencies.jar path/to/model target/export my-model
 ```
 
 The arguments are `<model-directory> <output-directory> <fmu-name>`.
@@ -121,7 +110,7 @@ output. A downloaded JAR alone is not yet a checkout-independent packing tool.
 For a complete runnable example:
 
 ```sh
-java -cp fmu/target/vdmfmu-jar-with-dependencies.jar org.overturetool.fmi.fmu.unifmu.FmuPacker fmu/src/test/resources/model target/export watertank
+java -jar fmu/target/vdmfmu-0.3.0-SNAPSHOT-jar-with-dependencies.jar fmu/src/test/resources/model target/export watertank
 ```
 
 ### 3. Simulate
@@ -129,7 +118,15 @@ java -cp fmu/target/vdmfmu-jar-with-dependencies.jar org.overturetool.fmi.fmu.un
 Import the `.fmu` into an FMI 2.0 Co-Simulation tool, configure its parameters
 and inputs, and run it with Java 21 available to the backend.
 
-On macOS/Linux, the included FMPy helper can run the packaged example:
+For example, install [FMPy](https://github.com/CATIA-Systems/FMPy) in your Python
+environment and run the FMU directly:
+
+```sh
+python -m pip install "fmpy[complete]"
+fmpy simulate target/export/watertank.fmu --stop-time 5 --show-plot
+```
+
+On macOS/Linux, the included helper sets up FMPy in a local virtual environment:
 
 ```sh
 fmu/src/test/resources/fmu-test.sh target/export/watertank.fmu
@@ -145,7 +142,7 @@ level input to a plant model; the helper does not supply that plant.
 Append `--debug` (port 5005) or `--debug=5007` when packing:
 
 ```sh
-java -cp fmu/target/vdmfmu-jar-with-dependencies.jar org.overturetool.fmi.fmu.unifmu.FmuPacker path/to/model target/export my-model --debug=5007
+java -jar fmu/target/vdmfmu-0.3.0-SNAPSHOT-jar-with-dependencies.jar path/to/model target/export my-model --debug=5007
 ```
 
 When the simulator starts the FMU, the JVM suspends until a debugger attaches.
@@ -158,21 +155,42 @@ example-project destination. Use the command above for your own projects.
 
 ## Development
 
+The `unifmu-runtime` module generates a Java FMU and takes its embedded runtime
+JAR as a dependency. Downloads and generated output stay under
+`unifmu-runtime/target` and are reused while complete. Change `unifmu.version`
+in the root POM to select the UniFMU release. Windows uses the native generator;
+the optional `unifmu-windows-docker` profile requires Linux containers
+(`--platform linux/amd64`) and disabling `unifmu-windows-native`.
+
+Packaging also creates an unattached `vdmfmu-jar-with-dependencies.jar` for local
+development scripts; use the versioned JAR for releases.
+
+### Upgrading dependencies
+
+| Dependency | Where to change the version |
+|---|---|
+| VDMJ | `fmu/pom.xml`: change `vdmj.version`, shared by `vdmj` and `stdlib` |
+| UniFMU | Root `pom.xml`: change the `unifmu.version` property |
+
+After changing either dependency, run `mvn clean package` to
+regenerate the runtime and run the tests. A UniFMU upgrade may also require
+adapting to changes in the generated Java model/protocol API.
+
 Import the root `pom.xml` into IntelliJ and build once. Reload Maven projects;
 the `intellij-unifmu-runtime` profile exposes the generated JAR to the editor.
 If it is not activated automatically, select it in Maven's Profiles list.
 After `mvn clean`, build again before reloading.
 
-Run all tests with `mvn -pl fmu -am test`, or select a test:
+Run all tests with `mvn test`, or select a test:
 
 ```sh
-mvn -pl fmu -am -Dtest=FmuChannelTest -Dsurefire.failIfNoSpecifiedTests=false test
+mvn -Dtest=FmuChannelTest -Dsurefire.failIfNoSpecifiedTests=false test
 ```
 
 Interpreter tests also use Python 3 and install matplotlib in a test-local
 virtual environment. Build from the root so Maven generates the runtime
 dependency first. To build `fmu/pom.xml` independently, first run
-`mvn -pl fmu -am install`.
+`mvn install`.
 
 | Path | Purpose |
 |---|---|
