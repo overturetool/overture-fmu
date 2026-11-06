@@ -22,15 +22,18 @@ assembly is attached for Maven installation/deployment. The packer and
 each release.
 
 The `unifmu-runtime` module downloads the native UniFMU generator for macOS/Linux
-(x86_64 or ARM64), generates a Java FMI 2 FMU, and packages the runtime JAR from
-that FMU as a Maven dependency. Windows uses Docker with `--platform linux/amd64`.
+(x86_64 or ARM64) or Windows (x86_64), generates a Java FMI 2 FMU, and packages the
+runtime JAR from that FMU as a Maven dependency. Windows uses PowerShell and the
+native Windows generator. The optional `unifmu-windows-docker` profile remains
+available with `--platform linux/amd64`; disable `unifmu-windows-native` when
+selecting it on Windows.
 No separately published release JAR is used. Change `unifmu.version` in the root
 `pom.xml` to select the release.
 
 Downloads, generated binaries, and the runtime JAR stay under
 `unifmu-runtime/target`; generation is skipped when the selected version's JAR
 and all expected binaries are present. macOS/Linux require `sh`, `curl`, and
-`unzip`; Windows requires Docker with Linux containers. The FMU module uses the
+`unzip`; Windows requires Windows PowerShell. The FMU module uses the
 upstream communication/protocol implementation, configured with
 `unifmu.model.impl`, `unifmu.fmi.version`, and `unifmu.launch.mode`.
 
@@ -54,7 +57,30 @@ This project depends on (**See https://gitlab.au.dk/software-engineering/tool-de
 * Overture Interpreter: https://github.com/overturetool/overture
 
 
-## Release procedure
+## GitHub Actions builds and releases
+
+**Build and Test** runs on branch pushes, pull requests, and manual dispatch,
+using Java 21 on `ubuntu-latest`, `macos-latest`, and `windows-latest`.
+Download the versioned, self-contained runtime
+JAR from the run's **Artifacts** section; build artifacts and failure reports
+expire after **3 days**. Manual builds accept an optional stable `version`
+(with or without `v`); otherwise they use the POM version.
+
+To release, run **Actions -> Release -> Run workflow** on the desired branch.
+An explicit `version` must be at least the POM revision and newer than existing
+stable tags. Leave it blank to select the next patch, or patch zero if the POM
+revision starts a newer major/minor line. Legacy `Release/<version>` tags are
+also considered. Releases use `v<version>` tags.
+
+The workflow builds and tests first, then commits the release version to a
+tagged commit and creates a **draft GitHub release** with the versioned runtime
+JAR and generated notes. The selected branch is not changed. Select
+`release_automatically` to publish immediately, or publish the draft manually
+after reviewing it. Release assets remain downloadable independently of the
+3-day workflow artifacts. Failed draft creation cleans up the tag owned by
+that run. Neither workflow deploys to Maven Central or any Maven repository.
+
+## Legacy release procedure
 
 ### Prepare
 

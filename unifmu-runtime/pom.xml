@@ -52,12 +52,19 @@
             </properties>
         </profile>
         <profile>
-            <id>unifmu-windows-docker</id>
+            <id>unifmu-windows-native</id>
             <activation>
                 <os>
                     <family>windows</family>
                 </os>
             </activation>
+            <properties>
+                <unifmu.bootstrap.executable>powershell.exe</unifmu.bootstrap.executable>
+                <unifmu.bootstrap.arguments>-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "${project.basedir}/update.ps1" -Version "${unifmu.version}"</unifmu.bootstrap.arguments>
+            </properties>
+        </profile>
+        <profile>
+            <id>unifmu-windows-docker</id>
             <properties>
                 <unifmu.bootstrap.executable>docker</unifmu.bootstrap.executable>
                 <unifmu.bootstrap.arguments>run --rm --platform linux/amd64 --volume "${project.basedir}:/workspace" --workdir /workspace debian:bookworm-slim sh -ec "apt-get update &amp;&amp; apt-get install -y --no-install-recommends ca-certificates curl unzip &amp;&amp; sh update.sh '${unifmu.version}'"</unifmu.bootstrap.arguments>

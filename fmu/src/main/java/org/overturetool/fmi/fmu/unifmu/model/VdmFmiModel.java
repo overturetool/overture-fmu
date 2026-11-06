@@ -60,7 +60,7 @@ public abstract class VdmFmiModel extends FmiStateModel implements Fmi2Model {
     public VdmFmiModel(String modelInstanceName, URI resourceLocation, Boolean visible, Boolean loggingOn) {
         try {
             logger.debug("Discovering VDMRT files in resource location: {}", resourceLocation);
-            this.discoveredVdmrtFiles.addAll(VdmrtDiscoveryUtil.discover(Paths.get(resourceLocation.getPath())));
+            this.discoveredVdmrtFiles.addAll(VdmrtDiscoveryUtil.discover(Paths.get(resourceLocation)));
             logger.debug("Discovered VDMRT files: {}", this.discoveredVdmrtFiles);
         } catch (IOException e) {
             throw new RuntimeException(e);
