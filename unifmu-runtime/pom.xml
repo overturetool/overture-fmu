@@ -1,0 +1,67 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.overturetool.fmi</groupId>
+        <artifactId>root</artifactId>
+        <version>${revision}${sha1}${changelist}</version>
+    </parent>
+    <artifactId>unifmu-runtime</artifactId>
+    <name>Generated UniFMU Java runtime</name>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>generate-unifmu-runtime</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <exec executable="${unifmu.bootstrap.executable}" failonerror="true">
+                                    <arg line="${unifmu.bootstrap.arguments}"/>
+                                </exec>
+                                <delete dir="${project.build.outputDirectory}"/>
+                                <unzip src="${project.build.directory}/generated-fmu/resources/libs/unifmu-java-runtime-${unifmu.version}.jar"
+                                       dest="${project.build.outputDirectory}"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>unifmu-native</id>
+            <activation>
+                <os>
+                    <family>unix</family>
+                </os>
+            </activation>
+            <properties>
+                <unifmu.bootstrap.executable>sh</unifmu.bootstrap.executable>
+                <unifmu.bootstrap.arguments>"${project.basedir}/update.sh" "${unifmu.version}"</unifmu.bootstrap.arguments>
+            </properties>
+        </profile>
+        <profile>
+            <id>unifmu-windows-docker</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                </os>
+            </activation>
+            <properties>
+                <unifmu.bootstrap.executable>docker</unifmu.bootstrap.executable>
+                <unifmu.bootstrap.arguments>run --rm --platform linux/amd64 --volume "${project.basedir}:/workspace" --workdir /workspace debian:bookworm-slim sh -ec "apt-get update &amp;&amp; apt-get install -y --no-install-recommends ca-certificates curl unzip &amp;&amp; sh update.sh '${unifmu.version}'"</unifmu.bootstrap.arguments>
+            </properties>
+        </profile>
+    </profiles>
+</project>

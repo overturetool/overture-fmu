@@ -3,7 +3,7 @@ package org.overturetool.fmi.fmu.unifmu;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.overturetool.fmi.fmu.unifmu.model.VdmFmiModel;
-import org.overturetool.fmi.fmu.unifmu.protocol.FmiProtocol;
+import org.intocps.unifmu.model.fmi2.Fmi2Model.Fmi2Status;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -35,6 +35,7 @@ public class FmuPackerTest {
             Assertions.assertNotNull(zipFile.getEntry("modelDescription.xml"));
             Assertions.assertNotNull(zipFile.getEntry("binaries/"));
             Assertions.assertNotNull(zipFile.getEntry("binaries/linux64/test-model.so"));
+            Assertions.assertNotNull(zipFile.getEntry("binaries/aarch64-linux/test-model.so"));
             Assertions.assertNotNull(zipFile.getEntry("binaries/darwin64/test-model.dylib"));
             Assertions.assertNotNull(zipFile.getEntry("binaries/win64/test-model.dll"));
             Assertions.assertNull(zipFile.getEntry("binaries/linux64/unifmu.so"));
@@ -43,7 +44,13 @@ public class FmuPackerTest {
             Assertions.assertNotNull(zipFile.getEntry("resources/log4j2.xml"));
             Assertions.assertNotNull(zipFile.getEntry("resources/HardwareInterface.vdmrt"));
             Assertions.assertNotNull(zipFile.getEntry("resources/System.vdmrt"));
-            Assertions.assertNotNull(zipFile.getEntry("resources/vdmfmu-0.3.0-SNAPSHOT-jar-with-dependencies.jar"));
+            boolean usesFatJar = zipFile.getEntry("resources/vdmfmu-jar-with-dependencies.jar") != null;
+            if (!usesFatJar) {
+                Assertions.assertNotNull(zipFile.getEntry("resources/classes/org/overturetool/fmi/fmu/unifmu/FmuPacker.class"));
+                Assertions.assertTrue(zipFile.stream().anyMatch(entry ->
+                        entry.getName().startsWith("resources/lib/unifmu-java-runtime-")
+                                && entry.getName().endsWith(".jar")));
+            }
 
             String modelDescription = new String(zipFile.getInputStream(zipFile.getEntry("modelDescription.xml")).readAllBytes(), StandardCharsets.UTF_8);
             Assertions.assertTrue(modelDescription.contains("modelName=\"test-model\""));
@@ -53,8 +60,8 @@ public class FmuPackerTest {
                         "<Category name=\"" + category.categoryName() + "\""),
                         "Missing log category: " + category.categoryName());
             }
-            for (var status : FmiProtocol.Fmi2Status.values()) {
-                if (status != FmiProtocol.Fmi2Status.OK) {
+            for (var status : Fmi2Status.values()) {
+                if (status != Fmi2Status.OK) {
                     Assertions.assertTrue(modelDescription.contains(
                             "<Category name=\"logStatus" + status.name() + "\""),
                             "Missing FMI status log category: " + status);
@@ -64,12 +71,19 @@ public class FmuPackerTest {
                     "<Category name=\"logUnifmuMessages\" description="));
 
             String launchToml = new String(zipFile.getInputStream(zipFile.getEntry("resources/launch.toml")).readAllBytes(), StandardCharsets.UTF_8);
-            Assertions.assertTrue(launchToml.contains("-Dfmu.model.impl=org.overturetool.fmi.fmu.unifmu.model.VdmRuntimeFmiModel"));
-            Assertions.assertTrue(launchToml.contains("org.overturetool.fmi.fmu.unifmu.protocol.Main"));
+            Assertions.assertTrue(launchToml.contains("-Dunifmu.model.impl=org.overturetool.fmi.fmu.unifmu.model.VdmRuntimeFmiModel"));
+            Assertions.assertTrue(launchToml.contains("org.intocps.unifmu.Main"));
+            Assertions.assertTrue(launchToml.contains("-Dunifmu.launch.mode=local"));
+            Assertions.assertTrue(launchToml.contains("-Dunifmu.fmi.version=fmi2"));
             Assertions.assertTrue(launchToml.contains("-Dlog4j.configurationFile=log4j2.xml"));
-            Assertions.assertTrue(launchToml.contains("\"-cp\", \"vdmfmu-0.3.0-SNAPSHOT-jar-with-dependencies.jar\""));
+            if (usesFatJar) {
+                Assertions.assertTrue(launchToml.contains("\"-cp\", \"vdmfmu-jar-with-dependencies.jar\""));
+            } else {
+                Assertions.assertTrue(launchToml.contains("\"-cp\", \"classes/:lib/*\""));
+                Assertions.assertTrue(launchToml.contains("\"-cp\", \"classes/;lib/*\""));
+            }
             Assertions.assertFalse(launchToml.contains("resources/log4j2.xml"));
-            Assertions.assertFalse(launchToml.contains("resources/vdmfmu-0.3.0-SNAPSHOT-jar-with-dependencies.jar"));
+            Assertions.assertFalse(launchToml.contains("resources/vdmfmu-jar-with-dependencies.jar"));
             Assertions.assertFalse(launchToml.contains("-agentlib:jdwp"));
         }
     }

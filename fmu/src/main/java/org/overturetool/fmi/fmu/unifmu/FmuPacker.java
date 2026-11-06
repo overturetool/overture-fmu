@@ -5,10 +5,9 @@ import com.fujitsu.vdmj.tc.definitions.*;
 import com.fujitsu.vdmj.tc.expressions.TCNewExpression;
 import com.fujitsu.vdmj.tc.lex.TCNameToken;
 import com.fujitsu.vdmj.tc.types.*;
-import com.fujitsu.vdmj.typechecker.TypeComparator;
 import org.overturetool.fmi.vdm.annotations.TCScalarVariableAnnotation;
 import org.overturetool.fmi.fmu.unifmu.model.VdmFmiModel;
-import org.overturetool.fmi.fmu.unifmu.protocol.FmiProtocol;
+import org.intocps.unifmu.model.fmi2.Fmi2Model.Fmi2Status;
 
 import java.io.File;
 import java.io.IOException;
@@ -74,7 +73,7 @@ public class FmuPacker {
               </ModelStructure>
             </fmiModelDescription>
             """;
-    private static final String MAIN_CLASS = "org.overturetool.fmi.fmu.unifmu.protocol.Main";
+    private static final String MAIN_CLASS = "org.intocps.unifmu.Main";
     private static final String MODEL_IMPL_CLASS = "org.overturetool.fmi.fmu.unifmu.model.VdmRuntimeFmiModel";
     private static final int DEFAULT_DEBUG_PORT = 5005;
     private static final String UNIFMU_MESSAGES_LOG_CATEGORY = "logUnifmuMessages";
@@ -253,8 +252,8 @@ public class FmuPacker {
 
     private static String createLogCategoriesXml() {
         var categories = new LinkedHashSet<String>();
-        Arrays.stream(FmiProtocol.Fmi2Status.values())
-                .filter(status -> status != FmiProtocol.Fmi2Status.OK)
+        Arrays.stream(Fmi2Status.values())
+                .filter(status -> status != Fmi2Status.OK)
                 .map(status -> "logStatus" + status.name())
                 .forEach(categories::add);
         categories.add(UNIFMU_MESSAGES_LOG_CATEGORY);
@@ -403,6 +402,16 @@ public class FmuPacker {
 
     private static Path resolveProjectResource(String relativePath) {
         Path moduleRoot = Paths.get("").toAbsolutePath().normalize();
+        Path builtResource = moduleRoot.resolve("target/classes").resolve(relativePath);
+        if (!Files.exists(builtResource)) {
+            builtResource = moduleRoot.resolve("fmu/target/classes").resolve(relativePath);
+        }
+        if (Files.exists(builtResource)) {
+            return builtResource;
+        }
+        if (relativePath.startsWith("unifmu/")) {
+            throw new IllegalStateException("UniFMU resources are missing; build from the repository root with mvn -pl fmu -am package");
+        }
         if (Files.exists(moduleRoot.resolve("src/main/resources").resolve(relativePath))) {
             return moduleRoot.resolve("src/main/resources").resolve(relativePath);
         }
@@ -446,7 +455,7 @@ public class FmuPacker {
             IOException {
         Path moduleRoot = Paths.get("").toAbsolutePath().normalize();
         Path targetDir = Files.exists(moduleRoot.resolve("target")) ? moduleRoot.resolve("target") : moduleRoot.resolve("fmu").resolve("target");
-        Path fatJar = targetDir.resolve("vdmfmu-0.3.0-SNAPSHOT-jar-with-dependencies.jar");
+        Path fatJar = targetDir.resolve("vdmfmu-jar-with-dependencies.jar");
         if (Files.exists(fatJar)) {
             String entryName = zipPrefix + fatJar.getFileName();
             addFile(zip, entryName, Files.readAllBytes(fatJar));
@@ -458,6 +467,11 @@ public class FmuPacker {
             throw new IOException("No runtime artifact found in " + targetDir);
         }
         copyDirectoryToZip(zip, classesDir, zipPrefix + "classes/", null);
+        Path dependenciesDir = targetDir.resolve("runtime-libs");
+        if (!Files.isDirectory(dependenciesDir)) {
+            throw new IOException("Runtime dependencies are missing; build with mvn -pl fmu -am package");
+        }
+        copyDirectoryToZip(zip, dependenciesDir, zipPrefix + "lib/", null);
         return new RuntimeArtifact(RuntimeArtifactType.CLASSES, "classes/");
     }
 
@@ -468,17 +482,28 @@ public class FmuPacker {
             javaArguments.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:" + debugPort);
         }
         javaArguments.add("-Dlog4j.configurationFile=log4j2.xml");
-        javaArguments.add("-Dfmu.model.impl=" + MODEL_IMPL_CLASS);
+        javaArguments.add("-Dunifmu.launch.mode=local");
+        javaArguments.add("-Dunifmu.fmi.version=fmi2");
+        javaArguments.add("-Dunifmu.model.impl=" + MODEL_IMPL_CLASS);
         javaArguments.add("-cp");
         javaArguments.add(runtimeArtifact.path());
         javaArguments.add(MAIN_CLASS);
 
-        String command = javaArguments.stream()
+        return "linux = " + launchCommand(javaArguments, runtimeArtifact, ":") + "\n"
+                + "macos = " + launchCommand(javaArguments, runtimeArtifact, ":") + "\n"
+                + "windows = " + launchCommand(javaArguments, runtimeArtifact, ";") + "\n";
+    }
+
+    private static String launchCommand(List<String> javaArguments, RuntimeArtifact runtimeArtifact,
+                                        String classpathSeparator) {
+        List<String> arguments = new ArrayList<>(javaArguments);
+        if (runtimeArtifact.type() == RuntimeArtifactType.CLASSES) {
+            int classpathIndex = arguments.indexOf("-cp") + 1;
+            arguments.set(classpathIndex, runtimeArtifact.path() + classpathSeparator + "lib/*");
+        }
+        return arguments.stream()
                 .map(argument -> "\"" + argument.replace("\\", "\\\\").replace("\"", "\\\"") + "\"")
                 .collect(Collectors.joining(", ", "[", "]"));
-        return "linux = " + command + "\n"
-                + "macos = " + command + "\n"
-                + "windows = " + command + "\n";
     }
 
     private static void addDirectoryEntry(ZipOutputStream zip, String entryName) throws IOException {

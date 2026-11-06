@@ -3,7 +3,7 @@ package org.overturetool.fmi.fmu.unifmu.model;
 import com.fujitsu.vdmj.lex.Dialect;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.overturetool.fmi.fmu.unifmu.protocol.FmiProtocol;
+import org.intocps.unifmu.model.fmi2.Fmi2Model.Fmi2Status;
 import org.overturetool.fmi.fmu.unifmu.FmuPacker;
 
 import java.io.BufferedWriter;
@@ -181,7 +181,7 @@ print(f\"Saved plot to {plot_path}\")
         double endTime = 5.0;
         double time = 0.0;
         interpreter.init();
-        Assertions.assertEquals(FmiProtocol.Fmi2Status.OK, interpreter.fmi2SetupExperiment(time, endTime, 0.1));
+        Assertions.assertEquals(Fmi2Status.OK, interpreter.fmi2SetupExperiment(time, endTime, 0.1));
 
         var scalars = FmuPacker.getScalarVariables(vdmrtFiles);
         var maxLevelSv = scalars.stream().filter(sv -> sv.name().equals("HardwareInterface.maxlevel")).findFirst().orElseThrow();
@@ -190,7 +190,7 @@ print(f\"Saved plot to {plot_path}\")
         interpreter.setValueParameter(new FmuPacker.ScalarVariable(0, "HardwareInterface.maxlevel", FmuPacker.Type.Real, FmuPacker.Variability.constant, FmuPacker.Causality.parameter, null,null), maxLevel);
         maxLevel = 2.0;
         var minLevel = 1.0;
-        Assertions.assertEquals(FmiProtocol.Fmi2Status.OK, interpreter.fmi2SetReal(List.of(minLevelSv.valueReference(), maxLevelSv.valueReference()), List.of(minLevel, maxLevel)));
+        Assertions.assertEquals(Fmi2Status.OK, interpreter.fmi2SetReal(List.of(minLevelSv.valueReference(), maxLevelSv.valueReference()), List.of(minLevel, maxLevel)));
 
         var valveSv = scalars.stream().filter(sv -> sv.name().equals("System.hwi.valveState")).findFirst().orElseThrow();
         var levelSv = scalars.stream().filter(sv -> sv.name().equals("System.hwi.level")).findFirst().orElseThrow();
@@ -203,12 +203,12 @@ print(f\"Saved plot to {plot_path}\")
         List<Boolean> valveStates = new ArrayList<>();
 
         while (time < endTime) {
-            Assertions.assertEquals(FmiProtocol.Fmi2Status.OK, interpreter.fmi2SetReal(List.of(levelSv.valueReference()), List.of(level)));
-            Assertions.assertEquals(FmiProtocol.Fmi2Status.OK, interpreter.fmi2DoStep(time, stepSize, false));
+            Assertions.assertEquals(Fmi2Status.OK, interpreter.fmi2SetReal(List.of(levelSv.valueReference()), List.of(level)));
+            Assertions.assertEquals(Fmi2Status.OK, interpreter.fmi2DoStep(time, stepSize, false));
             var valveValue = interpreter.fmi2GetBoolean(List.of(valveSv.valueReference()));
             Assertions.assertNotNull(valveValue);
-            Assertions.assertEquals(FmiProtocol.Fmi2Status.OK, valveValue.status());
-            boolean valve = valveValue.values().getFirst();
+            Assertions.assertEquals(Fmi2Status.OK, valveValue.status);
+            boolean valve = valveValue.values.getFirst();
             if (!valve) {
                 level += 0.1;
             } else {

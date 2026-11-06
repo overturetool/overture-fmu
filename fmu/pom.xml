@@ -17,33 +17,9 @@
     <dependencies>
 
         <dependency>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-            <version>4.27.3</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.zeromq</groupId>
-            <artifactId>jeromq</artifactId>
-            <version>0.5.2</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.moandjiezana.toml</groupId>
-            <artifactId>toml4j</artifactId>
-            <version>0.7.2</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.reflections</groupId>
-            <artifactId>reflections</artifactId>
-            <version>0.10.2</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>org.overturetool.fmi</groupId>
+            <artifactId>unifmu-runtime</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <!-- Source: https://mvnrepository.com/artifact/dk.au.ece.vdmj/vdmj -->
@@ -91,15 +67,67 @@
     </dependencies>
 
     <build>
-
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <excludes>
+                    <exclude>unifmu/**</exclude>
+                </excludes>
+            </resource>
+            <resource>
+                <directory>../unifmu-runtime/target/generated-fmu/binaries</directory>
+                <targetPath>unifmu/binaries</targetPath>
+            </resource>
+        </resources>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>stage-generated-runtime</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <delete dir="${project.build.directory}/runtime-libs"/>
+                                <!-- Reactor test builds expose this dependency as classes, so stage the generated JAR directly. -->
+                                <copy file="${project.basedir}/../unifmu-runtime/target/generated-fmu/resources/libs/unifmu-java-runtime-${unifmu.version}.jar"
+                                      todir="${project.build.directory}/runtime-libs"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.8.1</version>
+                <executions>
+                    <execution>
+                        <id>stage-runtime-dependencies</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <includeScope>runtime</includeScope>
+                            <excludeArtifactIds>unifmu-runtime</excludeArtifactIds>
+                            <outputDirectory>${project.build.directory}/runtime-libs</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
-                            <mainClass>org.overturetool.fmi.fmu.unifmu.Backend</mainClass>
+                            <mainClass>org.intocps.unifmu.Main</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
@@ -114,9 +142,41 @@
                             <goal>single</goal>
                         </goals>
                     </execution>
+                    <execution>
+                        <id>make-local-runtime-jar</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>${project.artifactId}</finalName>
+                            <attach>false</attach>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>intellij-unifmu-runtime</id>
+            <activation>
+                <property>
+                    <name>idea.version</name>
+                </property>
+            </activation>
+            <dependencies>
+                <!-- IntelliJ cannot index library classes extracted into another module's output directory. -->
+                <dependency>
+                    <groupId>org.intocps.unifmu</groupId>
+                    <artifactId>unifmu-java-runtime</artifactId>
+                    <version>${unifmu.version}</version>
+                    <scope>system</scope>
+                    <systemPath>${project.basedir}/../unifmu-runtime/target/generated-fmu/resources/libs/unifmu-java-runtime-${unifmu.version}.jar</systemPath>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 
 </project>
