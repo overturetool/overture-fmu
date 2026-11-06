@@ -1,21 +1,15 @@
 package org.overturetool.fmi.vdm.annotations;
 
-import com.fujitsu.vdmj.ast.lex.LexBooleanToken;
 import com.fujitsu.vdmj.tc.annotations.TCAnnotation;
 import com.fujitsu.vdmj.tc.definitions.TCClassDefinition;
 import com.fujitsu.vdmj.tc.definitions.TCDefinition;
 import com.fujitsu.vdmj.tc.definitions.TCInstanceVariableDefinition;
 import com.fujitsu.vdmj.tc.definitions.TCValueDefinition;
-import com.fujitsu.vdmj.tc.expressions.TCBooleanLiteralExpression;
 import com.fujitsu.vdmj.tc.expressions.TCExpression;
 import com.fujitsu.vdmj.tc.expressions.TCExpressionList;
-import com.fujitsu.vdmj.tc.expressions.TCVariableExpression;
 import com.fujitsu.vdmj.tc.lex.TCIdentifierToken;
-import com.fujitsu.vdmj.tc.lex.TCNameToken;
 import com.fujitsu.vdmj.tc.modules.TCModule;
-import com.fujitsu.vdmj.tc.statements.TCForIndexStatement;
 import com.fujitsu.vdmj.tc.statements.TCStatement;
-import com.fujitsu.vdmj.tc.statements.TCWhileStatement;
 import com.fujitsu.vdmj.tc.types.TCQuoteType;
 import com.fujitsu.vdmj.tc.types.TCType;
 import com.fujitsu.vdmj.tc.types.TCTypeSet;
@@ -25,8 +19,6 @@ import com.fujitsu.vdmj.typechecker.NameScope;
 import com.fujitsu.vdmj.typechecker.TypeComparator;
 
 import java.util.List;
-
-import static com.fujitsu.vdmj.typechecker.TypeChecker.detail2;
 
 public class TCScalarVariableAnnotation extends TCAnnotation {
 
