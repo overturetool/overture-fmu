@@ -19,9 +19,9 @@ mvn -q -f "$SCRIPT_DIR/pom.xml" -pl fmu -am -DskipTests package
 (
     cd "$FMU_DIR"
     java -jar "$RUNTIME_JAR" \
-        "src/test/resources/model" \
-        "target/FmuPackerTest/mainCreatesFmuInTargetFromResourceModel" \
-        "test-model" \
+        pack "src/test/resources/model" \
+        --output "target/FmuPackerTest/mainCreatesFmuInTargetFromResourceModel" \
+        --name "test-model" \
         "--debug=$DEBUG_PORT"
 )
 

@@ -1,0 +1,47 @@
+class RealPort
+instance variables
+    value : real := 0.0;
+operations
+    public RealPort : real ==> RealPort
+    RealPort(v) == value := v;
+    public setValue : real ==> ()
+    setValue(v) == value := v;
+    public getValue : () ==> real
+    getValue() == return value;
+end RealPort
+
+class IntPort
+instance variables
+    value : int := 0;
+operations
+    public IntPort : int ==> IntPort
+    IntPort(v) == value := v;
+    public setValue : int ==> ()
+    setValue(v) == value := v;
+    public getValue : () ==> int
+    getValue() == return value;
+end IntPort
+
+class BoolPort
+instance variables
+    value : bool := false;
+operations
+    public BoolPort : bool ==> BoolPort
+    BoolPort(v) == value := v;
+    public setValue : bool ==> ()
+    setValue(v) == value := v;
+    public getValue : () ==> bool
+    getValue() == return value;
+end BoolPort
+
+class StringPort
+instance variables
+    value : seq of char := "";
+operations
+    public StringPort : seq of char ==> StringPort
+    StringPort(v) == value := v;
+    public setValue : seq of char ==> ()
+    setValue(v) == value := v;
+    public getValue : () ==> seq of char
+    getValue() == return value;
+end StringPort

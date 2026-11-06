@@ -11,10 +11,12 @@ import org.intocps.unifmu.model.fmi2.Fmi2Model.Fmi2Status;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
@@ -22,6 +24,7 @@ import java.util.stream.Stream;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import java.util.zip.ZipFile;
 
 public class FmuPacker {
 
@@ -75,7 +78,6 @@ public class FmuPacker {
             """;
     private static final String MAIN_CLASS = "org.intocps.unifmu.Main";
     private static final String MODEL_IMPL_CLASS = "org.overturetool.fmi.fmu.unifmu.model.VdmRuntimeFmiModel";
-    private static final int DEFAULT_DEBUG_PORT = 5005;
     private static final String UNIFMU_MESSAGES_LOG_CATEGORY = "logUnifmuMessages";
     private static final String UNIFMU_MESSAGES_LOG_DESCRIPTION =
             "Messages related to internal UniFMU functionality. Enabling this category is required for distributed UniFMUs.";
@@ -86,9 +88,12 @@ public class FmuPacker {
         if (res.getValue()) {
             var astClassList = res.getKey();
             var tcRes = VdmjUtils.typeCheck(astClassList);
+            if (!tcRes.getKey()) {
+                throw new IllegalArgumentException("VDM specification failed type checking; see diagnostics above.");
+            }
             return getScalarVariables(tcRes.getValue());
         }
-        return null;
+        throw new IllegalArgumentException("VDM specification failed parsing; see diagnostics above.");
     }/**/
 
 
@@ -283,59 +288,66 @@ public class FmuPacker {
 
         Path normalizedModelPath = vdmModelPath.toAbsolutePath().normalize();
         Path normalizedOutputDir = outputDirectory.toAbsolutePath().normalize();
-        Files.createDirectories(normalizedOutputDir);
+        if (fmuName.endsWith(".fmu")) {
+            fmuName = fmuName.substring(0, fmuName.length() - 4);
+        }
+        if (!fmuName.matches("[A-Za-z_][A-Za-z0-9_-]*")) {
+            throw new IllegalArgumentException("FMU name must start with a letter or underscore and contain only letters, digits, underscores or hyphens.");
+        }
+        if (normalizedOutputDir.startsWith(normalizedModelPath)) {
+            throw new IllegalArgumentException("Output directory must be outside the model directory.");
+        }
 
         List<Path> discoveredVdmrtFiles = discoverModelFiles(normalizedModelPath);
+        if (discoveredVdmrtFiles.isEmpty()) {
+            throw new IllegalArgumentException("No .vdmrt files found in " + normalizedModelPath);
+        }
         List<ScalarVariable> scalarVariables = getScalarVariables(discoveredVdmrtFiles);
+        if (scalarVariables == null || scalarVariables.isEmpty()) {
+            throw new IllegalArgumentException("No FMI variables found. Define an annotated HardwareInterface connected to the system class.");
+        }
         String modelDescription = createModelDescription(fmuName, scalarVariables);
+        Files.createDirectories(normalizedOutputDir);
 
-        Path archive = normalizedOutputDir.resolve(fmuName.endsWith(".fmu") ? fmuName : fmuName + ".fmu");
-        try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(archive))) {
-            addDirectoryEntry(zip, "binaries/");
-            addDirectoryEntry(zip, "resources/");
-            addFile(zip, "modelDescription.xml", modelDescription.getBytes(StandardCharsets.UTF_8));
+        Path archive = normalizedOutputDir.resolve(fmuName + ".fmu");
+        Path temporary = Files.createTempFile(normalizedOutputDir, ".vdmfmu-", ".tmp");
+        try {
+            try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(temporary))) {
+                addDirectoryEntry(zip, "binaries/");
+                addDirectoryEntry(zip, "resources/");
+                addFile(zip, "modelDescription.xml", modelDescription.getBytes(StandardCharsets.UTF_8));
 
-            copyDirectoryToZip(zip, resolveProjectResource("unifmu/binaries"), "binaries/",
-                    fileName -> fileName.replace("unifmu", fmuName));
-            copyModelResources(zip, normalizedModelPath, "resources/");
-            addFile(zip, "resources/log4j2.xml", Files.readAllBytes(resolveProjectResource("log4j2.xml")));
-            RuntimeArtifact runtimeArtifact = copyRuntimeArtifact(zip, "resources/");
-            addFile(zip, "resources/launch.toml",
-                    createLaunchToml(runtimeArtifact, debugPort).getBytes(StandardCharsets.UTF_8));
+                copyNativeBinaries(zip, fmuName);
+                copyModelResources(zip, normalizedModelPath, "resources/");
+                try (InputStream logging = FmuPacker.class.getResourceAsStream("/log4j2.xml")) {
+                    if (logging == null) {
+                        throw new IOException("Bundled log4j2.xml is missing");
+                    }
+                    addFile(zip, "resources/log4j2.xml", logging.readAllBytes());
+                }
+                RuntimeArtifact runtimeArtifact = copyRuntimeArtifact(zip, "resources/");
+                addFile(zip, "resources/launch.toml",
+                        createLaunchToml(runtimeArtifact, debugPort).getBytes(StandardCharsets.UTF_8));
+            }
+            Files.move(temporary, archive, StandardCopyOption.REPLACE_EXISTING);
+        } finally {
+            Files.deleteIfExists(temporary);
         }
 
         return archive;
     }
 
     public static void main(String[] args) throws Exception {
-        if (args.length < 3 || args.length > 4) {
-            throw new IllegalArgumentException(
-                    "Usage: FmuPacker <vdm-model-path> <output-directory> <fmu-name> [--debug[=<port>]]");
+        // Keep the original three-positional-argument invocation working for existing scripts.
+        if (args.length >= 3 && !Set.of("init", "pack", "update").contains(args[0])
+                && !args[0].startsWith("-")) {
+            List<String> translated = new ArrayList<>(List.of("pack", args[0], "--output", args[1], "--name", args[2]));
+            translated.addAll(Arrays.asList(args).subList(3, args.length));
+            args = translated.toArray(String[]::new);
         }
-
-        Integer debugPort = args.length == 4 ? parseDebugPort(args[3]) : null;
-        Path archive = packageFmu(Paths.get(args[0]), Paths.get(args[1]), args[2], debugPort);
-        System.out.println("Created FMU: " + archive);
-        if (debugPort != null) {
-            System.out.printf(
-                    "Debug mode enabled: when the FMU starts, its JVM will wait for a debugger on TCP port %1$d. "
-                            + "For Docker, publish it with -p %1$d:%1$d; connect IntelliJ Remote JVM Debug to 127.0.0.1:%1$d. "
-                            + "JDWP has no authentication; do not expose this port publicly.%n",
-                    debugPort);
-        }
-    }
-
-    private static Integer parseDebugPort(String argument) {
-        if ("--debug".equals(argument)) {
-            return DEFAULT_DEBUG_PORT;
-        }
-        if (!argument.startsWith("--debug=")) {
-            throw new IllegalArgumentException("Expected --debug or --debug=<port>");
-        }
-        try {
-            return validateDebugPort(Integer.parseInt(argument.substring("--debug=".length())));
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Debug port must be an integer between 1 and 65535", e);
+        int result = FmuCli.execute(args);
+        if (result != 0) {
+            System.exit(result);
         }
     }
 
@@ -400,22 +412,34 @@ public class FmuPacker {
                 .replace(">", "&gt;");
     }
 
-    private static Path resolveProjectResource(String relativePath) {
-        Path moduleRoot = Paths.get("").toAbsolutePath().normalize();
-        Path builtResource = moduleRoot.resolve("target/classes").resolve(relativePath);
-        if (!Files.exists(builtResource)) {
-            builtResource = moduleRoot.resolve("fmu/target/classes").resolve(relativePath);
+    private static Path codeLocation() throws IOException {
+        try {
+            return Paths.get(FmuPacker.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+        } catch (java.net.URISyntaxException e) {
+            throw new IOException("Cannot resolve packer location", e);
         }
-        if (Files.exists(builtResource)) {
-            return builtResource;
+    }
+
+    private static void copyNativeBinaries(ZipOutputStream zip, String fmuName) throws IOException {
+        Path location = codeLocation();
+        if (Files.isDirectory(location)) {
+            copyDirectoryToZip(zip, location.resolve("unifmu/binaries"), "binaries/",
+                    name -> name.replace("unifmu", fmuName));
+            return;
         }
-        if (relativePath.startsWith("unifmu/")) {
-            throw new IllegalStateException("UniFMU resources are missing; build from the repository root with mvn -pl fmu -am package");
+        try (ZipFile jar = new ZipFile(location.toFile())) {
+            var binaries = jar.stream().filter(entry ->
+                    !entry.isDirectory() && entry.getName().startsWith("unifmu/binaries/")).toList();
+            if (binaries.isEmpty()) {
+                throw new IOException("Packer JAR contains no UniFMU native binaries");
+            }
+            for (var entry : binaries) {
+                try (InputStream input = jar.getInputStream(entry)) {
+                    addFile(zip, entry.getName().substring("unifmu/".length()).replace("unifmu", fmuName),
+                            input.readAllBytes());
+                }
+            }
         }
-        if (Files.exists(moduleRoot.resolve("src/main/resources").resolve(relativePath))) {
-            return moduleRoot.resolve("src/main/resources").resolve(relativePath);
-        }
-        return moduleRoot.resolve("fmu").resolve("src/main/resources").resolve(relativePath);
     }
 
     private static void copyModelResources(ZipOutputStream zip, Path source, String zipPrefix) throws
@@ -424,6 +448,11 @@ public class FmuPacker {
             try (Stream<Path> paths = Files.walk(source)) {
                 for (Path path : paths.filter(Files::isRegularFile).toList()) {
                     String entryName = zipPrefix + source.relativize(path).toString().replace('\\', '/');
+                    String relative = source.relativize(path).toString().replace('\\', '/');
+                    if (Set.of("launch.toml", "log4j2.xml", "backend.jar").contains(relative)
+                            || relative.startsWith("classes/") || relative.startsWith("runtime-libs/")) {
+                        throw new IOException("Model resource conflicts with a reserved backend path: " + relative);
+                    }
                     addFile(zip, entryName, Files.readAllBytes(path));
                 }
             }
@@ -453,17 +482,14 @@ public class FmuPacker {
 
     private static RuntimeArtifact copyRuntimeArtifact(ZipOutputStream zip, String zipPrefix) throws
             IOException {
-        Path moduleRoot = Paths.get("").toAbsolutePath().normalize();
-        Path targetDir = Files.isDirectory(moduleRoot.resolve("fmu/target/classes"))
-                ? moduleRoot.resolve("fmu/target") : moduleRoot.resolve("target");
-        Path fatJar = targetDir.resolve("vdmfmu-jar-with-dependencies.jar");
-        if (Files.exists(fatJar)) {
-            String entryName = zipPrefix + fatJar.getFileName();
-            addFile(zip, entryName, Files.readAllBytes(fatJar));
-            return new RuntimeArtifact(RuntimeArtifactType.JAR, fatJar.getFileName().toString());
+        Path location = codeLocation();
+        if (Files.isRegularFile(location)) {
+            addFile(zip, zipPrefix + "backend.jar", Files.readAllBytes(location));
+            return new RuntimeArtifact(RuntimeArtifactType.JAR, "backend.jar");
         }
+        Path targetDir = location.getParent();
 
-        Path classesDir = targetDir.resolve("classes");
+        Path classesDir = location;
         if (!Files.isDirectory(classesDir)) {
             throw new IOException("No runtime artifact found in " + targetDir);
         }
@@ -472,7 +498,7 @@ public class FmuPacker {
         if (!Files.isDirectory(dependenciesDir)) {
             throw new IOException("Runtime dependencies are missing; build with mvn -pl fmu -am package");
         }
-        copyDirectoryToZip(zip, dependenciesDir, zipPrefix + "lib/", null);
+        copyDirectoryToZip(zip, dependenciesDir, zipPrefix + "runtime-libs/", null);
         return new RuntimeArtifact(RuntimeArtifactType.CLASSES, "classes/");
     }
 
@@ -500,7 +526,7 @@ public class FmuPacker {
         List<String> arguments = new ArrayList<>(javaArguments);
         if (runtimeArtifact.type() == RuntimeArtifactType.CLASSES) {
             int classpathIndex = arguments.indexOf("-cp") + 1;
-            arguments.set(classpathIndex, runtimeArtifact.path() + classpathSeparator + "lib/*");
+            arguments.set(classpathIndex, runtimeArtifact.path() + classpathSeparator + "runtime-libs/*");
         }
         return arguments.stream()
                 .map(argument -> "\"" + argument.replace("\\", "\\\\").replace("\"", "\\\"") + "\"")

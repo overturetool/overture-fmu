@@ -101,7 +101,11 @@ public abstract class VdmFmiModel extends FmiStateModel implements Fmi2Model {
                                 if (value instanceof TCRealLiteralExpression rle) {
                                     val = rle.value.value;
                                 } else if (value instanceof TCIntegerLiteralExpression ile) {
-                                    val = ile.value.value;
+                                    if (entry.type() == FmuPacker.Type.Integer) {
+                                        val = Math.toIntExact(ile.value.value);
+                                    } else {
+                                        val = (double) ile.value.value;
+                                    }
                                 } else if (value instanceof TCBooleanLiteralExpression ble) {
                                     val = ble.value.value;
                                 } else if (value instanceof TCStringLiteralExpression sle) {

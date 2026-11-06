@@ -78,7 +78,7 @@ public class FmuPackerTest {
             if (!usesFatJar) {
                 Assertions.assertNotNull(zipFile.getEntry("resources/classes/org/overturetool/fmi/fmu/unifmu/FmuPacker.class"));
                 Assertions.assertTrue(zipFile.stream().anyMatch(entry ->
-                        entry.getName().startsWith("resources/lib/unifmu-java-runtime-")
+                        entry.getName().startsWith("resources/runtime-libs/unifmu-java-runtime-")
                                 && entry.getName().endsWith(".jar")));
             }
 
@@ -109,8 +109,8 @@ public class FmuPackerTest {
             if (usesFatJar) {
                 Assertions.assertTrue(launchToml.contains("\"-cp\", \"vdmfmu-jar-with-dependencies.jar\""));
             } else {
-                Assertions.assertTrue(launchToml.contains("\"-cp\", \"classes/:lib/*\""));
-                Assertions.assertTrue(launchToml.contains("\"-cp\", \"classes/;lib/*\""));
+                Assertions.assertTrue(launchToml.contains("\"-cp\", \"classes/:runtime-libs/*\""));
+                Assertions.assertTrue(launchToml.contains("\"-cp\", \"classes/;runtime-libs/*\""));
             }
             Assertions.assertFalse(launchToml.contains("resources/log4j2.xml"));
             Assertions.assertFalse(launchToml.contains("resources/vdmfmu-jar-with-dependencies.jar"));
