@@ -220,6 +220,6 @@ class FmuCliTest {
         }
         assertTrue(finished, "Packing helper timed out");
         assertEquals(0, process.exitValue(), Files.readString(log));
-        assertTrue(Files.isRegularFile(project.resolve("dist/helper-test.fmu")));
+        assertTrue(Files.isRegularFile(project.resolve("dist/helper-test.fmu")), Files.readString(log));
     }
 }

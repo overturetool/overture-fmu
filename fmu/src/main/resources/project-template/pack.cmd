@@ -1,5 +1,6 @@
 @echo off
 setlocal DisableDelayedExpansion
+set "PROJECT_DIR=%~dp0."
 set "FMU_JAR=@FMU_JAR@"
 set "FIRST_ARG=%~1"
 if not defined FIRST_ARG goto checkjar
@@ -19,5 +20,5 @@ set "PACK_ARGS=%PACK_ARGS% %1"
 shift
 goto arguments
 :pack
-java -jar "%FMU_JAR%" pack "%~dp0." %PACK_ARGS%
+java -jar "%FMU_JAR%" pack "%PROJECT_DIR%" %PACK_ARGS%
 exit /b %errorlevel%
